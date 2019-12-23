@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	//ErrCandlesCount is returned when insufficient amount of candles is
+	// ErrCandlesCount is returned when insufficient amount of candles is
 	// provided.
 	ErrCandlesCount = errors.New("insufficient amount of candles")
 )
@@ -17,13 +17,13 @@ var (
 // moving average.
 type SMA struct {
 	// Length specifies how many candles should be used.
-	Length int
+	Length int `json:"length"`
 
 	// Offset specifies how many latest candles should be skipped.
-	Offset int
+	Offset int `json:"offset"`
 
 	// Src specifies which price field of the candle should be used.
-	Src chartype.CandleField
+	Src chartype.CandleField `json:"src"`
 }
 
 // Calc calculates SMA value by using settings stored in the func receiver.
@@ -34,7 +34,7 @@ func (s SMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 
 	res := decimal.Zero
 
-	for i := len(cc) - 1 - s.Offset; i >= len(cc)-s.Length-s.Offset; i++ {
+	for i := len(cc) - 1 - s.Offset; i >= len(cc)-s.CandlesCount(); i-- {
 		res = res.Add(s.Src.Extract(cc[i]))
 	}
 
