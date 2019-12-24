@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	// ErrCandlesCount is returned when insufficient amount of candles is
+	// ErrInvalidCandlesCount is returned when insufficient amount of candles is
 	// provided.
-	ErrCandlesCount = errors.New("insufficient amount of candles")
+	ErrInvalidCandlesCount = errors.New("insufficient amount of candles")
 )
 
 // SMA holds all the neccesary information needed to calculate a simple
@@ -29,7 +29,7 @@ type SMA struct {
 // Calc calculates SMA value by using settings stored in the func receiver.
 func (s SMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 	if s.CandlesCount() > len(cc) {
-		return decimal.Zero, ErrCandlesCount
+		return decimal.Zero, ErrInvalidCandlesCount
 	}
 
 	res := decimal.Zero
