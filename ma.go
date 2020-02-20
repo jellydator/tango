@@ -28,22 +28,22 @@ type SMA struct {
 
 // Calc calculates SMA value by using settings stored in the func receiver.
 func (s SMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
-	if s.CandlesCount() > len(cc) {
+	if s.CandleCount() > len(cc) {
 		return decimal.Zero, ErrInvalidCandlesCount
 	}
 
 	res := decimal.Zero
 
-	for i := len(cc) - 1 - s.Offset; i >= len(cc)-s.CandlesCount(); i-- {
+	for i := len(cc) - 1 - s.Offset; i >= len(cc)-s.CandleCount(); i-- {
 		res = res.Add(s.Src.Extract(cc[i]))
 	}
 
 	return res.Div(decimal.NewFromInt(int64(s.Length))), nil
 }
 
-// CandlesCount determines the total amount of candles needed for SMA
+// CandleCount determines the total amount of candles needed for SMA
 // calculation by using settings stored in the receiver.
-func (s SMA) CandlesCount() int {
+func (s SMA) CandleCount() int {
 	return s.Length + s.Offset
 }
 
@@ -53,9 +53,9 @@ func CalcSMA(cc []chartype.Candle, l, off int, src chartype.CandleField) (decima
 	return s.Calc(cc)
 }
 
-// CandlesCountSMA determines the total amount of candles needed for SMA
+// CandleCountSMA determines the total amount of candles needed for SMA
 // calculation by using settings passed as parameters.
-func CandlesCountSMA(l, off int) int {
+func CandleCountSMA(l, off int) int {
 	s := SMA{Length: l, Offset: off}
-	return s.CandlesCount()
+	return s.CandleCount()
 }

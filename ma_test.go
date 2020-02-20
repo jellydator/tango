@@ -76,8 +76,8 @@ func TestSMACalc(t *testing.T) {
 	}
 }
 
-func TestSMACandlesCount(t *testing.T) {
+func TestSMACandleCount(t *testing.T) {
 	s := SMA{Length: 15, Offset: 10}
-	assert.Equal(t, 25, s.CandlesCount())
-	assert.Equal(t, 25, CandlesCountSMA(15, 10))
+	assert.Equal(t, 25, s.CandleCount())
+	assert.Equal(t, 25, CandleCountSMA(15, 10))
 }
