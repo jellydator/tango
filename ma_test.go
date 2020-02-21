@@ -23,7 +23,7 @@ func TestSMACalc(t *testing.T) {
 			Candles: []chartype.Candle{
 				{Close: decimal.NewFromInt(30)},
 			},
-			Error: ErrInvalidCandlesCount,
+			Error: ErrInvalidCandleCount,
 		},
 		"Successful calculation wit offset": {
 			Length: 3,
