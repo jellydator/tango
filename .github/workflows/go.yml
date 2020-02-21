@@ -1,0 +1,84 @@
+name: Go
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches: 
+      - master
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lint:
+    name: Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v2.5.2
+        with:
+          version: v1.40
+
+  test:
+    name: Testing
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.16
+
+    - name: Download gocov
+      run: go get github.com/axw/gocov/gocov
+      
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Run tests
+      run: gocov test ./... -race -failfast -timeout 3m > coverage.out
+
+    - name: Save coverage
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-data
+        path: coverage.out
+
+  coverage:
+    name: Coverage
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.16
+
+    - name: Download gocov
+      run: go get github.com/axw/gocov/gocov
+
+    - name: Load coverage report
+      uses: actions/download-artifact@v2
+      with:
+        name: coverage-data
+
+    - name: Check coverage
+      run: |
+        cov=$(gocov report coverage.out | sed -nE 's/^Total Coverage: (.+)%.*$/\1/p')
+        if [[ -z "${cov}" || "${cov}" == "NaN" ]]; then
+            echo "Invalid coverage data"
+            exit 1
+        fi
+
+        readonly MIN_COV=96.96
+
+        if (( "$(echo "${cov} < ${MIN_COV}" | bc)" )); then
+            echo "Coverage: ${cov}%, minimum allowed: ${MIN_COV}%"
+            exit 1
+        fi
+
+        echo "Coverage: ${cov}%"

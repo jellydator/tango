@@ -1,0 +1,116 @@
+[linters]
+enable = [
+    "bodyclose",
+    "rowserrcheck",
+    "stylecheck",
+    "gosec",
+    "unconvert",
+    "goconst",
+    "gocyclo",
+    "gocognit",
+    "asciicheck",
+    "gofmt",
+    "goimports",
+    "depguard",
+    "misspell",
+    "unparam",
+    "dogsled",
+    "nakedret",
+    "prealloc",
+    "gocritic",
+    "gochecknoinits",
+    "gochecknoglobals",
+    "whitespace",
+    "wsl",
+    "goprintffuncname",
+    "goerr113",
+    "godot",
+    "nestif",
+    "nolintlint",
+    "exhaustive",
+    "sqlclosecheck",
+    "exportloopref",
+    "noctx",
+    "forbidigo",
+    "forcetypeassert",
+    "nilerr",
+    "wastedassign",
+    "importas",
+    "revive",
+    "durationcheck",
+    "ifshort",
+    "predeclared"
+]
+
+[linters-settings.gocyclo]
+min-complexity = 16
+
+[linters-settings.gocognit]
+min-complexity = 20
+
+[linters-settings.maligned]
+suggest-new = true
+
+[linters-settings.depguard]
+type = "blacklist"
+packages = [
+	"gotest.tools/assert",
+	"github.com/bmizerany/assert"
+]
+
+[linters-settings.nakedret]
+max-func-lines = 20
+
+[linters-settings.prealloc]
+for-loops = true
+
+[linters-settings.gocritic]
+enabled-tags = [
+	"diagnostic",
+	"experimental",
+	"opinionated",
+	"performance",
+	"style"
+]
+disabled-checks = [
+	"hugeParam",
+	"sloppyReassign"
+]
+
+[linters-settings.whitespace]
+multi-if = true
+multi-func = true
+
+[linters-settings.wsl]
+force-err-cuddling = true
+
+[linters-settings.exhaustive]
+default-signifies-exhaustive = true
+
+[issues]
+exclude-use-default = false
+
+# allow defer usage
+[[issues.exclude-rules]]
+text = "unnecessaryDefer: defer"
+linters = ["gocritic"]
+
+# allow inits in test files
+[[issues.exclude-rules]]
+path = "_test.go"
+linters = ["gochecknoinits"]
+
+# exclude global vars prefixed with underscore
+[[issues.exclude-rules]]
+text = "_.+" 
+linters = ["gochecknoglobals"]
+
+# fix wsl and whitespace clash
+[[issues.exclude-rules]]
+text = "block should not start with a whitespace" 
+linters = ["wsl"]
+
+# allow dynamic errors
+[[issues.exclude-rules]]
+text = "do not define dynamic errors"
+linters = ["goerr113"]
