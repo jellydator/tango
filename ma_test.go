@@ -8,6 +8,40 @@ import (
 	"github.com/swithek/chartype"
 )
 
+func TestSMAValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length  int
+		Offset  int
+		Src     chartype.CandleField
+		Candles []chartype.Candle
+		Result  decimal.Decimal
+		Error   error
+	}{
+		"Length cannot be less than 1": {
+			Length: 0,
+			Error:  ErrInvalidLengthCount,
+		},
+		"Offset cannot be less than 0": {
+			Offset: -1,
+			Error:  ErrInvalidLengthCount,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			s := SMA{Length: c.Length, Offset: c.Offset}
+			err := s.Validate()
+			assert.Equal(t, c.Error, err)
+
+			err = ValidateSMA(c.Length, c.Offset)
+			assert.Equal(t, c.Error, err)
+		})
+	}
+}
+
 func TestSMACalc(t *testing.T) {
 	cc := map[string]struct {
 		Length  int
@@ -80,6 +114,40 @@ func TestSMACandleCount(t *testing.T) {
 	s := SMA{Length: 15, Offset: 10}
 	assert.Equal(t, 25, s.CandleCount())
 	assert.Equal(t, 25, CandleCountSMA(15, 10))
+}
+
+func TestEMAValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length  int
+		Offset  int
+		Src     chartype.CandleField
+		Candles []chartype.Candle
+		Result  decimal.Decimal
+		Error   error
+	}{
+		"Length cannot be less than 1": {
+			Length: 0,
+			Error:  ErrInvalidLengthCount,
+		},
+		"Offset cannot be less than 0": {
+			Offset: -1,
+			Error:  ErrInvalidLengthCount,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			e := EMA{Length: c.Length, Offset: c.Offset}
+			err := e.Validate()
+			assert.Equal(t, c.Error, err)
+
+			err = ValidateEMA(c.Length, c.Offset)
+			assert.Equal(t, c.Error, err)
+		})
+	}
 }
 
 func TestEMACalc(t *testing.T) {
