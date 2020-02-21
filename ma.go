@@ -26,19 +26,6 @@ type SMA struct {
 	Src chartype.CandleField `json:"src"`
 }
 
-// EMA holds all the neccesary information needed to calculate exponential
-// moving average.
-type EMA struct {
-	// Length specifies how many candles should be used.
-	Length int `json:"length"`
-
-	// Offset specifies how many latest candles should be skipped.
-	Offset int `json:"offset"`
-
-	// Src specifies which price field of the candle should be used.
-	Src chartype.CandleField `json:"src"`
-}
-
 // Calc calculates SMA value by using settings stored in the func receiver.
 func (s SMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 	if s.CandleCount() > len(cc) {
@@ -71,6 +58,19 @@ func CalcSMA(cc []chartype.Candle, l, off int, src chartype.CandleField) (decima
 func CandleCountSMA(l, off int) int {
 	s := SMA{Length: l, Offset: off}
 	return s.CandleCount()
+}
+
+// EMA holds all the neccesary information needed to calculate exponential
+// moving average.
+type EMA struct {
+	// Length specifies how many candles should be used.
+	Length int `json:"length"`
+
+	// Offset specifies how many latest candles should be skipped.
+	Offset int `json:"offset"`
+
+	// Src specifies which price field of the candle should be used.
+	Src chartype.CandleField `json:"src"`
 }
 
 // Calc calculates EMA value by using settings stored in the func receiver.
