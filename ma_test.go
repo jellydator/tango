@@ -22,8 +22,15 @@ func TestSMAValidation(t *testing.T) {
 			Error:  ErrInvalidLengthCount,
 		},
 		"Offset cannot be less than 0": {
+			Length: 1,
 			Offset: -1,
-			Error:  ErrInvalidLengthCount,
+			Error:  ErrInvalidOffsetCount,
+		},
+		"Invalid CandleField value": {
+			Length: 1,
+			Offset: 0,
+			Src:    69,
+			Error:  chartype.ErrInvalidCandleField,
 		},
 	}
 
@@ -32,11 +39,11 @@ func TestSMAValidation(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := SMA{Length: c.Length, Offset: c.Offset}
+			s := SMA{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			err := s.Validate()
 			assert.Equal(t, c.Error, err)
 
-			err = ValidateSMA(c.Length, c.Offset)
+			err = ValidateSMA(c.Length, c.Offset, c.Src)
 			assert.Equal(t, c.Error, err)
 		})
 	}
@@ -130,8 +137,15 @@ func TestEMAValidation(t *testing.T) {
 			Error:  ErrInvalidLengthCount,
 		},
 		"Offset cannot be less than 0": {
+			Length: 1,
 			Offset: -1,
-			Error:  ErrInvalidLengthCount,
+			Error:  ErrInvalidOffsetCount,
+		},
+		"Invalid CandleField value": {
+			Length: 1,
+			Offset: 0,
+			Src:    69,
+			Error:  chartype.ErrInvalidCandleField,
 		},
 	}
 
@@ -140,11 +154,11 @@ func TestEMAValidation(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			e := EMA{Length: c.Length, Offset: c.Offset}
+			e := EMA{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			err := e.Validate()
 			assert.Equal(t, c.Error, err)
 
-			err = ValidateEMA(c.Length, c.Offset)
+			err = ValidateEMA(c.Length, c.Offset, c.Src)
 			assert.Equal(t, c.Error, err)
 		})
 	}
