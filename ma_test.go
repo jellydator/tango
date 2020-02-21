@@ -1,7 +1,6 @@
 package indc
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -31,9 +30,9 @@ func TestSMAValidation(t *testing.T) {
 			Length: 1,
 			Offset: 0,
 			Src:    -69,
-			Error:  errors.New(""),
+			Error:  assert.AnError,
 		},
-		"Unexpected internal error has occured": {
+		"Successful validation": {
 			Length: 1,
 			Offset: 0,
 			Src:    1,
@@ -48,27 +47,31 @@ func TestSMAValidation(t *testing.T) {
 			s := SMA{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			err := s.Validate()
 			if c.Error != nil {
-				if c.Error.Error() == "" {
-					assert.Error(t, err)
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
 				} else {
 					assert.Equal(t, c.Error, err)
-					return
 				}
+				return
 			} else {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 			}
+
+			assert.Nil(t, err)
 
 			err = ValidateSMA(c.Length, c.Offset, c.Src)
 			if c.Error != nil {
-				if c.Error.Error() == "" {
-					assert.Error(t, err)
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
 				} else {
 					assert.Equal(t, c.Error, err)
-					return
 				}
+				return
 			} else {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 			}
+
+			assert.Nil(t, err)
 		})
 	}
 }
@@ -169,9 +172,9 @@ func TestEMAValidation(t *testing.T) {
 			Length: 1,
 			Offset: 0,
 			Src:    -69,
-			Error:  errors.New(""),
+			Error:  assert.AnError,
 		},
-		"Unexpected internal error has occured": {
+		"Successful validation": {
 			Length: 1,
 			Offset: 0,
 			Src:    1,
@@ -186,27 +189,31 @@ func TestEMAValidation(t *testing.T) {
 			e := EMA{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			err := e.Validate()
 			if c.Error != nil {
-				if c.Error.Error() == "" {
-					assert.Error(t, err)
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
 				} else {
 					assert.Equal(t, c.Error, err)
-					return
 				}
+				return
 			} else {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 			}
+
+			assert.Nil(t, err)
 
 			err = ValidateEMA(c.Length, c.Offset, c.Src)
 			if c.Error != nil {
-				if c.Error.Error() == "" {
-					assert.Error(t, err)
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
 				} else {
 					assert.Equal(t, c.Error, err)
-					return
 				}
+				return
 			} else {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 			}
+
+			assert.Nil(t, err)
 		})
 	}
 }
