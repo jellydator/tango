@@ -85,13 +85,18 @@ func (e EMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	mul := decimal.NewFromFloat(2.0 / float64(e.Length+1))
+	mul := e.Multiplier()
 
-	for i := len(cc) - 1 - e.Offset; i >= len(cc)-e.CandleCount(); i-- {
+	for i := len(cc) - e.CandleCount(); i <= len(cc)-1-e.Offset; i++ {
 		res = e.Src.Extract(cc[i]).Mul(mul).Add(res.Mul(decimal.NewFromInt(1).Sub(mul)))
 	}
 
 	return res, nil
+}
+
+// Multiplier calculates EMA multiplier value by using settings stored in the func receiver.
+func (e EMA) Multiplier() decimal.Decimal {
+	return decimal.NewFromFloat(2.0 / float64(e.Length+1))
 }
 
 // CandleCount determines the total amount of candles needed for EMA
