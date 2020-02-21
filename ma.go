@@ -43,18 +43,26 @@ func (s SMA) Validate() error {
 		return ErrInvalidOffsetCount
 	}
 
+	if err := s.Src.Validate(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // ValidateSMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateSMA(l, off int) error {
+func ValidateSMA(l, off int, src chartype.CandleField) error {
 	if l < 1 {
 		return ErrInvalidLengthCount
 	}
 
 	if off < 0 {
 		return ErrInvalidOffsetCount
+	}
+
+	if err := src.Validate(); err != nil {
+		return err
 	}
 
 	return nil
@@ -118,18 +126,26 @@ func (e EMA) Validate() error {
 		return ErrInvalidOffsetCount
 	}
 
+	if err := e.Src.Validate(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // ValidateEMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateEMA(l, off int) error {
+func ValidateEMA(l, off int, src chartype.CandleField) error {
 	if l < 1 {
 		return ErrInvalidLengthCount
 	}
 
 	if off < 0 {
 		return ErrInvalidOffsetCount
+	}
+
+	if err := src.Validate(); err != nil {
+		return err
 	}
 
 	return nil
