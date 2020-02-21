@@ -53,8 +53,6 @@ func TestSMAValidation(t *testing.T) {
 					assert.Equal(t, c.Error, err)
 				}
 				return
-			} else {
-				assert.NoError(t, err)
 			}
 
 			assert.Nil(t, err)
@@ -67,8 +65,6 @@ func TestSMAValidation(t *testing.T) {
 					assert.Equal(t, c.Error, err)
 				}
 				return
-			} else {
-				assert.NoError(t, err)
 			}
 
 			assert.Nil(t, err)
@@ -195,8 +191,6 @@ func TestEMAValidation(t *testing.T) {
 					assert.Equal(t, c.Error, err)
 				}
 				return
-			} else {
-				assert.NoError(t, err)
 			}
 
 			assert.Nil(t, err)
@@ -209,8 +203,6 @@ func TestEMAValidation(t *testing.T) {
 					assert.Equal(t, c.Error, err)
 				}
 				return
-			} else {
-				assert.NoError(t, err)
 			}
 
 			assert.Nil(t, err)
