@@ -141,7 +141,7 @@ func (e EMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	mul := e.Multiplier()
+	mul := e.multiplier()
 
 	for i := len(cc) - e.CandleCount() + e.Length; i <= len(cc)-1-e.Offset; i++ {
 		res = e.Src.Extract(cc[i]).Mul(mul).Add(res.Mul(decimal.NewFromInt(1).Sub(mul)))
@@ -150,8 +150,8 @@ func (e EMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 	return res, nil
 }
 
-// Multiplier calculates EMA multiplier value by using settings stored in the func receiver.
-func (e EMA) Multiplier() decimal.Decimal {
+// multiplier calculates EMA multiplier value by using settings stored in the func receiver.
+func (e EMA) multiplier() decimal.Decimal {
 	return decimal.NewFromFloat(2.0 / float64(e.Length+1))
 }
 
