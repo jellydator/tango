@@ -25,7 +25,7 @@ func TestSMACalc(t *testing.T) {
 			},
 			Error: ErrInvalidCandleCount,
 		},
-		"Successful calculation wit offset": {
+		"Successful calculation with offset": {
 			Length: 3,
 			Offset: 1,
 			Src:    chartype.CandleClose,
@@ -93,7 +93,7 @@ func TestEMACalc(t *testing.T) {
 			},
 			Error: ErrInvalidCandleCount,
 		},
-		"Successful calculation wit offset": {
+		"Successful calculation with offset": {
 			Length: 3,
 			Offset: 1,
 			Src:    chartype.CandleClose,
