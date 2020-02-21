@@ -1,6 +1,7 @@
 package indc
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -26,6 +27,12 @@ func TestSMAValidation(t *testing.T) {
 			Offset: -1,
 			Error:  ErrInvalidOffset,
 		},
+		"Invalid CandleField value": {
+			Length: 1,
+			Offset: 0,
+			Src:    -69,
+			Error:  errors.New(""),
+		},
 		"Unexpected internal error has occured": {
 			Length: 1,
 			Offset: 0,
@@ -41,16 +48,24 @@ func TestSMAValidation(t *testing.T) {
 			s := SMA{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			err := s.Validate()
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error.Error() == "" {
+					assert.Error(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+					return
+				}
 			} else {
 				assert.Nil(t, err)
 			}
 
 			err = ValidateSMA(c.Length, c.Offset, c.Src)
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error.Error() == "" {
+					assert.Error(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+					return
+				}
 			} else {
 				assert.Nil(t, err)
 			}
@@ -150,6 +165,12 @@ func TestEMAValidation(t *testing.T) {
 			Offset: -1,
 			Error:  ErrInvalidOffset,
 		},
+		"Invalid CandleField value": {
+			Length: 1,
+			Offset: 0,
+			Src:    -69,
+			Error:  errors.New(""),
+		},
 		"Unexpected internal error has occured": {
 			Length: 1,
 			Offset: 0,
@@ -165,16 +186,24 @@ func TestEMAValidation(t *testing.T) {
 			e := EMA{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			err := e.Validate()
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error.Error() == "" {
+					assert.Error(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+					return
+				}
 			} else {
 				assert.Nil(t, err)
 			}
 
 			err = ValidateEMA(c.Length, c.Offset, c.Src)
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error.Error() == "" {
+					assert.Error(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+					return
+				}
 			} else {
 				assert.Nil(t, err)
 			}
@@ -264,5 +293,5 @@ func TestEMACandleCount(t *testing.T) {
 
 func TestEMAMultiplier(t *testing.T) {
 	e := EMA{Length: 3}
-	assert.Equal(t, decimal.NewFromFloat(0.5), e.Multiplier())
+	assert.Equal(t, decimal.NewFromFloat(0.5), e.multiplier())
 }
