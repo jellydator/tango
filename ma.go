@@ -149,7 +149,7 @@ func (e EMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 
 	mul := e.Multiplier()
 
-	for i := len(cc) - e.CandleCount(); i <= len(cc)-1-e.Offset; i++ {
+	for i := len(cc) - e.CandleCount() + e.Length; i <= len(cc)-1-e.Offset; i++ {
 		res = e.Src.Extract(cc[i]).Mul(mul).Add(res.Mul(decimal.NewFromInt(1).Sub(mul)))
 	}
 
@@ -176,6 +176,6 @@ func CalcEMA(cc []chartype.Candle, l, off int, src chartype.CandleField) (decima
 // CandleCountEMA determines the total amount of candles needed for EMA
 // calculation by using settings passed as parameters.
 func CandleCountEMA(l, off int) int {
-	e := EMA{Length: l * 2, Offset: off}
+	e := EMA{Length: l, Offset: off}
 	return e.CandleCount()
 }
