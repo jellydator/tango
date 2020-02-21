@@ -76,6 +76,12 @@ func TestSMACalc(t *testing.T) {
 	}
 }
 
+func TestSMACandleCount(t *testing.T) {
+	s := SMA{Length: 15, Offset: 10}
+	assert.Equal(t, 25, s.CandleCount())
+	assert.Equal(t, 25, CandleCountSMA(15, 10))
+}
+
 func TestEMACalc(t *testing.T) {
 	cc := map[string]struct {
 		Length  int
@@ -144,14 +150,13 @@ func TestEMACalc(t *testing.T) {
 	}
 }
 
-func TestSMACandleCount(t *testing.T) {
-	s := SMA{Length: 15, Offset: 10}
-	assert.Equal(t, 25, s.CandleCount())
-	assert.Equal(t, 25, CandleCountSMA(15, 10))
-}
-
 func TestEMACandleCount(t *testing.T) {
 	e := EMA{Length: 15, Offset: 10}
 	assert.Equal(t, 25, e.CandleCount())
 	assert.Equal(t, 25, CandleCountEMA(15, 10))
+}
+
+func TestEMAMultiplier(t *testing.T) {
+	e := EMA{Length: 3}
+	assert.Equal(t, decimal.NewFromFloat(0.5), e.Multiplier())
 }
