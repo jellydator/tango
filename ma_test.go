@@ -19,18 +19,17 @@ func TestSMAValidation(t *testing.T) {
 	}{
 		"Length cannot be less than 1": {
 			Length: 0,
-			Error:  ErrInvalidLengthCount,
+			Error:  ErrInvalidLength,
 		},
 		"Offset cannot be less than 0": {
 			Length: 1,
 			Offset: -1,
-			Error:  ErrInvalidOffsetCount,
+			Error:  ErrInvalidOffset,
 		},
-		"Invalid CandleField value": {
+		"Unexpected internal error has occured": {
 			Length: 1,
 			Offset: 0,
-			Src:    69,
-			Error:  chartype.ErrInvalidCandleField,
+			Src:    1,
 		},
 	}
 
@@ -41,10 +40,20 @@ func TestSMAValidation(t *testing.T) {
 
 			s := SMA{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			err := s.Validate()
-			assert.Equal(t, c.Error, err)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+				return
+			} else {
+				assert.Nil(t, err)
+			}
 
 			err = ValidateSMA(c.Length, c.Offset, c.Src)
-			assert.Equal(t, c.Error, err)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+				return
+			} else {
+				assert.Nil(t, err)
+			}
 		})
 	}
 }
@@ -134,18 +143,17 @@ func TestEMAValidation(t *testing.T) {
 	}{
 		"Length cannot be less than 1": {
 			Length: 0,
-			Error:  ErrInvalidLengthCount,
+			Error:  ErrInvalidLength,
 		},
 		"Offset cannot be less than 0": {
 			Length: 1,
 			Offset: -1,
-			Error:  ErrInvalidOffsetCount,
+			Error:  ErrInvalidOffset,
 		},
-		"Invalid CandleField value": {
+		"Unexpected internal error has occured": {
 			Length: 1,
 			Offset: 0,
-			Src:    69,
-			Error:  chartype.ErrInvalidCandleField,
+			Src:    1,
 		},
 	}
 
@@ -156,10 +164,20 @@ func TestEMAValidation(t *testing.T) {
 
 			e := EMA{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			err := e.Validate()
-			assert.Equal(t, c.Error, err)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+				return
+			} else {
+				assert.Nil(t, err)
+			}
 
 			err = ValidateEMA(c.Length, c.Offset, c.Src)
-			assert.Equal(t, c.Error, err)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+				return
+			} else {
+				assert.Nil(t, err)
+			}
 		})
 	}
 }

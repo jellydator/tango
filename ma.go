@@ -12,11 +12,11 @@ var (
 	// provided.
 	ErrInvalidCandleCount = errors.New("insufficient amount of candles")
 
-	// ErrInvalidLengthCount is returned when provided length is less than 1.
-	ErrInvalidLengthCount = errors.New("length cannot be less than 1")
+	// ErrInvalidLength is returned when provided length is less than 1.
+	ErrInvalidLength = errors.New("length cannot be less than 1")
 
-	// ErrInvalidOffsetCount is returned when provided offset is less than 0.
-	ErrInvalidOffsetCount = errors.New("offset cannot be less than 0")
+	// ErrInvalidOffset is returned when provided offset is less than 0.
+	ErrInvalidOffset = errors.New("offset cannot be less than 0")
 )
 
 // SMA holds all the neccesary information needed to calculate simple
@@ -36,11 +36,11 @@ type SMA struct {
 // they're meeting each of their own requirements.
 func (s SMA) Validate() error {
 	if s.Length < 1 {
-		return ErrInvalidLengthCount
+		return ErrInvalidLength
 	}
 
 	if s.Offset < 0 {
-		return ErrInvalidOffsetCount
+		return ErrInvalidOffset
 	}
 
 	if err := s.Src.Validate(); err != nil {
@@ -53,19 +53,8 @@ func (s SMA) Validate() error {
 // ValidateSMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
 func ValidateSMA(l, off int, src chartype.CandleField) error {
-	if l < 1 {
-		return ErrInvalidLengthCount
-	}
-
-	if off < 0 {
-		return ErrInvalidOffsetCount
-	}
-
-	if err := src.Validate(); err != nil {
-		return err
-	}
-
-	return nil
+	s := SMA{Length: l, Offset: off, Src: src}
+	return s.Validate()
 }
 
 // Calc calculates SMA value by using settings stored in the func receiver.
@@ -119,11 +108,11 @@ type EMA struct {
 // they're meeting each of their own requirements.
 func (e EMA) Validate() error {
 	if e.Length < 1 {
-		return ErrInvalidLengthCount
+		return ErrInvalidLength
 	}
 
 	if e.Offset < 0 {
-		return ErrInvalidOffsetCount
+		return ErrInvalidOffset
 	}
 
 	if err := e.Src.Validate(); err != nil {
@@ -136,19 +125,8 @@ func (e EMA) Validate() error {
 // ValidateEMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
 func ValidateEMA(l, off int, src chartype.CandleField) error {
-	if l < 1 {
-		return ErrInvalidLengthCount
-	}
-
-	if off < 0 {
-		return ErrInvalidOffsetCount
-	}
-
-	if err := src.Validate(); err != nil {
-		return err
-	}
-
-	return nil
+	e := EMA{Length: l, Offset: off, Src: src}
+	return e.Validate()
 }
 
 // Calc calculates EMA value by using settings stored in the func receiver.
