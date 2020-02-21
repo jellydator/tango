@@ -11,6 +11,12 @@ var (
 	// ErrInvalidCandleCount is returned when insufficient amount of candles is
 	// provided.
 	ErrInvalidCandleCount = errors.New("insufficient amount of candles")
+
+	// ErrInvalidLengthCount is returned when provided length is less than 1.
+	ErrInvalidLengthCount = errors.New("length cannot be less than 1")
+
+	// ErrInvalidOffsetCount is returned when provided offset is less than 0.
+	ErrInvalidOffsetCount = errors.New("offset cannot be less than 0")
 )
 
 // SMA holds all the neccesary information needed to calculate simple
@@ -24,6 +30,34 @@ type SMA struct {
 
 	// Src specifies which price field of the candle should be used.
 	Src chartype.CandleField `json:"src"`
+}
+
+// Validate checks all SMA settings stored in func receiver to make sure that
+// they're meeting each of their own requirements.
+func (s SMA) Validate() error {
+	if s.Length < 1 {
+		return ErrInvalidLengthCount
+	}
+
+	if s.Offset < 0 {
+		return ErrInvalidOffsetCount
+	}
+
+	return nil
+}
+
+// ValidateSMA checks all settings passed as parameters to make sure that
+// they're meeting each of their own requirements.
+func ValidateSMA(l, off int) error {
+	if l < 1 {
+		return ErrInvalidLengthCount
+	}
+
+	if off < 0 {
+		return ErrInvalidOffsetCount
+	}
+
+	return nil
 }
 
 // Calc calculates SMA value by using settings stored in the func receiver.
@@ -71,6 +105,34 @@ type EMA struct {
 
 	// Src specifies which price field of the candle should be used.
 	Src chartype.CandleField `json:"src"`
+}
+
+// Validate checks all EMA settings stored in func receiver to make sure that
+// they're meeting each of their own requirements.
+func (e EMA) Validate() error {
+	if e.Length < 1 {
+		return ErrInvalidLengthCount
+	}
+
+	if e.Offset < 0 {
+		return ErrInvalidOffsetCount
+	}
+
+	return nil
+}
+
+// ValidateEMA checks all settings passed as parameters to make sure that
+// they're meeting each of their own requirements.
+func ValidateEMA(l, off int) error {
+	if l < 1 {
+		return ErrInvalidLengthCount
+	}
+
+	if off < 0 {
+		return ErrInvalidOffsetCount
+	}
+
+	return nil
 }
 
 // Calc calculates EMA value by using settings stored in the func receiver.
