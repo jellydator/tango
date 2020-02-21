@@ -107,6 +107,9 @@ func TestEMACalc(t *testing.T) {
 				{Close: decimal.NewFromInt(30)},
 				{Close: decimal.NewFromInt(31)},
 				{Close: decimal.NewFromInt(32)},
+				{Close: decimal.NewFromInt(30)},
+				{Close: decimal.NewFromInt(31)},
+				{Close: decimal.NewFromInt(32)},
 				{Close: decimal.NewFromInt(39)},
 			},
 			Result: decimal.NewFromFloat(31.375),
@@ -115,6 +118,9 @@ func TestEMACalc(t *testing.T) {
 			Length: 3,
 			Src:    chartype.CandleClose,
 			Candles: []chartype.Candle{
+				{Close: decimal.NewFromInt(30)},
+				{Close: decimal.NewFromInt(31)},
+				{Close: decimal.NewFromInt(32)},
 				{Close: decimal.NewFromInt(30)},
 				{Close: decimal.NewFromInt(31)},
 				{Close: decimal.NewFromInt(32)},
@@ -152,8 +158,8 @@ func TestEMACalc(t *testing.T) {
 
 func TestEMACandleCount(t *testing.T) {
 	e := EMA{Length: 15, Offset: 10}
-	assert.Equal(t, 25, e.CandleCount())
-	assert.Equal(t, 25, CandleCountEMA(15, 10))
+	assert.Equal(t, 40, e.CandleCount())
+	assert.Equal(t, 40, CandleCountEMA(15, 10))
 }
 
 func TestEMAMultiplier(t *testing.T) {

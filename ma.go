@@ -102,7 +102,7 @@ func (e EMA) Multiplier() decimal.Decimal {
 // CandleCount determines the total amount of candles needed for EMA
 // calculation by using settings stored in the receiver.
 func (e EMA) CandleCount() int {
-	return e.Length + e.Offset
+	return e.Length*2 + e.Offset
 }
 
 // CalcEMA calculates EMA value by using settings passed as parameters.
