@@ -18,8 +18,8 @@ var (
 	// ErrInvalidOffset is returned when provided offset is less than 0.
 	ErrInvalidOffset = errors.New("offset cannot be less than 0")
 
-	// ErrEmptyMAVariable is returned when ma field is nil.
-	ErrEmptyMAVariable = errors.New("macd ma value not set")
+	// ErrMANotSet is returned when ma field is nil.
+	ErrMANotSet = errors.New("macd ma value not set")
 )
 
 // MA interface holds all the placeholder functions required that every
@@ -279,7 +279,7 @@ type MACD struct {
 // they're meeting each of their own requirements.
 func (macd MACD) Validate() error {
 	if macd.MA1 == nil || macd.MA2 == nil {
-		return ErrEmptyMAVariable
+		return ErrMANotSet
 	}
 
 	if err := macd.MA1.Validate(); err != nil {
