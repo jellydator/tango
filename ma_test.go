@@ -434,35 +434,23 @@ func TestMACDValidation(t *testing.T) {
 		MA2   MA
 		Error error
 	}{
-		"MA1 length cannot be less than 1": {
+		"MA1 returns an error": {
 			MA1:   EMA{Length: -1, Offset: 0, Src: chartype.CandleClose},
 			MA2:   EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
-			Error: ErrInvalidLength,
+			Error: assert.AnError,
 		},
-		"MA2 length cannot be less than 1": {
+		"MA2 returns an error": {
 			MA1:   EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
 			MA2:   EMA{Length: -1, Offset: 0, Src: chartype.CandleClose},
-			Error: ErrInvalidLength,
-		},
-		"MA1 offset cannot be less than 0": {
-			MA1:   EMA{Length: 1, Offset: -1, Src: chartype.CandleClose},
-			MA2:   EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
-			Error: ErrInvalidOffset,
-		},
-		"MA2 offset cannot be less than 0": {
-			MA1:   EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
-			MA2:   EMA{Length: 1, Offset: -1, Src: chartype.CandleClose},
-			Error: ErrInvalidOffset,
-		},
-		"MA1 invalid CandleField value": {
-			MA1:   EMA{Length: 1, Offset: 0, Src: -69},
-			MA2:   EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
 			Error: assert.AnError,
 		},
-		"MA2 invalid CandleField value": {
+		"MA1 is nil": {
+			MA2:   EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
+			Error: ErrEmptyVariable,
+		},
+		"MA2 is nil": {
 			MA1:   EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
-			MA2:   EMA{Length: 1, Offset: 0, Src: -69},
-			Error: assert.AnError,
+			Error: ErrEmptyVariable,
 		},
 		"Successful validation": {
 			MA1: EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
