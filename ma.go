@@ -64,13 +64,6 @@ func (s SMA) Validate() error {
 	return nil
 }
 
-// ValidateSMA checks all settings passed as parameters to make sure that
-// they're meeting each of their own requirements.
-func ValidateSMA(len, off int, src chartype.CandleField) error {
-	s := SMA{Length: len, Offset: off, Src: src}
-	return s.Validate()
-}
-
 // Calc calculates SMA value by using settings stored in the func receiver.
 func (s SMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 	if s.CandleCount() > len(cc) {
@@ -90,6 +83,13 @@ func (s SMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 // calculation by using settings stored in the receiver.
 func (s SMA) CandleCount() int {
 	return s.Length + s.Offset
+}
+
+// ValidateSMA checks all settings passed as parameters to make sure that
+// they're meeting each of their own requirements.
+func ValidateSMA(len, off int, src chartype.CandleField) error {
+	s := SMA{Length: len, Offset: off, Src: src}
+	return s.Validate()
 }
 
 // CalcSMA calculates SMA value by using settings passed as parameters.
@@ -136,13 +136,6 @@ func (e EMA) Validate() error {
 	return nil
 }
 
-// ValidateEMA checks all settings passed as parameters to make sure that
-// they're meeting each of their own requirements.
-func ValidateEMA(len, off int, src chartype.CandleField) error {
-	e := EMA{Length: len, Offset: off, Src: src}
-	return e.Validate()
-}
-
 // Calc calculates EMA value by using settings stored in the func receiver.
 func (e EMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 	if e.CandleCount() > len(cc) {
@@ -173,6 +166,13 @@ func (e EMA) multiplier() decimal.Decimal {
 // calculation by using settings stored in the receiver.
 func (e EMA) CandleCount() int {
 	return e.Length*2 + e.Offset
+}
+
+// ValidateEMA checks all settings passed as parameters to make sure that
+// they're meeting each of their own requirements.
+func ValidateEMA(len, off int, src chartype.CandleField) error {
+	e := EMA{Length: len, Offset: off, Src: src}
+	return e.Validate()
 }
 
 // CalcEMA calculates EMA value by using settings passed as parameters.
@@ -219,13 +219,6 @@ func (w WMA) Validate() error {
 	return nil
 }
 
-// ValidateWMA checks all settings passed as parameters to make sure that
-// they're meeting each of their own requirements.
-func ValidateWMA(len, off int, src chartype.CandleField) error {
-	w := WMA{Length: len, Offset: off, Src: src}
-	return w.Validate()
-}
-
 // Calc calculates WMA value by using settings stored in the func receiver.
 func (w WMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 	if w.CandleCount() > len(cc) {
@@ -249,6 +242,13 @@ func (w WMA) CandleCount() int {
 	return w.Length + w.Offset
 }
 
+// ValidateWMA checks all settings passed as parameters to make sure that
+// they're meeting each of their own requirements.
+func ValidateWMA(len, off int, src chartype.CandleField) error {
+	w := WMA{Length: len, Offset: off, Src: src}
+	return w.Validate()
+}
+
 // CalcWMA calculates WMA value by using settings passed as parameters.
 func CalcWMA(cc []chartype.Candle, len, off int, src chartype.CandleField) (decimal.Decimal, error) {
 	w := WMA{Length: len, Offset: off, Src: src}
@@ -260,4 +260,76 @@ func CalcWMA(cc []chartype.Candle, len, off int, src chartype.CandleField) (deci
 func CandleCountWMA(len, off int) int {
 	w := WMA{Length: len, Offset: off}
 	return w.CandleCount()
+}
+
+// MACD holds all the neccesary information needed to calculate moving averages
+// convergence divergence.
+type MACD struct {
+	// MA1 configures first moving average.
+	MA1 MA `json:"ma1"`
+
+	// MA2 configures second moving average.
+	MA2 MA `json:"ma2"`
+}
+
+// Validate checks all MACD settings stored in func receiver to make sure that
+// they're meeting each of their own requirements.
+func (macd MACD) Validate() error {
+	if err := macd.MA1.Validate(); err != nil {
+		return err
+	}
+
+	if err := macd.MA2.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Calc calculates MACD value by using settings stored in the func receiver.
+func (macd MACD) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
+	ma1res, err := macd.MA1.Calc(cc)
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	ma2res, err := macd.MA2.Calc(cc)
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	res := ma1res.Sub(ma2res)
+
+	return res, nil
+}
+
+// CandleCount determines the total amount of candles needed for MACD
+// calculation by using settings stored in the receiver.
+func (macd MACD) CandleCount() int {
+	ma1CC := macd.MA1.CandleCount()
+	ma2CC := macd.MA2.CandleCount()
+	if ma1CC > ma2CC {
+		return ma1CC
+	}
+	return ma2CC
+}
+
+// ValidateMACD checks all settings passed as parameters to make sure that
+// they're meeting each of their own requirements.
+func ValidateMACD(ma1, ma2 MA) error {
+	macd := MACD{MA1: ma1, MA2: ma2}
+	return macd.Validate()
+}
+
+// CalcMACD calculates MACD value by using settings passed as parameters.
+func CalcMACD(cc []chartype.Candle, ma1, ma2 MA) (decimal.Decimal, error) {
+	macd := MACD{MA1: ma1, MA2: ma2}
+	return macd.Calc(cc)
+}
+
+// CandleCountMACD determines the total amount of candles needed for MACD
+// calculation by using settings passed as parameters.
+func CandleCountMACD(ma1, ma2 MA) int {
+	macd := MACD{MA1: ma1, MA2: ma2}
+	return macd.CandleCount()
 }
