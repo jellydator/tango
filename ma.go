@@ -150,7 +150,7 @@ func (e EMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 
 	mul := e.multiplier()
 
-	for i := len(cc) - e.CandleCount(); i < len(cc)-e.CandleCount()+e.Length; i++ {
+	for i := len(cc) - e.CandleCount() + e.Length; i < len(cc)-e.Offset; i++ {
 		res = e.Src.Extract(cc[i]).Mul(mul).Add(res.Mul(decimal.NewFromInt(1).Sub(mul)))
 	}
 
