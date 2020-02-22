@@ -446,11 +446,11 @@ func TestMACDValidation(t *testing.T) {
 		},
 		"MA1 is nil": {
 			MA2:   EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
-			Error: ErrEmptyVariable,
+			Error: ErrEmptyMAVariable,
 		},
 		"MA2 is nil": {
 			MA1:   EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
-			Error: ErrEmptyVariable,
+			Error: ErrEmptyMAVariable,
 		},
 		"Successful validation": {
 			MA1: EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},

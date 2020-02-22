@@ -18,8 +18,8 @@ var (
 	// ErrInvalidOffset is returned when provided offset is less than 0.
 	ErrInvalidOffset = errors.New("offset cannot be less than 0")
 
-	// ErrEmptyVariable is returned when provided field is nil.
-	ErrEmptyVariable = errors.New("variable can not be nil")
+	// ErrEmptyMAVariable is returned when ma field is nil.
+	ErrEmptyMAVariable = errors.New("macd ma value not set")
 )
 
 // MA interface holds all the placeholder functions required that every
@@ -279,7 +279,7 @@ type MACD struct {
 // they're meeting each of their own requirements.
 func (macd MACD) Validate() error {
 	if macd.MA1 == nil || macd.MA2 == nil {
-		return ErrEmptyVariable
+		return ErrEmptyMAVariable
 	}
 
 	if err := macd.MA1.Validate(); err != nil {
@@ -313,12 +313,12 @@ func (macd MACD) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 // CandleCount determines the total amount of candles needed for MACD
 // calculation by using settings stored in the receiver.
 func (macd MACD) CandleCount() int {
-	cc1 := macd.MA1.CandleCount()
-	cc2 := macd.MA2.CandleCount()
-	if cc1 > cc2 {
-		return cc1
+	c1 := macd.MA1.CandleCount()
+	c2 := macd.MA2.CandleCount()
+	if c1 > c2 {
+		return c1
 	}
-	return cc2
+	return c2
 }
 
 // ValidateMACD checks all settings passed as parameters to make sure that
