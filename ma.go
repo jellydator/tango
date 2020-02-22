@@ -19,6 +19,20 @@ var (
 	ErrInvalidOffset = errors.New("offset cannot be less than 0")
 )
 
+// MA interface holds all the placeholder functions required to have my every
+// moving average.
+type MA interface {
+	// Validate makes sure that the moving average is valid.
+	Validate() error
+
+	// Calc calculates moving average value by using settings stored in the func receiver.
+	Calc(cc []chartype.Candle) (decimal.Decimal, error)
+
+	// CandleCount determines the total amount of candles needed for moving averages
+	// calculation by using settings stored in the receiver.
+	CandleCount() int
+}
+
 // SMA holds all the neccesary information needed to calculate simple
 // moving average.
 type SMA struct {
