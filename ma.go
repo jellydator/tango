@@ -19,8 +19,8 @@ var (
 	ErrInvalidOffset = errors.New("offset cannot be less than 0")
 )
 
-// MA interface holds all the placeholder functions required to have my every
-// moving average.
+// MA interface holds all the placeholder functions required that every
+// moving average has to have.
 type MA interface {
 	// Validate makes sure that the moving average is valid.
 	Validate() error
