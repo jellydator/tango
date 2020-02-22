@@ -10,12 +10,10 @@ import (
 
 func TestSMAValidation(t *testing.T) {
 	cc := map[string]struct {
-		Length  int
-		Offset  int
-		Src     chartype.CandleField
-		Candles []chartype.Candle
-		Result  decimal.Decimal
-		Error   error
+		Length int
+		Offset int
+		Src    chartype.CandleField
+		Error  error
 	}{
 		"Length cannot be less than 1": {
 			Length: 0,
@@ -35,7 +33,7 @@ func TestSMAValidation(t *testing.T) {
 		"Successful validation": {
 			Length: 1,
 			Offset: 0,
-			Src:    1,
+			Src:    chartype.CandleClose,
 		},
 	}
 
@@ -147,12 +145,10 @@ func TestSMACandleCount(t *testing.T) {
 
 func TestEMAValidation(t *testing.T) {
 	cc := map[string]struct {
-		Length  int
-		Offset  int
-		Src     chartype.CandleField
-		Candles []chartype.Candle
-		Result  decimal.Decimal
-		Error   error
+		Length int
+		Offset int
+		Src    chartype.CandleField
+		Error  error
 	}{
 		"Length cannot be less than 1": {
 			Length: 0,
@@ -172,7 +168,7 @@ func TestEMAValidation(t *testing.T) {
 		"Successful validation": {
 			Length: 1,
 			Offset: 0,
-			Src:    1,
+			Src:    chartype.CandleClose,
 		},
 	}
 
@@ -240,7 +236,7 @@ func TestEMACalc(t *testing.T) {
 			Result: decimal.NewFromFloat(31.375),
 		},
 		"Successful calculation without offset": {
-			Length: 3,
+			Length: 2,
 			Src:    chartype.CandleClose,
 			Candles: []chartype.Candle{
 				{Close: decimal.NewFromInt(30)},
@@ -248,9 +244,9 @@ func TestEMACalc(t *testing.T) {
 				{Close: decimal.NewFromInt(32)},
 				{Close: decimal.NewFromInt(30)},
 				{Close: decimal.NewFromInt(31)},
-				{Close: decimal.NewFromInt(32)},
+				{Close: decimal.NewFromInt(31)},
 			},
-			Result: decimal.NewFromFloat(31.375),
+			Result: decimal.NewFromFloat(31),
 		},
 	}
 
@@ -294,12 +290,10 @@ func TestEMAMultiplier(t *testing.T) {
 
 func TestWMAValidation(t *testing.T) {
 	cc := map[string]struct {
-		Length  int
-		Offset  int
-		Src     chartype.CandleField
-		Candles []chartype.Candle
-		Result  decimal.Decimal
-		Error   error
+		Length int
+		Offset int
+		Src    chartype.CandleField
+		Error  error
 	}{
 		"Length cannot be less than 1": {
 			Length: 0,
@@ -319,7 +313,7 @@ func TestWMAValidation(t *testing.T) {
 		"Successful validation": {
 			Length: 1,
 			Offset: 0,
-			Src:    1,
+			Src:    chartype.CandleClose,
 		},
 	}
 
@@ -432,4 +426,156 @@ func TestWMACandleCount(t *testing.T) {
 	w := WMA{Length: 15, Offset: 10}
 	assert.Equal(t, 25, w.CandleCount())
 	assert.Equal(t, 25, CandleCountWMA(15, 10))
+}
+
+func TestMACDValidation(t *testing.T) {
+	cc := map[string]struct {
+		MA1   MA
+		MA2   MA
+		Error error
+	}{
+		"MA1 returns an error": {
+			MA1:   EMA{Length: -1, Offset: 0, Src: chartype.CandleClose},
+			MA2:   EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
+			Error: assert.AnError,
+		},
+		"MA2 returns an error": {
+			MA1:   EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
+			MA2:   EMA{Length: -1, Offset: 0, Src: chartype.CandleClose},
+			Error: assert.AnError,
+		},
+		"MA1 is nil": {
+			MA2:   EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
+			Error: ErrMANotSet,
+		},
+		"MA2 is nil": {
+			MA1:   EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
+			Error: ErrMANotSet,
+		},
+		"Successful validation": {
+			MA1: EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
+			MA2: EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			macd := MACD{MA1: c.MA1, MA2: c.MA2}
+			err := macd.Validate()
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+
+			err = ValidateMACD(c.MA1, c.MA2)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestMACDCalc(t *testing.T) {
+	cc := map[string]struct {
+		MA1     MA
+		MA2     MA
+		Candles []chartype.Candle
+		Result  decimal.Decimal
+		Error   error
+	}{
+		"MA1 insufficient amount of candles": {
+			MA1: EMA{Length: 4, Offset: 0, Src: chartype.CandleClose},
+			MA2: EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
+			Candles: []chartype.Candle{
+				{Close: decimal.NewFromInt(30)},
+			},
+			Error: ErrInvalidCandleCount,
+		},
+		"MA2 insufficient amount of candles": {
+			MA1: EMA{Length: 1, Offset: 0, Src: chartype.CandleClose},
+			MA2: EMA{Length: 4, Offset: 0, Src: chartype.CandleClose},
+			Candles: []chartype.Candle{
+				{Close: decimal.NewFromInt(30)},
+			},
+			Error: ErrInvalidCandleCount,
+		},
+		"Successful calculation with offset": {
+			MA1: EMA{Length: 3, Offset: 1, Src: chartype.CandleOpen},
+			MA2: EMA{Length: 2, Offset: 1, Src: chartype.CandleClose},
+			Candles: []chartype.Candle{
+				{Open: decimal.NewFromInt(30), Close: decimal.NewFromInt(30)},
+				{Open: decimal.NewFromInt(31), Close: decimal.NewFromInt(31)},
+				{Open: decimal.NewFromInt(32), Close: decimal.NewFromInt(32)},
+				{Open: decimal.NewFromInt(30), Close: decimal.NewFromInt(30)},
+				{Open: decimal.NewFromInt(31), Close: decimal.NewFromInt(31)},
+				{Open: decimal.NewFromInt(32), Close: decimal.NewFromInt(31)},
+				{Open: decimal.NewFromInt(420), Close: decimal.NewFromInt(420)},
+			},
+			Result: decimal.NewFromFloat(0.375),
+		},
+
+		"Successful calculation without offset": {
+			MA1: EMA{Length: 3, Offset: 0, Src: chartype.CandleOpen},
+			MA2: EMA{Length: 2, Offset: 0, Src: chartype.CandleClose},
+			Candles: []chartype.Candle{
+				{Open: decimal.NewFromInt(30), Close: decimal.NewFromInt(30)},
+				{Open: decimal.NewFromInt(31), Close: decimal.NewFromInt(31)},
+				{Open: decimal.NewFromInt(32), Close: decimal.NewFromInt(32)},
+				{Open: decimal.NewFromInt(30), Close: decimal.NewFromInt(30)},
+				{Open: decimal.NewFromInt(31), Close: decimal.NewFromInt(31)},
+				{Open: decimal.NewFromInt(32), Close: decimal.NewFromInt(31)},
+			},
+			Result: decimal.NewFromFloat(0.375),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			macd := MACD{MA1: c.MA1, MA2: c.MA2}
+			res, err := macd.Calc(c.Candles)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+				return
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+
+			res, err = CalcMACD(c.Candles, c.MA1, c.MA2)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+				return
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
+
+func TestMACDCandleCount(t *testing.T) {
+	macd := MACD{MA1: EMA{Length: 10, Offset: 5}, MA2: EMA{Length: 1, Offset: 0}}
+	assert.Equal(t, macd.MA1.CandleCount(), macd.CandleCount())
+	assert.Equal(t, macd.MA1.CandleCount(), CandleCountMACD(macd.MA1, macd.MA2))
+
+	macd = MACD{MA1: EMA{Length: 2, Offset: 3}, MA2: EMA{Length: 9, Offset: 15}}
+	assert.Equal(t, macd.MA2.CandleCount(), macd.CandleCount())
+	assert.Equal(t, macd.MA2.CandleCount(), CandleCountMACD(macd.MA1, macd.MA2))
 }
