@@ -171,6 +171,7 @@ func TestRSICandleCount(t *testing.T) {
 }
 
 func TestSTOCHValidation(t *testing.T) {
+
 	cc := map[string]struct {
 		Length int
 		Offset int
@@ -206,6 +207,7 @@ func TestSTOCHValidation(t *testing.T) {
 
 			s := STOCH{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			err := s.Validate()
+
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -217,6 +219,7 @@ func TestSTOCHValidation(t *testing.T) {
 			}
 
 			err = ValidateSTOCH(c.Length, c.Offset, c.Src)
+
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -278,6 +281,7 @@ func TestSTOCHCalc(t *testing.T) {
 
 			s := STOCH{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			res, err := s.Calc(c.Candles)
+
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -290,6 +294,7 @@ func TestSTOCHCalc(t *testing.T) {
 			}
 
 			res, err = CalcSTOCH(c.Candles, c.Length, c.Offset, c.Src)
+
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -308,4 +313,148 @@ func TestSTOCHCandleCount(t *testing.T) {
 	s := STOCH{Length: 15, Offset: 10}
 	assert.Equal(t, 25, s.CandleCount())
 	assert.Equal(t, 25, CandleCountSTOCH(15, 10))
+}
+
+func TestROCValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Offset int
+		Src    chartype.CandleField
+		Error  error
+	}{
+		"Length cannot be less than 1": {
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Offset cannot be less than 0": {
+			Length: 1,
+			Offset: -1,
+			Error:  ErrInvalidOffset,
+		},
+		"Invalid CandleField value": {
+			Length: 1,
+			Offset: 0,
+			Src:    -69,
+			Error:  assert.AnError,
+		},
+		"Successful validation": {
+			Length: 1,
+			Offset: 0,
+			Src:    chartype.CandleClose,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			r := ROC{Length: c.Length, Offset: c.Offset, Src: c.Src}
+			err := r.Validate()
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+
+			err = ValidateROC(c.Length, c.Offset, c.Src)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestROCCalc(t *testing.T) {
+	cc := map[string]struct {
+		Length  int
+		Offset  int
+		Src     chartype.CandleField
+		Candles []chartype.Candle
+		Result  decimal.Decimal
+		Error   error
+	}{
+		"Insufficient amount of candles": {
+			Length: 3,
+			Src:    chartype.CandleClose,
+			Candles: []chartype.Candle{
+				{Close: decimal.NewFromInt(30)},
+			},
+			Error: ErrInvalidCandleCount,
+		},
+		"Successful calculation with offset": {
+			Length: 5,
+			Offset: 1,
+			Src:    chartype.CandleClose,
+			Candles: []chartype.Candle{
+				{Close: decimal.NewFromInt(7)},
+				{Close: decimal.NewFromInt(420)},
+				{Close: decimal.NewFromInt(420)},
+				{Close: decimal.NewFromInt(420)},
+				{Close: decimal.NewFromInt(10)},
+				{Close: decimal.NewFromInt(420)},
+			},
+			Result: decimal.NewFromFloat(42.85714286),
+		},
+		"Successful calculation without offset": {
+			Length: 5,
+			Src:    chartype.CandleClose,
+			Candles: []chartype.Candle{
+				{Close: decimal.NewFromInt(7)},
+				{Close: decimal.NewFromInt(420)},
+				{Close: decimal.NewFromInt(420)},
+				{Close: decimal.NewFromInt(420)},
+				{Close: decimal.NewFromInt(10)},
+			},
+			Result: decimal.NewFromFloat(42.85714286),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			r := ROC{Length: c.Length, Offset: c.Offset, Src: c.Src}
+			res, err := r.Calc(c.Candles)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+
+			res, err = CalcROC(c.Candles, c.Length, c.Offset, c.Src)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
+
+func TestROCCandleCount(t *testing.T) {
+	r := ROC{Length: 15, Offset: 10}
+	assert.Equal(t, 25, r.CandleCount())
+	assert.Equal(t, 25, CandleCountROC(15, 10))
 }
