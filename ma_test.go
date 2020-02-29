@@ -64,7 +64,6 @@ func TestSMAValidation(t *testing.T) {
 			} else {
 				assert.Nil(t, err)
 			}
-
 		})
 	}
 }
@@ -120,19 +119,17 @@ func TestSMACalc(t *testing.T) {
 			if c.Error != nil {
 				assert.Equal(t, c.Error, err)
 				return
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
 			}
+			assert.Nil(t, err)
+			assert.Equal(t, c.Result.String(), res.String())
 
 			res, err = CalcSMA(c.Candles, c.Length, c.Offset, c.Src)
 			if c.Error != nil {
 				assert.Equal(t, c.Error, err)
 				return
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
 			}
+			assert.Nil(t, err)
+			assert.Equal(t, c.Result.String(), res.String())
 		})
 	}
 }
@@ -260,19 +257,17 @@ func TestEMACalc(t *testing.T) {
 			if c.Error != nil {
 				assert.Equal(t, c.Error, err)
 				return
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
 			}
+			assert.Nil(t, err)
+			assert.Equal(t, c.Result.String(), res.String())
 
 			res, err = CalcEMA(c.Candles, c.Length, c.Offset, c.Src)
 			if c.Error != nil {
 				assert.Equal(t, c.Error, err)
 				return
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
 			}
+			assert.Nil(t, err)
+			assert.Equal(t, c.Result.String(), res.String())
 		})
 	}
 }
@@ -405,19 +400,17 @@ func TestWMACalc(t *testing.T) {
 			if c.Error != nil {
 				assert.Equal(t, c.Error, err)
 				return
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
 			}
+			assert.Nil(t, err)
+			assert.Equal(t, c.Result.String(), res.String())
 
 			res, err = CalcWMA(c.Candles, c.Length, c.Offset, c.Src)
 			if c.Error != nil {
 				assert.Equal(t, c.Error, err)
 				return
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
 			}
+			assert.Nil(t, err)
+			assert.Equal(t, c.Result.String(), res.String())
 		})
 	}
 }
@@ -553,19 +546,17 @@ func TestMACDCalc(t *testing.T) {
 			if c.Error != nil {
 				assert.Equal(t, c.Error, err)
 				return
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
 			}
+			assert.Nil(t, err)
+			assert.Equal(t, c.Result.String(), res.String())
 
 			res, err = CalcMACD(c.Candles, c.MA1, c.MA2)
 			if c.Error != nil {
 				assert.Equal(t, c.Error, err)
 				return
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
 			}
+			assert.Nil(t, err)
+			assert.Equal(t, c.Result.String(), res.String())
 		})
 	}
 }
