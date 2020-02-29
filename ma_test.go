@@ -117,19 +117,27 @@ func TestSMACalc(t *testing.T) {
 			s := SMA{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			res, err := s.Calc(c.Candles)
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
 			}
-			assert.Nil(t, err)
-			assert.Equal(t, c.Result.String(), res.String())
 
 			res, err = CalcSMA(c.Candles, c.Length, c.Offset, c.Src)
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
 			}
-			assert.Nil(t, err)
-			assert.Equal(t, c.Result.String(), res.String())
 		})
 	}
 }
@@ -255,19 +263,27 @@ func TestEMACalc(t *testing.T) {
 			e := EMA{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			res, err := e.Calc(c.Candles)
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
 			}
-			assert.Nil(t, err)
-			assert.Equal(t, c.Result.String(), res.String())
 
 			res, err = CalcEMA(c.Candles, c.Length, c.Offset, c.Src)
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
 			}
-			assert.Nil(t, err)
-			assert.Equal(t, c.Result.String(), res.String())
 		})
 	}
 }
@@ -398,19 +414,27 @@ func TestWMACalc(t *testing.T) {
 			w := WMA{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			res, err := w.Calc(c.Candles)
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
 			}
-			assert.Nil(t, err)
-			assert.Equal(t, c.Result.String(), res.String())
 
 			res, err = CalcWMA(c.Candles, c.Length, c.Offset, c.Src)
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
 			}
-			assert.Nil(t, err)
-			assert.Equal(t, c.Result.String(), res.String())
 		})
 	}
 }
@@ -544,19 +568,27 @@ func TestMACDCalc(t *testing.T) {
 			macd := MACD{MA1: c.MA1, MA2: c.MA2}
 			res, err := macd.Calc(c.Candles)
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
 			}
-			assert.Nil(t, err)
-			assert.Equal(t, c.Result.String(), res.String())
 
 			res, err = CalcMACD(c.Candles, c.MA1, c.MA2)
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
 			}
-			assert.Nil(t, err)
-			assert.Equal(t, c.Result.String(), res.String())
 		})
 	}
 }
