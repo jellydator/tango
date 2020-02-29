@@ -118,7 +118,14 @@ func (r ROC) Validate() error {
 
 // Calc calculates ROC value by using settings stored in the func receiver.
 func (r ROC) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
-	return decimal.Zero, nil
+	if r.CandleCount() > len(cc) {
+		return decimal.Zero, ErrInvalidCandleCount
+	}
+
+	l := r.Src.Extract(cc[len(cc)-r.Offset-1])
+	s := r.Src.Extract(cc[len(cc)-r.CandleCount()])
+
+	return l.Sub(s).Div(s).Mul(decimal.NewFromInt(100)), nil
 }
 
 // CandleCount determines the total amount of candles needed for ROC
