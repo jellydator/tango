@@ -85,8 +85,8 @@ func CandleCountRSI(len, off int) int {
 	return r.CandleCount()
 }
 
-// STOCH holds all the neccesary information needed to calculate relative
-// strength index.
+// STOCH holds all the neccesary information needed to calculate stochastic
+// oscillator.
 type STOCH struct {
 	// Length specifies how many candles should be used.
 	Length int `json:"length"`
