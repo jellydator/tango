@@ -124,8 +124,7 @@ func (r ROC) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 
 	l := r.Src.Extract(cc[len(cc)-r.Offset-1])
 	s := r.Src.Extract(cc[len(cc)-r.CandleCount()])
-
-	return l.Sub(s).Div(s).Mul(decimal.NewFromInt(100)), nil
+	return l.Sub(s).Div(s).Mul(decimal.NewFromInt(100)).Round(8), nil
 }
 
 // CandleCount determines the total amount of candles needed for ROC
