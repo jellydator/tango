@@ -139,19 +139,27 @@ func TestRSICalc(t *testing.T) {
 			r := RSI{Length: c.Length, Offset: c.Offset, Src: c.Src}
 			res, err := r.Calc(c.Candles)
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
 			}
-			assert.Nil(t, err)
-			assert.Equal(t, c.Result.String(), res.String())
 
 			res, err = CalcRSI(c.Candles, c.Length, c.Offset, c.Src)
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-				return
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
 			}
-			assert.Nil(t, err)
-			assert.Equal(t, c.Result.String(), res.String())
 		})
 	}
 }
