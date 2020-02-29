@@ -134,7 +134,7 @@ func (s STOCH) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 		}
 	}
 
-	return (s.Src.Extract(cc[len(cc)-s.Offset-1]).Sub(l)).Div(h.Sub(l)).Mul(decimal.NewFromInt(100)), nil
+	return s.Src.Extract(cc[len(cc)-s.Offset-1]).Sub(l).Div(h.Sub(l)).Mul(decimal.NewFromInt(100)), nil
 }
 
 // CandleCount determines the total amount of candles needed for STOCH
