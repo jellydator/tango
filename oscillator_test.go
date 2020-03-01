@@ -59,12 +59,12 @@ func TestRSICalc(t *testing.T) {
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Insufficient amount of candles": {
+		"Insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidCandleCount,
+			Error: ErrInvalidDataPointCount,
 		},
 		"Successful calculation": {
 			Length: 14,
@@ -121,7 +121,7 @@ func TestRSICalc(t *testing.T) {
 	}
 }
 
-func TestRSICandleCount(t *testing.T) {
+func TestRSICount(t *testing.T) {
 	r := RSI{Length: 15}
 	assert.Equal(t, 15, r.Count())
 	assert.Equal(t, 15, CountRSI(15))
@@ -182,12 +182,12 @@ func TestStochCalc(t *testing.T) {
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Insufficient amount of candles": {
+		"Insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidCandleCount,
+			Error: ErrInvalidDataPointCount,
 		},
 		"Successful calculation": {
 			Length: 3,
@@ -235,7 +235,7 @@ func TestStochCalc(t *testing.T) {
 	}
 }
 
-func TestStochCandleCount(t *testing.T) {
+func TestStochCount(t *testing.T) {
 	s := Stoch{Length: 15}
 	assert.Equal(t, 15, s.Count())
 	assert.Equal(t, 15, CountStoch(15))
@@ -293,12 +293,12 @@ func TestROCCalc(t *testing.T) {
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Insufficient amount of candles": {
+		"Insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidCandleCount,
+			Error: ErrInvalidDataPointCount,
 		},
 		"Successful calculation": {
 			Length: 5,
@@ -346,7 +346,7 @@ func TestROCCalc(t *testing.T) {
 	}
 }
 
-func TestROCCandleCount(t *testing.T) {
+func TestROCCount(t *testing.T) {
 	r := ROC{Length: 15}
 	assert.Equal(t, 15, r.Count())
 	assert.Equal(t, 15, CountROC(15))

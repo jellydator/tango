@@ -59,12 +59,12 @@ func TestSMACalc(t *testing.T) {
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Insufficient amount of candles": {
+		"Insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidCandleCount,
+			Error: ErrInvalidDataPointCount,
 		},
 		"Successful calculation": {
 			Length: 3,
@@ -168,12 +168,12 @@ func TestEMACalc(t *testing.T) {
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Insufficient amount of candles": {
+		"Insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidCandleCount,
+			Error: ErrInvalidDataPointCount,
 		},
 		"Successful calculation": {
 			Length: 2,
@@ -285,12 +285,12 @@ func TestWMACalc(t *testing.T) {
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Insufficient amount of candles": {
+		"Insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidCandleCount,
+			Error: ErrInvalidDataPointCount,
 		},
 		"Successful calculation": {
 			Length: 3,
@@ -339,7 +339,7 @@ func TestWMACalc(t *testing.T) {
 	}
 }
 
-func TestWMACandleCount(t *testing.T) {
+func TestWMACount(t *testing.T) {
 	w := WMA{Length: 15}
 	assert.Equal(t, 15, w.Count())
 	assert.Equal(t, 15, CountWMA(15))
@@ -414,21 +414,21 @@ func TestMACDCalc(t *testing.T) {
 		Result decimal.Decimal
 		Error  error
 	}{
-		"MA1 insufficient amount of candles": {
+		"MA1 insufficient amount of data points": {
 			MA1: EMA{Length: 4},
 			MA2: EMA{Length: 1},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidCandleCount,
+			Error: ErrInvalidDataPointCount,
 		},
-		"MA2 insufficient amount of candles": {
+		"MA2 insufficient amount of data points": {
 			MA1: EMA{Length: 1},
 			MA2: EMA{Length: 4},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidCandleCount,
+			Error: ErrInvalidDataPointCount,
 		},
 		"Successful calculation": {
 			MA1: SMA{Length: 2},
@@ -478,7 +478,7 @@ func TestMACDCalc(t *testing.T) {
 	}
 }
 
-func TestMACDCandleCount(t *testing.T) {
+func TestMACDCount(t *testing.T) {
 	macd := MACD{MA1: EMA{Length: 10}, MA2: EMA{Length: 1}}
 	assert.Equal(t, macd.MA1.Count(), macd.Count())
 	assert.Equal(t, macd.MA1.Count(), CountMACD(macd.MA1, macd.MA2))
