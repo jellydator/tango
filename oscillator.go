@@ -53,21 +53,21 @@ func (r RSI) Count() int {
 
 // ValidateRSI checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateRSI(len int) error {
-	r := RSI{Length: len}
+func ValidateRSI(l int) error {
+	r := RSI{Length: l}
 	return r.Validate()
 }
 
 // CalcRSI calculates RSI value by using settings passed as parameters.
-func CalcRSI(dd []decimal.Decimal, len int) (decimal.Decimal, error) {
-	r := RSI{Length: len}
+func CalcRSI(dd []decimal.Decimal, l int) (decimal.Decimal, error) {
+	r := RSI{Length: l}
 	return r.Calc(dd)
 }
 
 // CountRSI determines the total amount of data points needed for RSI
 // calculation by using settings passed as parameters.
-func CountRSI(len int) int {
-	r := RSI{Length: len}
+func CountRSI(l int) int {
+	r := RSI{Length: l}
 	return r.Count()
 }
 
@@ -118,21 +118,21 @@ func (s Stoch) Count() int {
 
 // ValidateStoch checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateStoch(len int) error {
-	s := Stoch{Length: len}
+func ValidateStoch(l int) error {
+	s := Stoch{Length: l}
 	return s.Validate()
 }
 
 // CalcStoch calculates stochastic value by using settings passed as parameters.
-func CalcStoch(dd []decimal.Decimal, len int) (decimal.Decimal, error) {
-	s := Stoch{Length: len}
+func CalcStoch(dd []decimal.Decimal, l int) (decimal.Decimal, error) {
+	s := Stoch{Length: l}
 	return s.Calc(dd)
 }
 
 // CountStoch determines the total amount of data points needed for stochastic
 // calculation by using settings passed as parameters.
-func CountStoch(len int) int {
-	s := Stoch{Length: len}
+func CountStoch(l int) int {
+	s := Stoch{Length: l}
 	return s.Count()
 }
 
@@ -173,20 +173,20 @@ func (r ROC) Count() int {
 
 // ValidateROC checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateROC(len int) error {
-	r := ROC{Length: len}
+func ValidateROC(l int) error {
+	r := ROC{Length: l}
 	return r.Validate()
 }
 
 // CalcROC calculates ROC value by using settings passed as parameters.
-func CalcROC(dd []decimal.Decimal, len int) (decimal.Decimal, error) {
-	r := ROC{Length: len}
+func CalcROC(dd []decimal.Decimal, l int) (decimal.Decimal, error) {
+	r := ROC{Length: l}
 	return r.Calc(dd)
 }
 
 // CountROC determines the total amount of data points needed for ROC
 // calculation by using settings passed as parameters.
-func CountROC(len int) int {
-	r := ROC{Length: len}
+func CountROC(l int) int {
+	r := ROC{Length: l}
 	return r.Count()
 }
