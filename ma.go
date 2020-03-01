@@ -154,9 +154,6 @@ func CountEMA(len, off int) int {
 type WMA struct {
 	// Length specifies how many data points should be used.
 	Length int `json:"length"`
-
-	// Src specifies which price field of the candle should be used.
-	Src chartype.CandleField `json:"src"`
 }
 
 // Validate checks all WMA settings stored in func receiver to make sure that
@@ -166,54 +163,52 @@ func (w WMA) Validate() error {
 		return ErrInvalidLength
 	}
 
-	if err := w.Src.Validate(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 // Calc calculates WMA value by using settings stored in the func receiver.
-func (w WMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
-	if w.CandleCount() > len(cc) {
-		return decimal.Zero, ErrInvalidCandleCount
+func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, w.Count())
+
+	if err != nil {
+		return decimal.Zero, err
 	}
 
 	res := decimal.Zero
 
 	weight := decimal.NewFromFloat(float64(w.Length*(w.Length+1)) / 2.0)
 
-	for i := len(cc) - w.CandleCount(); i < len(cc)-w.CandleCount()+w.Length; i++ {
-		res = res.Add(w.Src.Extract(cc[i]).Mul(decimal.NewFromInt(int64(i - len(cc) + w.CandleCount() + 1)).Div(weight)))
+	for i := 0; i < len(dd); i++ {
+		res = res.Add(dd[i].Mul(decimal.NewFromInt(int64(i + 1)).Div(weight)))
 	}
 
 	return res, nil
 }
 
-// CandleCount determines the total amount of candles needed for WMA
+// Count determines the total amount of data points needed for WMA
 // calculation by using settings stored in the receiver.
-func (w WMA) CandleCount() int {
+func (w WMA) Count() int {
 	return w.Length
 }
 
 // ValidateWMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateWMA(len, off int, src chartype.CandleField) error {
-	w := WMA{Length: len, Src: src}
+func ValidateWMA(len int) error {
+	w := WMA{Length: len}
 	return w.Validate()
 }
 
 // CalcWMA calculates WMA value by using settings passed as parameters.
-func CalcWMA(cc []chartype.Candle, len int, src chartype.CandleField) (decimal.Decimal, error) {
-	w := WMA{Length: len, Src: src}
-	return w.Calc(cc)
+func CalcWMA(dd []decimal.Decimal, len int) (decimal.Decimal, error) {
+	w := WMA{Length: len}
+	return w.Calc(dd)
 }
 
-// CandleCountWMA determines the total amount of candles needed for WMA
+// CountWMA determines the total amount of data points needed for WMA
 // calculation by using settings passed as parameters.
-func CandleCountWMA(len int) int {
+func CountWMA(len int) int {
 	w := WMA{Length: len}
-	return w.CandleCount()
+	return w.Count()
 }
 
 // MACD holds all the neccesary information needed to calculate moving averages
