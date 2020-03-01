@@ -72,10 +72,10 @@ func ValidateSMA(len int, src chartype.CandleField) error {
 }
 
 // CalcSMA calculates SMA value by using settings passed as parameters.
-func CalcSMA(cc []chartype.Candle, len int, src chartype.CandleField) (decimal.Decimal, error) {
-	s := SMA{Length: len, Src: src}
-	return s.Calc(cc)
-}
+// func CalcSMA(cc []chartype.Candle, len int, src chartype.CandleField) (decimal.Decimal, error) {
+// s := SMA{Length: len, Src: src}
+// return s.Calc(cc)
+// }
 
 // CandleCountSMA determines the total amount of candles needed for SMA
 // calculation by using settings passed as parameters.
