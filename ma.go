@@ -25,9 +25,6 @@ type SMA struct {
 	// Length specifies how many candles should be used.
 	Length int `json:"length"`
 
-	// Offset specifies how many latest candles should be skipped.
-	Offset int `json:"offset"`
-
 	// Src specifies which price field of the candle should be used.
 	Src chartype.CandleField `json:"src"`
 }
@@ -39,10 +36,6 @@ func (s SMA) Validate() error {
 		return ErrInvalidLength
 	}
 
-	if s.Offset < 0 {
-		return ErrInvalidOffset
-	}
-
 	if err := s.Src.Validate(); err != nil {
 		return err
 	}
@@ -51,15 +44,15 @@ func (s SMA) Validate() error {
 }
 
 // Calc calculates SMA value by using settings stored in the func receiver.
-func (s SMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
-	if s.CandleCount() > len(cc) {
+func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if s.CandleCount() > len(dd) {
 		return decimal.Zero, ErrInvalidCandleCount
 	}
 
 	res := decimal.Zero
 
-	for i := len(cc) - 1 - s.Offset; i >= len(cc)-s.CandleCount(); i-- {
-		res = res.Add(s.Src.Extract(cc[i]))
+	for i := len(dd) - 1 - s.Offset; i >= len(dd)-s.CandleCount(); i-- {
+		res = res.Add(dd[i])
 	}
 
 	return res.Div(decimal.NewFromInt(int64(s.Length))), nil
@@ -96,9 +89,6 @@ func CandleCountSMA(len, off int) int {
 type EMA struct {
 	// Length specifies how many candles should be used.
 	Length int `json:"length"`
-
-	// Offset specifies how many latest candles should be skipped.
-	Offset int `json:"offset"`
 
 	// Src specifies which price field of the candle should be used.
 	Src chartype.CandleField `json:"src"`
@@ -179,9 +169,6 @@ func CandleCountEMA(len, off int) int {
 type WMA struct {
 	// Length specifies how many candles should be used.
 	Length int `json:"length"`
-
-	// Offset specifies how many latest candles should be skipped.
-	Offset int `json:"offset"`
 
 	// Src specifies which price field of the candle should be used.
 	Src chartype.CandleField `json:"src"`
