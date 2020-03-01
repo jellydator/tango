@@ -199,6 +199,10 @@ type CCI struct {
 // Validate checks all CCI settings stored in func receiver to make sure that
 // they're meeting each of their own requirements.
 func (c CCI) Validate() error {
+	if c.MA == nil {
+		return ErrMANotSet
+	}
+
 	if err := c.MA.Validate(); err != nil {
 		return err
 	}
@@ -212,7 +216,12 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	return decimal.Zero, nil
+	ma, err := c.MA.Calc(dd)
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	return dd[len(dd)-1].Sub(ma).Div(decimal.NewFromFloat(0.015).Mul(meanDeviation(dd))).Round(8), nil
 }
 
 // Count determines the total amount of data points needed for CCI
