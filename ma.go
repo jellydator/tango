@@ -22,11 +22,8 @@ type MA interface {
 // SMA holds all the neccesary information needed to calculate simple
 // moving average.
 type SMA struct {
-	// Length specifies how many candles should be used.
+	// Length specifies how many data points should be used.
 	Length int `json:"length"`
-
-	// Src specifies which price field of the candle should be used.
-	Src chartype.CandleField `json:"src"`
 }
 
 // Validate checks all SMA settings stored in func receiver to make sure that
@@ -34,10 +31,6 @@ type SMA struct {
 func (s SMA) Validate() error {
 	if s.Length < 1 {
 		return ErrInvalidLength
-	}
-
-	if err := s.Src.Validate(); err != nil {
-		return err
 	}
 
 	return nil
@@ -67,14 +60,14 @@ func (s SMA) Count() int {
 
 // ValidateSMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateSMA(len int, src chartype.CandleField) error {
-	s := SMA{Length: len, Src: src}
+func ValidateSMA(len int) error {
+	s := SMA{Length: len}
 	return s.Validate()
 }
 
 // CalcSMA calculates SMA value by using settings passed as parameters.
-func CalcSMA(dd []decimal.Decimal, len int, src chartype.CandleField) (decimal.Decimal, error) {
-	s := SMA{Length: len, Src: src}
+func CalcSMA(dd []decimal.Decimal, len int) (decimal.Decimal, error) {
+	s := SMA{Length: len}
 	return s.Calc(dd)
 }
 
@@ -88,11 +81,8 @@ func CountSMA(len int) int {
 // EMA holds all the neccesary information needed to calculate exponential
 // moving average.
 type EMA struct {
-	// Length specifies how many candles should be used.
+	// Length specifies how many data points should be used.
 	Length int `json:"length"`
-
-	// Src specifies which price field of the candle should be used.
-	Src chartype.CandleField `json:"src"`
 }
 
 // Validate checks all EMA settings stored in func receiver to make sure that
@@ -102,20 +92,18 @@ func (e EMA) Validate() error {
 		return ErrInvalidLength
 	}
 
-	if err := e.Src.Validate(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 // Calc calculates EMA value by using settings stored in the func receiver.
-func (e EMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
-	if e.CandleCount() > len(cc) {
-		return decimal.Zero, ErrInvalidCandleCount
+func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, e.Count())
+
+	if err != nil {
+		return decimal.Zero, err
 	}
 
-	res, err := CalcSMA(cc, e.Length, e.Src)
+	res, err := CalcSMA(dd, e.Length)
 
 	if err != nil {
 		return decimal.Zero, err
@@ -123,8 +111,8 @@ func (e EMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 
 	mul := e.multiplier()
 
-	for i := len(cc) - e.CandleCount() + e.Length; i < len(cc); i++ {
-		res = e.Src.Extract(cc[i]).Mul(mul).Add(res.Mul(decimal.NewFromInt(1).Sub(mul)))
+	for i := 0; i < len(dd); i++ {
+		res = dd[i].Mul(mul).Add(res.Mul(decimal.NewFromInt(1).Sub(mul)))
 	}
 
 	return res, nil
@@ -135,36 +123,36 @@ func (e EMA) multiplier() decimal.Decimal {
 	return decimal.NewFromFloat(2.0 / float64(e.Length+1))
 }
 
-// CandleCount determines the total amount of candles needed for EMA
+// Count determines the total amount of data points needed for EMA
 // calculation by using settings stored in the receiver.
-func (e EMA) CandleCount() int {
+func (e EMA) Count() int {
 	return e.Length * 2
 }
 
 // ValidateEMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateEMA(len, off int, src chartype.CandleField) error {
-	e := EMA{Length: len, Src: src}
+func ValidateEMA(len, off int) error {
+	e := EMA{Length: len}
 	return e.Validate()
 }
 
 // CalcEMA calculates EMA value by using settings passed as parameters.
-func CalcEMA(cc []chartype.Candle, len, off int, src chartype.CandleField) (decimal.Decimal, error) {
-	e := EMA{Length: len, Src: src}
-	return e.Calc(cc)
+func CalcEMA(dd []decimal.Decimal, len, off int) (decimal.Decimal, error) {
+	e := EMA{Length: len}
+	return e.Calc(dd)
 }
 
-// CandleCountEMA determines the total amount of candles needed for EMA
+// CountEMA determines the total amount of data points needed for EMA
 // calculation by using settings passed as parameters.
-func CandleCountEMA(len, off int) int {
+func CountEMA(len, off int) int {
 	e := EMA{Length: len}
-	return e.CandleCount()
+	return e.Count()
 }
 
 // WMA holds all the neccesary information needed to calculate weighted
 // moving average.
 type WMA struct {
-	// Length specifies how many candles should be used.
+	// Length specifies how many data points should be used.
 	Length int `json:"length"`
 
 	// Src specifies which price field of the candle should be used.
