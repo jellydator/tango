@@ -31,14 +31,12 @@ func (s SMA) Validate() error {
 	if s.Length < 1 {
 		return ErrInvalidLength
 	}
-
 	return nil
 }
 
 // Calc calculates SMA value by using settings stored in the func receiver.
 func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, s.Count())
-
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -91,20 +89,17 @@ func (e EMA) Validate() error {
 	if e.Length < 1 {
 		return ErrInvalidLength
 	}
-
 	return nil
 }
 
 // Calc calculates EMA value by using settings stored in the func receiver.
 func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, e.Count())
-
 	if err != nil {
 		return decimal.Zero, err
 	}
 
 	res, err := CalcSMA(dd[len(dd)-e.Length:], e.Length)
-
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -162,14 +157,12 @@ func (w WMA) Validate() error {
 	if w.Length < 1 {
 		return ErrInvalidLength
 	}
-
 	return nil
 }
 
 // Calc calculates WMA value by using settings stored in the func receiver.
 func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, w.Count())
-
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -242,19 +235,16 @@ func (macd MACD) Validate() error {
 // Calc calculates MACD value by using settings stored in the func receiver.
 func (macd MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, macd.Count())
-
 	if err != nil {
 		return decimal.Zero, err
 	}
 
 	res1, err := macd.MA1.Calc(dd)
-
 	if err != nil {
 		return decimal.Zero, err
 	}
 
 	res2, err := macd.MA2.Calc(dd)
-
 	if err != nil {
 		return decimal.Zero, err
 	}

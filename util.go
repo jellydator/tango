@@ -25,9 +25,11 @@ func resize(dd []decimal.Decimal, l int) ([]decimal.Decimal, error) {
 	if l < 1 {
 		return nil, ErrInvalidLength
 	}
+
 	if l > len(dd) {
 		return nil, ErrInvalidDataPointCount
 	}
+
 	return dd[len(dd)-l:], nil
 }
 
@@ -37,8 +39,10 @@ func resizeCandles(cc []chartype.Candle, l int) ([]chartype.Candle, error) {
 	if l < 1 {
 		return nil, ErrInvalidLength
 	}
+
 	if l > len(cc) || l < 1 {
 		return nil, ErrInvalidDataPointCount
 	}
+
 	return cc[len(cc)-l:], nil
 }

@@ -17,14 +17,12 @@ func (r RSI) Validate() error {
 	if r.Length < 1 {
 		return ErrInvalidLength
 	}
-
 	return nil
 }
 
 // Calc calculates RSI value by using settings stored in the func receiver.
 func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, r.Count())
-
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -85,14 +83,12 @@ func (s Stoch) Validate() error {
 	if s.Length < 1 {
 		return ErrInvalidLength
 	}
-
 	return nil
 }
 
 // Calc calculates stochastic value by using settings stored in the func receiver.
 func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, s.Count())
-
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -151,7 +147,6 @@ func (r ROC) Validate() error {
 	if r.Length < 1 {
 		return ErrInvalidLength
 	}
-
 	return nil
 }
 
@@ -164,6 +159,7 @@ func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	l := dd[len(dd)-1]
 	s := dd[0]
+
 	return l.Sub(s).Div(s).Mul(decimal.NewFromInt(100)).Round(8), nil
 }
 
