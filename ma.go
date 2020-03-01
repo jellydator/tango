@@ -51,7 +51,7 @@ func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	res := decimal.Zero
 
-	for i := len(dd) - 1 - s.Offset; i >= len(dd)-s.CandleCount(); i-- {
+	for i := len(dd) - 1; i >= len(dd)-s.CandleCount(); i-- {
 		res = res.Add(dd[i])
 	}
 
@@ -61,26 +61,26 @@ func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // CandleCount determines the total amount of candles needed for SMA
 // calculation by using settings stored in the receiver.
 func (s SMA) CandleCount() int {
-	return s.Length + s.Offset
+	return s.Length
 }
 
 // ValidateSMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateSMA(len, off int, src chartype.CandleField) error {
-	s := SMA{Length: len, Offset: off, Src: src}
+func ValidateSMA(len int, src chartype.CandleField) error {
+	s := SMA{Length: len, Src: src}
 	return s.Validate()
 }
 
 // CalcSMA calculates SMA value by using settings passed as parameters.
-func CalcSMA(cc []chartype.Candle, len, off int, src chartype.CandleField) (decimal.Decimal, error) {
-	s := SMA{Length: len, Offset: off, Src: src}
+func CalcSMA(cc []chartype.Candle, len int, src chartype.CandleField) (decimal.Decimal, error) {
+	s := SMA{Length: len, Src: src}
 	return s.Calc(cc)
 }
 
 // CandleCountSMA determines the total amount of candles needed for SMA
 // calculation by using settings passed as parameters.
-func CandleCountSMA(len, off int) int {
-	s := SMA{Length: len, Offset: off}
+func CandleCountSMA(len int) int {
+	s := SMA{Length: len}
 	return s.CandleCount()
 }
 
@@ -101,10 +101,6 @@ func (e EMA) Validate() error {
 		return ErrInvalidLength
 	}
 
-	if e.Offset < 0 {
-		return ErrInvalidOffset
-	}
-
 	if err := e.Src.Validate(); err != nil {
 		return err
 	}
@@ -118,7 +114,7 @@ func (e EMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidCandleCount
 	}
 
-	res, err := CalcSMA(cc, e.Length, e.Offset+e.Length, e.Src)
+	res, err := CalcSMA(cc, e.Length, e.Src)
 
 	if err != nil {
 		return decimal.Zero, err
@@ -126,7 +122,7 @@ func (e EMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 
 	mul := e.multiplier()
 
-	for i := len(cc) - e.CandleCount() + e.Length; i < len(cc)-e.Offset; i++ {
+	for i := len(cc) - e.CandleCount() + e.Length; i < len(cc); i++ {
 		res = e.Src.Extract(cc[i]).Mul(mul).Add(res.Mul(decimal.NewFromInt(1).Sub(mul)))
 	}
 
@@ -141,26 +137,26 @@ func (e EMA) multiplier() decimal.Decimal {
 // CandleCount determines the total amount of candles needed for EMA
 // calculation by using settings stored in the receiver.
 func (e EMA) CandleCount() int {
-	return e.Length*2 + e.Offset
+	return e.Length * 2
 }
 
 // ValidateEMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
 func ValidateEMA(len, off int, src chartype.CandleField) error {
-	e := EMA{Length: len, Offset: off, Src: src}
+	e := EMA{Length: len, Src: src}
 	return e.Validate()
 }
 
 // CalcEMA calculates EMA value by using settings passed as parameters.
 func CalcEMA(cc []chartype.Candle, len, off int, src chartype.CandleField) (decimal.Decimal, error) {
-	e := EMA{Length: len, Offset: off, Src: src}
+	e := EMA{Length: len, Src: src}
 	return e.Calc(cc)
 }
 
 // CandleCountEMA determines the total amount of candles needed for EMA
 // calculation by using settings passed as parameters.
 func CandleCountEMA(len, off int) int {
-	e := EMA{Length: len, Offset: off}
+	e := EMA{Length: len}
 	return e.CandleCount()
 }
 
@@ -179,10 +175,6 @@ type WMA struct {
 func (w WMA) Validate() error {
 	if w.Length < 1 {
 		return ErrInvalidLength
-	}
-
-	if w.Offset < 0 {
-		return ErrInvalidOffset
 	}
 
 	if err := w.Src.Validate(); err != nil {
@@ -212,26 +204,26 @@ func (w WMA) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 // CandleCount determines the total amount of candles needed for WMA
 // calculation by using settings stored in the receiver.
 func (w WMA) CandleCount() int {
-	return w.Length + w.Offset
+	return w.Length
 }
 
 // ValidateWMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
 func ValidateWMA(len, off int, src chartype.CandleField) error {
-	w := WMA{Length: len, Offset: off, Src: src}
+	w := WMA{Length: len, Src: src}
 	return w.Validate()
 }
 
 // CalcWMA calculates WMA value by using settings passed as parameters.
-func CalcWMA(cc []chartype.Candle, len, off int, src chartype.CandleField) (decimal.Decimal, error) {
-	w := WMA{Length: len, Offset: off, Src: src}
+func CalcWMA(cc []chartype.Candle, len int, src chartype.CandleField) (decimal.Decimal, error) {
+	w := WMA{Length: len, Src: src}
 	return w.Calc(cc)
 }
 
 // CandleCountWMA determines the total amount of candles needed for WMA
 // calculation by using settings passed as parameters.
-func CandleCountWMA(len, off int) int {
-	w := WMA{Length: len, Offset: off}
+func CandleCountWMA(len int) int {
+	w := WMA{Length: len}
 	return w.CandleCount()
 }
 
