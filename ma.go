@@ -130,20 +130,20 @@ func (e EMA) Count() int {
 
 // ValidateEMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateEMA(len, off int) error {
+func ValidateEMA(len int) error {
 	e := EMA{Length: len}
 	return e.Validate()
 }
 
 // CalcEMA calculates EMA value by using settings passed as parameters.
-func CalcEMA(dd []decimal.Decimal, len, off int) (decimal.Decimal, error) {
+func CalcEMA(dd []decimal.Decimal, len int) (decimal.Decimal, error) {
 	e := EMA{Length: len}
 	return e.Calc(dd)
 }
 
 // CountEMA determines the total amount of data points needed for EMA
 // calculation by using settings passed as parameters.
-func CountEMA(len, off int) int {
+func CountEMA(len int) int {
 	e := EMA{Length: len}
 	return e.Count()
 }
