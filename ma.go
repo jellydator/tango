@@ -12,11 +12,11 @@ type MA interface {
 	Validate() error
 
 	// Calc calculates moving average value by using settings stored in the func receiver.
-	Calc(cc []chartype.Candle) (decimal.Decimal, error)
+	Calc(cc []decimal.Decimal) (decimal.Decimal, error)
 
-	// CandleCount determines the total amount of candles needed for moving averages
+	// Count determines the total amount of data points needed for moving averages
 	// calculation by using settings stored in the receiver.
-	CandleCount() int
+	Count() int
 }
 
 // SMA holds all the neccesary information needed to calculate simple
@@ -45,22 +45,23 @@ func (s SMA) Validate() error {
 
 // Calc calculates SMA value by using settings stored in the func receiver.
 func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-	if s.CandleCount() > len(dd) {
-		return decimal.Zero, ErrInvalidCandleCount
+	dd, err := resize(dd, s.Count())
+	if err != nil {
+		return decimal.Zero, err
 	}
 
 	res := decimal.Zero
 
-	for i := len(dd) - 1; i >= len(dd)-s.CandleCount(); i-- {
+	for i := 0; i < len(dd); i++ {
 		res = res.Add(dd[i])
 	}
 
 	return res.Div(decimal.NewFromInt(int64(s.Length))), nil
 }
 
-// CandleCount determines the total amount of candles needed for SMA
+// Count determines the total amount of data points needed for SMA
 // calculation by using settings stored in the receiver.
-func (s SMA) CandleCount() int {
+func (s SMA) Count() int {
 	return s.Length
 }
 
@@ -72,16 +73,16 @@ func ValidateSMA(len int, src chartype.CandleField) error {
 }
 
 // CalcSMA calculates SMA value by using settings passed as parameters.
-// func CalcSMA(cc []chartype.Candle, len int, src chartype.CandleField) (decimal.Decimal, error) {
-// s := SMA{Length: len, Src: src}
-// return s.Calc(cc)
-// }
+func CalcSMA(dd []decimal.Decimal, len int, src chartype.CandleField) (decimal.Decimal, error) {
+	s := SMA{Length: len, Src: src}
+	return s.Calc(dd)
+}
 
-// CandleCountSMA determines the total amount of candles needed for SMA
+// CountSMA determines the total amount of data points needed for SMA
 // calculation by using settings passed as parameters.
-func CandleCountSMA(len int) int {
+func CountSMA(len int) int {
 	s := SMA{Length: len}
-	return s.CandleCount()
+	return s.Count()
 }
 
 // EMA holds all the neccesary information needed to calculate exponential
