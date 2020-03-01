@@ -18,8 +18,8 @@ var (
 	ErrMANotSet = errors.New("macd ma value not set")
 )
 
-func Resize(dd []decimal.Decimal, l, offset int) ([]decimal.Decimal, error) {
-	if l+offset > len(dd) {
+func Resize(dd []decimal.Decimal, l) ([]decimal.Decimal, error) {
+	if l > len(dd) {
 		return decimal.Zero, ErrInvalidCandleCount
 	}
 	return decimal.Zero, nil

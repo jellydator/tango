@@ -11,9 +11,6 @@ type RSI struct {
 	// Length specifies how many candles should be used.
 	Length int `json:"length"`
 
-	// Offset specifies how many latest candles should be skipped.
-	Offset int `json:"offset"`
-
 	// Src specifies which price field of the candle should be used.
 	Src chartype.CandleField `json:"src"`
 }
@@ -23,10 +20,6 @@ type RSI struct {
 func (r RSI) Validate() error {
 	if r.Length < 1 {
 		return ErrInvalidLength
-	}
-
-	if r.Offset < 0 {
-		return ErrInvalidOffset
 	}
 
 	if err := r.Src.Validate(); err != nil {
@@ -62,26 +55,26 @@ func (r RSI) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 // CandleCount determines the total amount of candles needed for RSI
 // calculation by using settings stored in the receiver.
 func (r RSI) CandleCount() int {
-	return r.Length + r.Offset
+	return r.Length
 }
 
 // ValidateRSI checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateRSI(len, off int, src chartype.CandleField) error {
-	r := RSI{Length: len, Offset: off, Src: src}
+func ValidateRSI(len int, src chartype.CandleField) error {
+	r := RSI{Length: len, Src: src}
 	return r.Validate()
 }
 
 // CalcRSI calculates RSI value by using settings passed as parameters.
-func CalcRSI(cc []chartype.Candle, len, off int, src chartype.CandleField) (decimal.Decimal, error) {
-	r := RSI{Length: len, Offset: off, Src: src}
+func CalcRSI(cc []chartype.Candle, len int, src chartype.CandleField) (decimal.Decimal, error) {
+	r := RSI{Length: len, Src: src}
 	return r.Calc(cc)
 }
 
 // CandleCountRSI determines the total amount of candles needed for RSI
 // calculation by using settings passed as parameters.
-func CandleCountRSI(len, off int) int {
-	r := RSI{Length: len, Offset: off}
+func CandleCountRSI(len int) int {
+	r := RSI{Length: len}
 	return r.CandleCount()
 }
 
@@ -92,9 +85,6 @@ type STOCH struct {
 	// Length specifies how many candles should be used.
 	Length int `json:"length"`
 
-	// Offset specifies how many latest candles should be skipped.
-	Offset int `json:"offset"`
-
 	// Src specifies which price field of the candle should be used.
 	Src chartype.CandleField `json:"src"`
 }
@@ -104,10 +94,6 @@ type STOCH struct {
 func (s STOCH) Validate() error {
 	if s.Length < 1 {
 		return ErrInvalidLength
-	}
-
-	if s.Offset < 0 {
-		return ErrInvalidOffset
 	}
 
 	if err := s.Src.Validate(); err != nil {
@@ -135,32 +121,32 @@ func (s STOCH) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 		}
 	}
 
-	return s.Src.Extract(cc[len(cc)-s.Offset-1]).Sub(l).Div(h.Sub(l)).Mul(decimal.NewFromInt(100)), nil
+	return s.Src.Extract(cc[len(cc)-1]).Sub(l).Div(h.Sub(l)).Mul(decimal.NewFromInt(100)), nil
 }
 
 // CandleCount determines the total amount of candles needed for STOCH
 // calculation by using settings stored in the receiver.
 func (s STOCH) CandleCount() int {
-	return s.Length + s.Offset
+	return s.Length
 }
 
 // ValidateSTOCH checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateSTOCH(len, off int, src chartype.CandleField) error {
-	s := STOCH{Length: len, Offset: off, Src: src}
+func ValidateSTOCH(len int, src chartype.CandleField) error {
+	s := STOCH{Length: len, Src: src}
 	return s.Validate()
 }
 
 // CalcSTOCH calculates STOCH value by using settings passed as parameters.
-func CalcSTOCH(cc []chartype.Candle, len, off int, src chartype.CandleField) (decimal.Decimal, error) {
-	s := STOCH{Length: len, Offset: off, Src: src}
+func CalcSTOCH(cc []chartype.Candle, len int, src chartype.CandleField) (decimal.Decimal, error) {
+	s := STOCH{Length: len, Src: src}
 	return s.Calc(cc)
 }
 
 // CandleCountSTOCH determines the total amount of candles needed for STOCH
 // calculation by using settings passed as parameters.
-func CandleCountSTOCH(len, off int) int {
-	s := STOCH{Length: len, Offset: off}
+func CandleCountSTOCH(len int) int {
+	s := STOCH{Length: len}
 	return s.CandleCount()
 }
 
@@ -169,9 +155,6 @@ func CandleCountSTOCH(len, off int) int {
 type ROC struct {
 	// Length specifies how many candles should be used.
 	Length int `json:"length"`
-
-	// Offset specifies how many latest candles should be skipped.
-	Offset int `json:"offset"`
 
 	// Src specifies which price field of the candle should be used.
 	Src chartype.CandleField `json:"src"`
@@ -182,10 +165,6 @@ type ROC struct {
 func (r ROC) Validate() error {
 	if r.Length < 1 {
 		return ErrInvalidLength
-	}
-
-	if r.Offset < 0 {
-		return ErrInvalidOffset
 	}
 
 	if err := r.Src.Validate(); err != nil {
@@ -201,7 +180,7 @@ func (r ROC) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidCandleCount
 	}
 
-	l := r.Src.Extract(cc[len(cc)-r.Offset-1])
+	l := r.Src.Extract(cc[len(cc)-1])
 	s := r.Src.Extract(cc[len(cc)-r.CandleCount()])
 	return l.Sub(s).Div(s).Mul(decimal.NewFromInt(100)).Round(8), nil
 }
@@ -209,25 +188,25 @@ func (r ROC) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 // CandleCount determines the total amount of candles needed for ROC
 // calculation by using settings stored in the receiver.
 func (r ROC) CandleCount() int {
-	return r.Length + r.Offset
+	return r.Length
 }
 
 // ValidateROC checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateROC(len, off int, src chartype.CandleField) error {
-	r := ROC{Length: len, Offset: off, Src: src}
+func ValidateROC(len int, src chartype.CandleField) error {
+	r := ROC{Length: len, Src: src}
 	return r.Validate()
 }
 
 // CalcROC calculates ROC value by using settings passed as parameters.
-func CalcROC(cc []chartype.Candle, len, off int, src chartype.CandleField) (decimal.Decimal, error) {
-	r := ROC{Length: len, Offset: off, Src: src}
+func CalcROC(cc []chartype.Candle, len int, src chartype.CandleField) (decimal.Decimal, error) {
+	r := ROC{Length: len, Src: src}
 	return r.Calc(cc)
 }
 
 // CandleCountROC determines the total amount of candles needed for ROC
 // calculation by using settings passed as parameters.
-func CandleCountROC(len, off int) int {
-	r := ROC{Length: len, Offset: off}
+func CandleCountROC(len int) int {
+	r := ROC{Length: len}
 	return r.CandleCount()
 }
