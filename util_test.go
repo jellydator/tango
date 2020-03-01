@@ -120,3 +120,33 @@ func TestResizeCandles(t *testing.T) {
 		})
 	}
 }
+
+func TestMeanDeviation(t *testing.T) {
+	cc := map[string]struct {
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+	}{
+		"Successful resize": {
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(5),
+				decimal.NewFromInt(7),
+				decimal.NewFromInt(10),
+				decimal.NewFromInt(12),
+				decimal.NewFromInt(14),
+			},
+			Result: decimal.NewFromFloat(3.66666667),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res := meanDeviation(c.Data)
+
+			assert.Equal(t, c.Result, res)
+		})
+	}
+}
