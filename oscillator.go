@@ -24,6 +24,7 @@ func (r RSI) Validate() error {
 // Calc calculates RSI value by using settings stored in the func receiver.
 func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, r.Count())
+
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -91,6 +92,7 @@ func (s Stoch) Validate() error {
 // Calc calculates stochastic value by using settings stored in the func receiver.
 func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, s.Count())
+
 	if err != nil {
 		return decimal.Zero, err
 	}
