@@ -22,17 +22,17 @@ var (
 // resize cuts given array based on length to use for
 // calculations.
 func resize(dd []decimal.Decimal, l int) ([]decimal.Decimal, error) {
-	if l > len(dd) {
+	if l > len(dd) || l < 1 {
 		return nil, ErrInvalidCandleCount
 	}
-	return dd[len(dd)-l-1:], nil
+	return dd[len(dd)-l:], nil
 }
 
 // resizeCandles cuts given array based on length to use for
 // calculations.
 func resizeCandles(cc []chartype.Candle, l int) ([]chartype.Candle, error) {
-	if l > len(cc) {
+	if l > len(cc) || l < 1 {
 		return nil, ErrInvalidCandleCount
 	}
-	return cc[len(cc)-l-1:], nil
+	return cc[len(cc)-l:], nil
 }

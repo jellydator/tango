@@ -102,7 +102,7 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	res, err := CalcSMA(dd, e.Length)
+	res, err := CalcSMA(dd[len(dd)-e.Length:], e.Length)
 
 	if err != nil {
 		return decimal.Zero, err
@@ -110,7 +110,7 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	mul := e.multiplier()
 
-	for i := 0; i < len(dd); i++ {
+	for i := e.Length; i < len(dd); i++ {
 		res = dd[i].Mul(mul).Add(res.Mul(decimal.NewFromInt(1).Sub(mul)))
 	}
 

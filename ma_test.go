@@ -431,8 +431,8 @@ func TestMACDCalc(t *testing.T) {
 			Error: ErrInvalidCandleCount,
 		},
 		"Successful calculation": {
-			MA1: EMA{Length: 3},
-			MA2: EMA{Length: 2},
+			MA1: SMA{Length: 2},
+			MA2: SMA{Length: 3},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -441,7 +441,7 @@ func TestMACDCalc(t *testing.T) {
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(32),
 			},
-			Result: decimal.NewFromFloat(0.375),
+			Result: decimal.NewFromFloat(0.5),
 		},
 	}
 

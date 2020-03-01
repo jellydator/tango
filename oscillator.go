@@ -31,7 +31,7 @@ func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	ag := decimal.Zero
 	al := decimal.Zero
 
-	for i := 0; i < len(dd); i++ {
+	for i := 1; i < len(dd); i++ {
 		if dd[i].Sub(dd[i-1]).LessThan(decimal.Zero) {
 			al = al.Add(dd[i].Sub(dd[i-1]).Abs())
 		} else {
