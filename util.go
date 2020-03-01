@@ -47,14 +47,18 @@ func resizeCandles(cc []chartype.Candle, l int) ([]chartype.Candle, error) {
 	return cc[len(cc)-l:], nil
 }
 
+// typicalPrice recalculates array of candles into an array of typical prices
 func typicalPrice(cc []chartype.Candle) []decimal.Decimal {
 	tp := make([]decimal.Decimal, len(cc))
+
 	for i := 0; i < len(cc); i++ {
 		tp[i] = cc[i].High.Add(cc[i].Low.Add(cc[i].Close)).Div(decimal.NewFromInt(3))
 	}
+
 	return tp
 }
 
+// meanDeviation calculates mean deviation of given array
 func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	s := decimal.Zero
 	rez := decimal.Zero
