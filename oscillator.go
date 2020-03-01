@@ -71,16 +71,16 @@ func CountRSI(len int) int {
 	return r.Count()
 }
 
-// STOCH holds all the neccesary information needed to calculate stochastic
+// Stoch holds all the neccesary information needed to calculate stochastic
 // oscillator.
-type STOCH struct {
+type Stoch struct {
 	// Length specifies how many data points should be used.
 	Length int `json:"length"`
 }
 
-// Validate checks all STOCH settings stored in func receiver to make sure that
+// Validate checks all stochastic settings stored in func receiver to make sure that
 // they're meeting each of their own requirements.
-func (s STOCH) Validate() error {
+func (s Stoch) Validate() error {
 	if s.Length < 1 {
 		return ErrInvalidLength
 	}
@@ -88,8 +88,8 @@ func (s STOCH) Validate() error {
 	return nil
 }
 
-// Calc calculates STOCH value by using settings stored in the func receiver.
-func (s STOCH) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+// Calc calculates stochastic value by using settings stored in the func receiver.
+func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, s.Count())
 	if err != nil {
 		return decimal.Zero, err
@@ -110,29 +110,29 @@ func (s STOCH) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return dd[len(dd)-1].Sub(l).Div(h.Sub(l)).Mul(decimal.NewFromInt(100)), nil
 }
 
-// Count determines the total amount of data points needed for STOCH
+// Count determines the total amount of data points needed for stochastic
 // calculation by using settings stored in the receiver.
-func (s STOCH) Count() int {
+func (s Stoch) Count() int {
 	return s.Length
 }
 
-// ValidateSTOCH checks all settings passed as parameters to make sure that
+// ValidateStoch checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateSTOCH(len int) error {
-	s := STOCH{Length: len}
+func ValidateStoch(len int) error {
+	s := Stoch{Length: len}
 	return s.Validate()
 }
 
-// CalcSTOCH calculates STOCH value by using settings passed as parameters.
-func CalcSTOCH(dd []decimal.Decimal, len int) (decimal.Decimal, error) {
-	s := STOCH{Length: len}
+// CalcStoch calculates stochastic value by using settings passed as parameters.
+func CalcStoch(dd []decimal.Decimal, len int) (decimal.Decimal, error) {
+	s := Stoch{Length: len}
 	return s.Calc(dd)
 }
 
-// CountSTOCH determines the total amount of data points needed for STOCH
+// CountStoch determines the total amount of data points needed for stochastic
 // calculation by using settings passed as parameters.
-func CountSTOCH(len int) int {
-	s := STOCH{Length: len}
+func CountStoch(len int) int {
+	s := Stoch{Length: len}
 	return s.Count()
 }
 

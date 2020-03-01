@@ -127,7 +127,7 @@ func TestRSICandleCount(t *testing.T) {
 	assert.Equal(t, 15, CountRSI(15))
 }
 
-func TestSTOCHValidation(t *testing.T) {
+func TestStochValidation(t *testing.T) {
 
 	cc := map[string]struct {
 		Length int
@@ -147,7 +147,7 @@ func TestSTOCHValidation(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := STOCH{Length: c.Length}
+			s := Stoch{Length: c.Length}
 			err := s.Validate()
 
 			if c.Error != nil {
@@ -160,7 +160,7 @@ func TestSTOCHValidation(t *testing.T) {
 				assert.Nil(t, err)
 			}
 
-			err = ValidateSTOCH(c.Length)
+			err = ValidateStoch(c.Length)
 
 			if c.Error != nil {
 				if c.Error == assert.AnError {
@@ -175,7 +175,7 @@ func TestSTOCHValidation(t *testing.T) {
 	}
 }
 
-func TestSTOCHCalc(t *testing.T) {
+func TestStochCalc(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Data   []decimal.Decimal
@@ -205,7 +205,7 @@ func TestSTOCHCalc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := STOCH{Length: c.Length}
+			s := Stoch{Length: c.Length}
 			res, err := s.Calc(c.Data)
 
 			if c.Error != nil {
@@ -219,7 +219,7 @@ func TestSTOCHCalc(t *testing.T) {
 				assert.Equal(t, c.Result.String(), res.String())
 			}
 
-			res, err = CalcSTOCH(c.Data, c.Length)
+			res, err = CalcStoch(c.Data, c.Length)
 
 			if c.Error != nil {
 				if c.Error == assert.AnError {
@@ -235,10 +235,10 @@ func TestSTOCHCalc(t *testing.T) {
 	}
 }
 
-func TestSTOCHCandleCount(t *testing.T) {
-	s := STOCH{Length: 15}
+func TestStochCandleCount(t *testing.T) {
+	s := Stoch{Length: 15}
 	assert.Equal(t, 15, s.Count())
-	assert.Equal(t, 15, CountSTOCH(15))
+	assert.Equal(t, 15, CountStoch(15))
 }
 
 func TestROCValidation(t *testing.T) {
