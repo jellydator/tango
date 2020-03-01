@@ -5,35 +5,19 @@ import (
 
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"github.com/swithek/chartype"
 )
 
 func TestRSIValidation(t *testing.T) {
 	cc := map[string]struct {
 		Length int
-		Offset int
-		Src    chartype.CandleField
 		Error  error
 	}{
 		"Length cannot be less than 1": {
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
-		"Offset cannot be less than 0": {
-			Length: 1,
-			Offset: -1,
-			Error:  ErrInvalidOffset,
-		},
-		"Invalid CandleField value": {
-			Length: 1,
-			Offset: 0,
-			Src:    -69,
-			Error:  assert.AnError,
-		},
 		"Successful validation": {
 			Length: 1,
-			Offset: 0,
-			Src:    chartype.CandleClose,
 		},
 	}
 
@@ -42,7 +26,7 @@ func TestRSIValidation(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			r := RSI{Length: c.Length, Offset: c.Offset, Src: c.Src}
+			r := RSI{Length: c.Length}
 			err := r.Validate()
 			if c.Error != nil {
 				if c.Error == assert.AnError {
@@ -54,7 +38,7 @@ func TestRSIValidation(t *testing.T) {
 				assert.Nil(t, err)
 			}
 
-			err = ValidateRSI(c.Length, c.Offset, c.Src)
+			err = ValidateRSI(c.Length)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -70,62 +54,35 @@ func TestRSIValidation(t *testing.T) {
 
 func TestRSICalc(t *testing.T) {
 	cc := map[string]struct {
-		Length  int
-		Offset  int
-		Src     chartype.CandleField
-		Candles []chartype.Candle
-		Result  decimal.Decimal
-		Error   error
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
 	}{
 		"Insufficient amount of candles": {
 			Length: 3,
-			Src:    chartype.CandleClose,
-			Candles: []chartype.Candle{
-				{Close: decimal.NewFromInt(30)},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidCandleCount,
 		},
-		"Successful calculation with offset": {
+		"Successful calculation": {
 			Length: 14,
-			Offset: 1,
-			Src:    chartype.CandleClose,
-			Candles: []chartype.Candle{
-				{Close: decimal.NewFromFloat32(44.34)},
-				{Close: decimal.NewFromFloat32(44.09)},
-				{Close: decimal.NewFromFloat32(44.15)},
-				{Close: decimal.NewFromFloat32(43.61)},
-				{Close: decimal.NewFromFloat32(44.33)},
-				{Close: decimal.NewFromFloat32(44.83)},
-				{Close: decimal.NewFromFloat32(45.10)},
-				{Close: decimal.NewFromFloat32(45.42)},
-				{Close: decimal.NewFromFloat32(45.84)},
-				{Close: decimal.NewFromFloat32(46.08)},
-				{Close: decimal.NewFromFloat32(45.89)},
-				{Close: decimal.NewFromFloat32(46.03)},
-				{Close: decimal.NewFromFloat32(45.61)},
-				{Close: decimal.NewFromFloat32(46.28)},
-				{Close: decimal.NewFromInt(420)},
-			},
-			Result: decimal.NewFromFloat(70.46413502),
-		},
-		"Successful calculation without offset": {
-			Length: 14,
-			Src:    chartype.CandleClose,
-			Candles: []chartype.Candle{
-				{Close: decimal.NewFromFloat32(44.34)},
-				{Close: decimal.NewFromFloat32(44.09)},
-				{Close: decimal.NewFromFloat32(44.15)},
-				{Close: decimal.NewFromFloat32(43.61)},
-				{Close: decimal.NewFromFloat32(44.33)},
-				{Close: decimal.NewFromFloat32(44.83)},
-				{Close: decimal.NewFromFloat32(45.10)},
-				{Close: decimal.NewFromFloat32(45.42)},
-				{Close: decimal.NewFromFloat32(45.84)},
-				{Close: decimal.NewFromFloat32(46.08)},
-				{Close: decimal.NewFromFloat32(45.89)},
-				{Close: decimal.NewFromFloat32(46.03)},
-				{Close: decimal.NewFromFloat32(45.61)},
-				{Close: decimal.NewFromFloat32(46.28)},
+			Data: []decimal.Decimal{
+				decimal.NewFromFloat32(44.34),
+				decimal.NewFromFloat32(44.09),
+				decimal.NewFromFloat32(44.15),
+				decimal.NewFromFloat32(43.61),
+				decimal.NewFromFloat32(44.33),
+				decimal.NewFromFloat32(44.83),
+				decimal.NewFromFloat32(45.10),
+				decimal.NewFromFloat32(45.42),
+				decimal.NewFromFloat32(45.84),
+				decimal.NewFromFloat32(46.08),
+				decimal.NewFromFloat32(45.89),
+				decimal.NewFromFloat32(46.03),
+				decimal.NewFromFloat32(45.61),
+				decimal.NewFromFloat32(46.28),
 			},
 			Result: decimal.NewFromFloat(70.46413502),
 		},
@@ -136,8 +93,8 @@ func TestRSICalc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			r := RSI{Length: c.Length, Offset: c.Offset, Src: c.Src}
-			res, err := r.Calc(c.Candles)
+			r := RSI{Length: c.Length}
+			res, err := r.Calc(c.Data)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -149,7 +106,7 @@ func TestRSICalc(t *testing.T) {
 				assert.Equal(t, c.Result.String(), res.String())
 			}
 
-			res, err = CalcRSI(c.Candles, c.Length, c.Offset, c.Src)
+			res, err = CalcRSI(c.Data, c.Length)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -165,38 +122,23 @@ func TestRSICalc(t *testing.T) {
 }
 
 func TestRSICandleCount(t *testing.T) {
-	r := RSI{Length: 15, Offset: 10}
-	assert.Equal(t, 25, r.CandleCount())
-	assert.Equal(t, 25, CandleCountRSI(15, 10))
+	r := RSI{Length: 15}
+	assert.Equal(t, 15, r.Count())
+	assert.Equal(t, 15, CountRSI(15))
 }
 
 func TestSTOCHValidation(t *testing.T) {
 
 	cc := map[string]struct {
 		Length int
-		Offset int
-		Src    chartype.CandleField
 		Error  error
 	}{
 		"Length cannot be less than 1": {
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
-		"Offset cannot be less than 0": {
-			Length: 1,
-			Offset: -1,
-			Error:  ErrInvalidOffset,
-		},
-		"Invalid CandleField value": {
-			Length: 1,
-			Offset: 0,
-			Src:    -69,
-			Error:  assert.AnError,
-		},
 		"Successful validation": {
 			Length: 1,
-			Offset: 0,
-			Src:    chartype.CandleClose,
 		},
 	}
 
@@ -205,7 +147,7 @@ func TestSTOCHValidation(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := STOCH{Length: c.Length, Offset: c.Offset, Src: c.Src}
+			s := STOCH{Length: c.Length}
 			err := s.Validate()
 
 			if c.Error != nil {
@@ -218,7 +160,7 @@ func TestSTOCHValidation(t *testing.T) {
 				assert.Nil(t, err)
 			}
 
-			err = ValidateSTOCH(c.Length, c.Offset, c.Src)
+			err = ValidateSTOCH(c.Length)
 
 			if c.Error != nil {
 				if c.Error == assert.AnError {
@@ -235,40 +177,24 @@ func TestSTOCHValidation(t *testing.T) {
 
 func TestSTOCHCalc(t *testing.T) {
 	cc := map[string]struct {
-		Length  int
-		Offset  int
-		Src     chartype.CandleField
-		Candles []chartype.Candle
-		Result  decimal.Decimal
-		Error   error
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
 	}{
 		"Insufficient amount of candles": {
 			Length: 3,
-			Src:    chartype.CandleClose,
-			Candles: []chartype.Candle{
-				{Close: decimal.NewFromInt(30)},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidCandleCount,
 		},
-		"Successful calculation with offset": {
+		"Successful calculation": {
 			Length: 3,
-			Offset: 1,
-			Src:    chartype.CandleClose,
-			Candles: []chartype.Candle{
-				{Close: decimal.NewFromInt(150)},
-				{Close: decimal.NewFromInt(125)},
-				{Close: decimal.NewFromInt(145)},
-				{Close: decimal.NewFromInt(420)},
-			},
-			Result: decimal.NewFromInt(80),
-		},
-		"Successful calculation without offset": {
-			Length: 3,
-			Src:    chartype.CandleClose,
-			Candles: []chartype.Candle{
-				{Close: decimal.NewFromInt(150)},
-				{Close: decimal.NewFromInt(125)},
-				{Close: decimal.NewFromInt(145)},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(150),
+				decimal.NewFromInt(125),
+				decimal.NewFromInt(145),
 			},
 			Result: decimal.NewFromInt(80),
 		},
@@ -279,8 +205,8 @@ func TestSTOCHCalc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := STOCH{Length: c.Length, Offset: c.Offset, Src: c.Src}
-			res, err := s.Calc(c.Candles)
+			s := STOCH{Length: c.Length}
+			res, err := s.Calc(c.Data)
 
 			if c.Error != nil {
 				if c.Error == assert.AnError {
@@ -293,7 +219,7 @@ func TestSTOCHCalc(t *testing.T) {
 				assert.Equal(t, c.Result.String(), res.String())
 			}
 
-			res, err = CalcSTOCH(c.Candles, c.Length, c.Offset, c.Src)
+			res, err = CalcSTOCH(c.Data, c.Length)
 
 			if c.Error != nil {
 				if c.Error == assert.AnError {
@@ -310,37 +236,22 @@ func TestSTOCHCalc(t *testing.T) {
 }
 
 func TestSTOCHCandleCount(t *testing.T) {
-	s := STOCH{Length: 15, Offset: 10}
-	assert.Equal(t, 25, s.CandleCount())
-	assert.Equal(t, 25, CandleCountSTOCH(15, 10))
+	s := STOCH{Length: 15}
+	assert.Equal(t, 15, s.Count())
+	assert.Equal(t, 15, CountSTOCH(15))
 }
 
 func TestROCValidation(t *testing.T) {
 	cc := map[string]struct {
 		Length int
-		Offset int
-		Src    chartype.CandleField
 		Error  error
 	}{
 		"Length cannot be less than 1": {
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
-		"Offset cannot be less than 0": {
-			Length: 1,
-			Offset: -1,
-			Error:  ErrInvalidOffset,
-		},
-		"Invalid CandleField value": {
-			Length: 1,
-			Offset: 0,
-			Src:    -69,
-			Error:  assert.AnError,
-		},
 		"Successful validation": {
 			Length: 1,
-			Offset: 0,
-			Src:    chartype.CandleClose,
 		},
 	}
 
@@ -349,7 +260,7 @@ func TestROCValidation(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			r := ROC{Length: c.Length, Offset: c.Offset, Src: c.Src}
+			r := ROC{Length: c.Length}
 			err := r.Validate()
 			if c.Error != nil {
 				if c.Error == assert.AnError {
@@ -361,7 +272,7 @@ func TestROCValidation(t *testing.T) {
 				assert.Nil(t, err)
 			}
 
-			err = ValidateROC(c.Length, c.Offset, c.Src)
+			err = ValidateROC(c.Length)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -377,44 +288,26 @@ func TestROCValidation(t *testing.T) {
 
 func TestROCCalc(t *testing.T) {
 	cc := map[string]struct {
-		Length  int
-		Offset  int
-		Src     chartype.CandleField
-		Candles []chartype.Candle
-		Result  decimal.Decimal
-		Error   error
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
 	}{
 		"Insufficient amount of candles": {
 			Length: 3,
-			Src:    chartype.CandleClose,
-			Candles: []chartype.Candle{
-				{Close: decimal.NewFromInt(30)},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidCandleCount,
 		},
-		"Successful calculation with offset": {
+		"Successful calculation": {
 			Length: 5,
-			Offset: 1,
-			Src:    chartype.CandleClose,
-			Candles: []chartype.Candle{
-				{Close: decimal.NewFromInt(7)},
-				{Close: decimal.NewFromInt(420)},
-				{Close: decimal.NewFromInt(420)},
-				{Close: decimal.NewFromInt(420)},
-				{Close: decimal.NewFromInt(10)},
-				{Close: decimal.NewFromInt(420)},
-			},
-			Result: decimal.NewFromFloat(42.85714286),
-		},
-		"Successful calculation without offset": {
-			Length: 5,
-			Src:    chartype.CandleClose,
-			Candles: []chartype.Candle{
-				{Close: decimal.NewFromInt(7)},
-				{Close: decimal.NewFromInt(420)},
-				{Close: decimal.NewFromInt(420)},
-				{Close: decimal.NewFromInt(420)},
-				{Close: decimal.NewFromInt(10)},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(7),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(10),
 			},
 			Result: decimal.NewFromFloat(42.85714286),
 		},
@@ -425,8 +318,8 @@ func TestROCCalc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			r := ROC{Length: c.Length, Offset: c.Offset, Src: c.Src}
-			res, err := r.Calc(c.Candles)
+			r := ROC{Length: c.Length}
+			res, err := r.Calc(c.Data)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -438,7 +331,7 @@ func TestROCCalc(t *testing.T) {
 				assert.Equal(t, c.Result.String(), res.String())
 			}
 
-			res, err = CalcROC(c.Candles, c.Length, c.Offset, c.Src)
+			res, err = CalcROC(c.Data, c.Length)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -454,7 +347,7 @@ func TestROCCalc(t *testing.T) {
 }
 
 func TestROCCandleCount(t *testing.T) {
-	r := ROC{Length: 15, Offset: 10}
-	assert.Equal(t, 25, r.CandleCount())
-	assert.Equal(t, 25, CandleCountROC(15, 10))
+	r := ROC{Length: 15}
+	assert.Equal(t, 15, r.Count())
+	assert.Equal(t, 15, CountROC(15))
 }
