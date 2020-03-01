@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	// ErrInvalidCandleCount is returned when insufficient amount of candles is
+	// ErrInvalidDataPointCount is returned when insufficient amount of data points is
 	// provided.
-	ErrInvalidCandleCount = errors.New("insufficient amount of candles")
+	ErrInvalidDataPointCount = errors.New("insufficient amount of data points")
 
 	// ErrInvalidLength is returned when provided length is less than 1.
 	ErrInvalidLength = errors.New("length cannot be less than 1")
@@ -23,7 +23,7 @@ var (
 // calculations.
 func resize(dd []decimal.Decimal, l int) ([]decimal.Decimal, error) {
 	if l > len(dd) || l < 1 {
-		return nil, ErrInvalidCandleCount
+		return nil, ErrInvalidDataPointCount
 	}
 	return dd[len(dd)-l:], nil
 }
@@ -32,7 +32,7 @@ func resize(dd []decimal.Decimal, l int) ([]decimal.Decimal, error) {
 // calculations.
 func resizeCandles(cc []chartype.Candle, l int) ([]chartype.Candle, error) {
 	if l > len(cc) || l < 1 {
-		return nil, ErrInvalidCandleCount
+		return nil, ErrInvalidDataPointCount
 	}
 	return cc[len(cc)-l:], nil
 }
