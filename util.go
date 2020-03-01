@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/shopspring/decimal"
+	"github.com/swithek/chartype"
 )
 
 var (
@@ -15,12 +16,23 @@ var (
 	ErrInvalidLength = errors.New("length cannot be less than 1")
 
 	// ErrMANotSet is returned when ma field is nil.
-	ErrMANotSet = errors.New("macd ma value not set")
+	ErrMANotSet = errors.New("ma value not set")
 )
 
-func Resize(dd []decimal.Decimal, l) ([]decimal.Decimal, error) {
+// Resize cuts given array based on length to use for
+// calculations.
+func resize(dd []decimal.Decimal, l int) ([]decimal.Decimal, error) {
 	if l > len(dd) {
-		return decimal.Zero, ErrInvalidCandleCount
+		return nil, ErrInvalidCandleCount
 	}
-	return decimal.Zero, nil
+	return dd[len(dd)-l-1:], nil
+}
+
+// ResizeCandles cuts given array based on length to use for
+// calculations.
+func resizeCandles(cc []chartype.Candle, l int) ([]chartype.Candle, error) {
+	if l > len(cc) {
+		return nil, ErrInvalidCandleCount
+	}
+	return cc[len(cc)-l-1:], nil
 }
