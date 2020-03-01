@@ -2,7 +2,6 @@ package indc
 
 import (
 	"github.com/shopspring/decimal"
-	"github.com/swithek/chartype"
 )
 
 // MA interface holds all the placeholder functions required that every
@@ -240,13 +239,13 @@ func (macd MACD) Validate() error {
 }
 
 // Calc calculates MACD value by using settings stored in the func receiver.
-func (macd MACD) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
-	res1, err := macd.MA1.Calc(cc)
+func (macd MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	res1, err := macd.MA1.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	res2, err := macd.MA2.Calc(cc)
+	res2, err := macd.MA2.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -256,11 +255,11 @@ func (macd MACD) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 	return res, nil
 }
 
-// CandleCount determines the total amount of candles needed for MACD
+// Count determines the total amount of data points needed for MACD
 // calculation by using settings stored in the receiver.
-func (macd MACD) CandleCount() int {
-	c1 := macd.MA1.CandleCount()
-	c2 := macd.MA2.CandleCount()
+func (macd MACD) Count() int {
+	c1 := macd.MA1.Count()
+	c2 := macd.MA2.Count()
 	if c1 > c2 {
 		return c1
 	}
@@ -275,14 +274,14 @@ func ValidateMACD(ma1, ma2 MA) error {
 }
 
 // CalcMACD calculates MACD value by using settings passed as parameters.
-func CalcMACD(cc []chartype.Candle, ma1, ma2 MA) (decimal.Decimal, error) {
+func CalcMACD(dd []decimal.Decimal, ma1, ma2 MA) (decimal.Decimal, error) {
 	macd := MACD{MA1: ma1, MA2: ma2}
-	return macd.Calc(cc)
+	return macd.Calc(dd)
 }
 
-// CandleCountMACD determines the total amount of candles needed for MACD
+// CountMACD determines the total amount of data points needed for MACD
 // calculation by using settings passed as parameters.
-func CandleCountMACD(ma1, ma2 MA) int {
+func CountMACD(ma1, ma2 MA) int {
 	macd := MACD{MA1: ma1, MA2: ma2}
-	return macd.CandleCount()
+	return macd.Count()
 }
