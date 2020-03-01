@@ -8,11 +8,8 @@ import (
 // RSI holds all the neccesary information needed to calculate relative
 // strength index.
 type RSI struct {
-	// Length specifies how many candles should be used.
+	// Length specifies how many data points should be used.
 	Length int `json:"length"`
-
-	// Src specifies which price field of the candle should be used.
-	Src chartype.CandleField `json:"src"`
 }
 
 // Validate checks all RSI settings stored in func receiver to make sure that
@@ -22,27 +19,24 @@ func (r RSI) Validate() error {
 		return ErrInvalidLength
 	}
 
-	if err := r.Src.Validate(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 // Calc calculates RSI value by using settings stored in the func receiver.
-func (r RSI) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
-	if r.CandleCount() > len(cc) {
-		return decimal.Zero, ErrInvalidCandleCount
+func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, r.Count())
+	if err != nil {
+		return decimal.Zero, err
 	}
 
 	ag := decimal.Zero
 	al := decimal.Zero
 
-	for i := len(cc) - r.CandleCount() + 1; i < len(cc)-r.CandleCount()+r.Length; i++ {
-		if r.Src.Extract(cc[i]).Sub(r.Src.Extract(cc[i-1])).LessThan(decimal.Zero) {
-			al = al.Add(r.Src.Extract(cc[i]).Sub(r.Src.Extract(cc[i-1])).Abs())
+	for i := 0; i < len(dd); i++ {
+		if dd[i].Sub(dd[i-1]).LessThan(decimal.Zero) {
+			al = al.Add(dd[i].Sub(dd[i-1]).Abs())
 		} else {
-			ag = ag.Add(r.Src.Extract(cc[i]).Sub(r.Src.Extract(cc[i-1])))
+			ag = ag.Add(dd[i].Sub(dd[i-1]))
 		}
 	}
 
@@ -52,30 +46,30 @@ func (r RSI) Calc(cc []chartype.Candle) (decimal.Decimal, error) {
 	return decimal.NewFromInt(100).Sub(decimal.NewFromInt(100).Div(decimal.NewFromInt(1).Add(ag.Div(al)))).Round(8), nil
 }
 
-// CandleCount determines the total amount of candles needed for RSI
+// Count determines the total amount of data points needed for RSI
 // calculation by using settings stored in the receiver.
-func (r RSI) CandleCount() int {
+func (r RSI) Count() int {
 	return r.Length
 }
 
 // ValidateRSI checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateRSI(len int, src chartype.CandleField) error {
-	r := RSI{Length: len, Src: src}
+func ValidateRSI(len int) error {
+	r := RSI{Length: len}
 	return r.Validate()
 }
 
 // CalcRSI calculates RSI value by using settings passed as parameters.
-func CalcRSI(cc []chartype.Candle, len int, src chartype.CandleField) (decimal.Decimal, error) {
-	r := RSI{Length: len, Src: src}
-	return r.Calc(cc)
+func CalcRSI(dd []decimal.Decimal, len int) (decimal.Decimal, error) {
+	r := RSI{Length: len}
+	return r.Calc(dd)
 }
 
-// CandleCountRSI determines the total amount of candles needed for RSI
+// CountRSI determines the total amount of data points needed for RSI
 // calculation by using settings passed as parameters.
-func CandleCountRSI(len int) int {
+func CountRSI(len int) int {
 	r := RSI{Length: len}
-	return r.CandleCount()
+	return r.Count()
 }
 
 // STOCH holds all the neccesary information needed to calculate stochastic

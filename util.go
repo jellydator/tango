@@ -19,7 +19,7 @@ var (
 	ErrMANotSet = errors.New("ma value not set")
 )
 
-// Resize cuts given array based on length to use for
+// resize cuts given array based on length to use for
 // calculations.
 func resize(dd []decimal.Decimal, l int) ([]decimal.Decimal, error) {
 	if l > len(dd) {
@@ -28,7 +28,7 @@ func resize(dd []decimal.Decimal, l int) ([]decimal.Decimal, error) {
 	return dd[len(dd)-l-1:], nil
 }
 
-// ResizeCandles cuts given array based on length to use for
+// resizeCandles cuts given array based on length to use for
 // calculations.
 func resizeCandles(cc []chartype.Candle, l int) ([]chartype.Candle, error) {
 	if l > len(cc) {

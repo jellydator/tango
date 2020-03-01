@@ -240,6 +240,11 @@ func (macd MACD) Validate() error {
 
 // Calc calculates MACD value by using settings stored in the func receiver.
 func (macd MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, macd.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
+
 	res1, err := macd.MA1.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
