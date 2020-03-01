@@ -11,7 +11,7 @@ type MA interface {
 	Validate() error
 
 	// Calc calculates moving average value by using settings stored in the func receiver.
-	Calc(cc []decimal.Decimal) (decimal.Decimal, error)
+	Calc(dd []decimal.Decimal) (decimal.Decimal, error)
 
 	// Count determines the total amount of data points needed for moving averages
 	// calculation by using settings stored in the receiver.
@@ -38,6 +38,7 @@ func (s SMA) Validate() error {
 // Calc calculates SMA value by using settings stored in the func receiver.
 func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, s.Count())
+
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -241,16 +242,19 @@ func (macd MACD) Validate() error {
 // Calc calculates MACD value by using settings stored in the func receiver.
 func (macd MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, macd.Count())
+
 	if err != nil {
 		return decimal.Zero, err
 	}
 
 	res1, err := macd.MA1.Calc(dd)
+
 	if err != nil {
 		return decimal.Zero, err
 	}
 
 	res2, err := macd.MA2.Calc(dd)
+
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -265,9 +269,11 @@ func (macd MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 func (macd MACD) Count() int {
 	c1 := macd.MA1.Count()
 	c2 := macd.MA2.Count()
+
 	if c1 > c2 {
 		return c1
 	}
+
 	return c2
 }
 
