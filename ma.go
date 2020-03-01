@@ -59,21 +59,21 @@ func (s SMA) Count() int {
 
 // ValidateSMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateSMA(len int) error {
-	s := SMA{Length: len}
+func ValidateSMA(l int) error {
+	s := SMA{Length: l}
 	return s.Validate()
 }
 
 // CalcSMA calculates SMA value by using settings passed as parameters.
-func CalcSMA(dd []decimal.Decimal, len int) (decimal.Decimal, error) {
-	s := SMA{Length: len}
+func CalcSMA(dd []decimal.Decimal, l int) (decimal.Decimal, error) {
+	s := SMA{Length: l}
 	return s.Calc(dd)
 }
 
 // CountSMA determines the total amount of data points needed for SMA
 // calculation by using settings passed as parameters.
-func CountSMA(len int) int {
-	s := SMA{Length: len}
+func CountSMA(l int) int {
+	s := SMA{Length: l}
 	return s.Count()
 }
 
@@ -130,21 +130,21 @@ func (e EMA) Count() int {
 
 // ValidateEMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateEMA(len int) error {
-	e := EMA{Length: len}
+func ValidateEMA(l int) error {
+	e := EMA{Length: l}
 	return e.Validate()
 }
 
 // CalcEMA calculates EMA value by using settings passed as parameters.
-func CalcEMA(dd []decimal.Decimal, len int) (decimal.Decimal, error) {
-	e := EMA{Length: len}
+func CalcEMA(dd []decimal.Decimal, l int) (decimal.Decimal, error) {
+	e := EMA{Length: l}
 	return e.Calc(dd)
 }
 
 // CountEMA determines the total amount of data points needed for EMA
 // calculation by using settings passed as parameters.
-func CountEMA(len int) int {
-	e := EMA{Length: len}
+func CountEMA(l int) int {
+	e := EMA{Length: l}
 	return e.Count()
 }
 
@@ -192,21 +192,21 @@ func (w WMA) Count() int {
 
 // ValidateWMA checks all settings passed as parameters to make sure that
 // they're meeting each of their own requirements.
-func ValidateWMA(len int) error {
-	w := WMA{Length: len}
+func ValidateWMA(l int) error {
+	w := WMA{Length: l}
 	return w.Validate()
 }
 
 // CalcWMA calculates WMA value by using settings passed as parameters.
-func CalcWMA(dd []decimal.Decimal, len int) (decimal.Decimal, error) {
-	w := WMA{Length: len}
+func CalcWMA(dd []decimal.Decimal, l int) (decimal.Decimal, error) {
+	w := WMA{Length: l}
 	return w.Calc(dd)
 }
 
 // CountWMA determines the total amount of data points needed for WMA
 // calculation by using settings passed as parameters.
-func CountWMA(len int) int {
-	w := WMA{Length: len}
+func CountWMA(l int) int {
+	w := WMA{Length: l}
 	return w.Count()
 }
 
