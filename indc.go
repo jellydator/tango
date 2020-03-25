@@ -72,24 +72,25 @@ func (e EMA) Validate() error {
 
 // Calc calculates EMA value by using settings stored in the func receiver.
 func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-	return decimal.Zero, nil
-	// dd, err := resize(dd, e.Count())
-	// if err != nil {
-	// 	return decimal.Zero, err
-	// }
+	// return decimal.Zero, nil
+	dd, err := resize(dd, e.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-	// res, err := CalcSMA(dd[len(dd)-e.Length:], e.Length)
-	// if err != nil {
-	// 	return decimal.Zero, err
-	// }
+	sma := SMA{Length: e.Length}
+	res, err := sma.Calc(dd[len(dd)-e.Length:])
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-	// mul := e.multiplier()
+	mul := e.multiplier()
 
-	// for i := e.Length; i < len(dd); i++ {
-	// 	res = dd[i].Mul(mul).Add(res.Mul(decimal.NewFromInt(1).Sub(mul)))
-	// }
+	for i := e.Length; i < len(dd); i++ {
+		res = dd[i].Mul(mul).Add(res.Mul(decimal.NewFromInt(1).Sub(mul)))
+	}
 
-	// return res, nil
+	return res, nil
 }
 
 // multiplier calculates EMA multiplier value by using settings stored in the func receiver.
