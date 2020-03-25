@@ -1,7 +1,7 @@
-# indc
+# Technical market analysis
 Market data aggregation and indicator formation library
 
-Currently hosted indices (alphabetical order)
+Currently hosted technical indicators (in alphabetical order):
  - CCI
  - EMA
  - MACD
