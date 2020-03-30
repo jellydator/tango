@@ -43,11 +43,31 @@ func (c CCI) Count() int {
 	return c.MA.Count()
 }
 
-//D EMA holds all the neccesary information needed to calculate double exponential
+// DEMA holds all the neccesary information needed to calculate double exponential
 // moving average.
 type DEMA struct {
 	// Length specifies how many data points should be used.
 	Length int `json:"length"`
+}
+
+// Calc calculates DEMA value by using settings stored in the func receiver.
+func (d DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	return decimal.Zero, nil
+}
+
+// Count determines the total amount of data points needed for DEMA
+// calculation by using settings stored in the receiver.
+func (d DEMA) Count() int {
+	return d.Length * 2
+}
+
+// Validate checks all DEMA settings stored in func receiver to make sure that
+// they're meeting each of their own requirements.
+func (d DEMA) Validate() error {
+	if d.Length < 1 {
+		return ErrInvalidLength
+	}
+	return nil
 }
 
 // EMA holds all the neccesary information needed to calculate exponential
