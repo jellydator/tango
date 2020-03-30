@@ -204,7 +204,7 @@ func TestDEMACalc(t *testing.T) {
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(31),
 			},
-			Result: decimal.NewFromFloat(310),
+			Result: decimal.NewFromFloat(30.72222222),
 		},
 	}
 
@@ -231,7 +231,7 @@ func TestDEMACalc(t *testing.T) {
 
 func TestDEMACount(t *testing.T) {
 	d := DEMA{Length: 15}
-	assert.Equal(t, 30, d.Count())
+	assert.Equal(t, 29, d.Count())
 }
 
 func TestEMACalc(t *testing.T) {

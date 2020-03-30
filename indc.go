@@ -59,28 +59,17 @@ func (d DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	r := make([]decimal.Decimal, d.Length)
 
-	s := SMA{Length: d.Length}
-
-	r[0], err = s.Calc(dd[:d.Length])
+	sma := SMA{Length: d.Length}
+	r[0], err = sma.Calc(dd[:d.Length])
 	if err != nil {
 		return decimal.Zero, err
 	}
 
 	e := EMA{Length: d.Length}
 
-	for i := d.Length + 1; i < len(dd); i++ {
-		r[i-d.Length] = e.CalcNext(r[i-d.Length-1], dd[i])
+	for i := d.Length; i < len(dd); i++ {
+		r[i-d.Length+1] = e.CalcNext(r[i-d.Length], dd[i])
 	}
-
-	// sma := SMA{Length: e.Length}
-	// res, err := sma.Calc(dd[:e.Length])
-	// if err != nil {
-	// 	return decimal.Zero, err
-	// }
-
-	// for i := e.Length; i < len(dd); i++ {
-	// 	res = e.CalcNext(res, dd[i])
-	// }
 
 	v := r[0]
 
@@ -88,13 +77,13 @@ func (d DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		v = e.CalcNext(v, r[i])
 	}
 
-	return v, nil
+	return v.Round(8), nil
 }
 
 // Count determines the total amount of data points needed for DEMA
 // calculation by using settings stored in the receiver.
 func (d DEMA) Count() int {
-	return d.Length * 2
+	return d.Length*2 - 1
 }
 
 // Validate checks all DEMA settings stored in func receiver to make sure that
@@ -204,7 +193,7 @@ func (macd MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	r := res1.Sub(r2)
+	r := r1.Sub(r2)
 
 	return r, nil
 }
