@@ -1,8 +1,9 @@
 # Technical market analysis
 Market data aggregation and indicator formation library
 
-Currently hosted technical indicators (in alphabetical order):
+Currently hosted indicators (alphabetical order)
  - CCI
+ - DEMA
  - EMA
  - MACD
  - ROC

@@ -43,6 +43,58 @@ func (c CCI) Count() int {
 	return c.MA.Count()
 }
 
+// DEMA holds all the neccesary information needed to calculate double exponential
+// moving average.
+type DEMA struct {
+	// Length specifies how many data points should be used.
+	Length int `json:"length"`
+}
+
+// Calc calculates DEMA value by using settings stored in the func receiver.
+func (d DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, d.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	r := make([]decimal.Decimal, d.Length)
+
+	sma := SMA{Length: d.Length}
+	r[0], err = sma.Calc(dd[:d.Length])
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	e := EMA{Length: d.Length}
+
+	for i := d.Length; i < len(dd); i++ {
+		r[i-d.Length+1] = e.CalcNext(r[i-d.Length], dd[i])
+	}
+
+	v := r[0]
+
+	for i := 0; i < len(r); i++ {
+		v = e.CalcNext(v, r[i])
+	}
+
+	return v.Round(8), nil
+}
+
+// Count determines the total amount of data points needed for DEMA
+// calculation by using settings stored in the receiver.
+func (d DEMA) Count() int {
+	return d.Length*2 - 1
+}
+
+// Validate checks all DEMA settings stored in func receiver to make sure that
+// they're meeting each of their own requirements.
+func (d DEMA) Validate() error {
+	if d.Length < 1 {
+		return ErrInvalidLength
+	}
+	return nil
+}
+
 // EMA holds all the neccesary information needed to calculate exponential
 // moving average.
 type EMA struct {
@@ -61,25 +113,28 @@ func (e EMA) Validate() error {
 
 // Calc calculates EMA value by using settings stored in the func receiver.
 func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-	// return decimal.Zero, nil
 	dd, err := resize(dd, e.Count())
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	sma := SMA{Length: e.Length}
-	res, err := sma.Calc(dd[len(dd)-e.Length:])
+	s := SMA{Length: e.Length}
+	r, err := s.Calc(dd[:e.Length])
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	mul := e.multiplier()
-
 	for i := e.Length; i < len(dd); i++ {
-		res = dd[i].Mul(mul).Add(res.Mul(decimal.NewFromInt(1).Sub(mul)))
+		r = e.CalcNext(r, dd[i])
 	}
 
-	return res, nil
+	return r.Round(8), nil
+}
+
+// CalcNext calculates sequential EMA value by using previous ema.
+func (e EMA) CalcNext(l, n decimal.Decimal) decimal.Decimal {
+	mul := e.multiplier()
+	return n.Mul(mul).Add(l.Mul(decimal.NewFromInt(1).Sub(mul)))
 }
 
 // multiplier calculates EMA multiplier value by using settings stored in the func receiver.
@@ -90,7 +145,7 @@ func (e EMA) multiplier() decimal.Decimal {
 // Count determines the total amount of data points needed for EMA
 // calculation by using settings stored in the receiver.
 func (e EMA) Count() int {
-	return e.Length * 2
+	return e.Length*2 - 1
 }
 
 // MACD holds all the neccesary information needed to calculate moving averages
@@ -128,19 +183,19 @@ func (macd MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	res1, err := macd.MA1.Calc(dd)
+	r1, err := macd.MA1.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	res2, err := macd.MA2.Calc(dd)
+	r2, err := macd.MA2.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	res := res1.Sub(res2)
+	r := r1.Sub(r2)
 
-	return res, nil
+	return r, nil
 }
 
 // Count determines the total amount of data points needed for MACD
@@ -260,13 +315,13 @@ func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	res := decimal.Zero
+	r := decimal.Zero
 
 	for i := 0; i < len(dd); i++ {
-		res = res.Add(dd[i])
+		r = r.Add(dd[i])
 	}
 
-	return res.Div(decimal.NewFromInt(int64(s.Length))), nil
+	return r.Div(decimal.NewFromInt(int64(s.Length))), nil
 }
 
 // Count determines the total amount of data points needed for SMA
@@ -342,15 +397,15 @@ func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	res := decimal.Zero
+	r := decimal.Zero
 
-	weight := decimal.NewFromFloat(float64(w.Length*(w.Length+1)) / 2.0)
+	wi := decimal.NewFromFloat(float64(w.Length*(w.Length+1)) / 2.0)
 
 	for i := 0; i < len(dd); i++ {
-		res = res.Add(dd[i].Mul(decimal.NewFromInt(int64(i + 1)).Div(weight)))
+		r = r.Add(dd[i].Mul(decimal.NewFromInt(int64(i + 1)).Div(wi)))
 	}
 
-	return res, nil
+	return r, nil
 }
 
 // Count determines the total amount of data points needed for WMA

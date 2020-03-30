@@ -112,6 +112,40 @@ func TestCCICount(t *testing.T) {
 	assert.Equal(t, c.MA.Count(), c.Count())
 }
 
+func TestDEMAValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Error  error
+	}{
+		"Length cannot be less than 1": {
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful validation": {
+			Length: 1,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			d := DEMA{Length: c.Length}
+			err := d.Validate()
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
 func TestEMAValidation(t *testing.T) {
 	cc := map[string]struct {
 		Length int
@@ -146,6 +180,60 @@ func TestEMAValidation(t *testing.T) {
 	}
 }
 
+func TestDEMACalc(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Insufficient amount of data points": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful calculation": {
+			Length: 2,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(31),
+			},
+			Result: decimal.NewFromFloat(30.72222222),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			d := DEMA{Length: c.Length}
+			res, err := d.Calc(c.Data)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
+
+func TestDEMACount(t *testing.T) {
+	d := DEMA{Length: 15}
+	assert.Equal(t, 29, d.Count())
+}
+
 func TestEMACalc(t *testing.T) {
 	cc := map[string]struct {
 		Length int
@@ -170,7 +258,7 @@ func TestEMACalc(t *testing.T) {
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(31),
 			},
-			Result: decimal.NewFromFloat(31),
+			Result: decimal.NewFromFloat(30.83333333),
 		},
 	}
 
@@ -197,7 +285,7 @@ func TestEMACalc(t *testing.T) {
 
 func TestEMACount(t *testing.T) {
 	e := EMA{Length: 15}
-	assert.Equal(t, 30, e.Count())
+	assert.Equal(t, 29, e.Count())
 }
 
 func TestEMAMultiplier(t *testing.T) {
