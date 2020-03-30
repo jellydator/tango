@@ -72,6 +72,16 @@ func (d DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		r[i-d.Length] = e.CalcNext(r[i-d.Length-1], dd[i])
 	}
 
+	// sma := SMA{Length: e.Length}
+	// res, err := sma.Calc(dd[:e.Length])
+	// if err != nil {
+	// 	return decimal.Zero, err
+	// }
+
+	// for i := e.Length; i < len(dd); i++ {
+	// 	res = e.CalcNext(res, dd[i])
+	// }
+
 	v := r[0]
 
 	for i := 0; i < len(r); i++ {
@@ -119,17 +129,17 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	sma := SMA{Length: e.Length}
-	res, err := sma.Calc(dd[:e.Length])
+	s := SMA{Length: e.Length}
+	r, err := s.Calc(dd[:e.Length])
 	if err != nil {
 		return decimal.Zero, err
 	}
 
 	for i := e.Length; i < len(dd); i++ {
-		res = e.CalcNext(res, dd[i])
+		r = e.CalcNext(r, dd[i])
 	}
 
-	return res.Round(8), nil
+	return r.Round(8), nil
 }
 
 // CalcNext calculates sequential EMA value by using previous ema.
@@ -184,19 +194,19 @@ func (macd MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	res1, err := macd.MA1.Calc(dd)
+	r1, err := macd.MA1.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	res2, err := macd.MA2.Calc(dd)
+	r2, err := macd.MA2.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	res := res1.Sub(res2)
+	r := res1.Sub(r2)
 
-	return res, nil
+	return r, nil
 }
 
 // Count determines the total amount of data points needed for MACD
@@ -316,13 +326,13 @@ func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	res := decimal.Zero
+	r := decimal.Zero
 
 	for i := 0; i < len(dd); i++ {
-		res = res.Add(dd[i])
+		r = r.Add(dd[i])
 	}
 
-	return res.Div(decimal.NewFromInt(int64(s.Length))), nil
+	return r.Div(decimal.NewFromInt(int64(s.Length))), nil
 }
 
 // Count determines the total amount of data points needed for SMA
@@ -398,15 +408,15 @@ func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	res := decimal.Zero
+	r := decimal.Zero
 
-	weight := decimal.NewFromFloat(float64(w.Length*(w.Length+1)) / 2.0)
+	wi := decimal.NewFromFloat(float64(w.Length*(w.Length+1)) / 2.0)
 
 	for i := 0; i < len(dd); i++ {
-		res = res.Add(dd[i].Mul(decimal.NewFromInt(int64(i + 1)).Div(weight)))
+		r = r.Add(dd[i].Mul(decimal.NewFromInt(int64(i + 1)).Div(wi)))
 	}
 
-	return res, nil
+	return r, nil
 }
 
 // Count determines the total amount of data points needed for WMA
