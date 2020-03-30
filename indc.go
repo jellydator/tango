@@ -1,6 +1,8 @@
 package indc
 
-import "github.com/shopspring/decimal"
+import (
+	"github.com/shopspring/decimal"
+)
 
 // Aroon holds all the neccesary information needed to calculate aroon.
 type Aroon struct {
@@ -38,18 +40,14 @@ func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	for i := 0; i < len(dd); i++ {
 		if v.Equal(decimal.Zero) {
 			v = dd[i]
-			p = decimal.NewFromInt(1)
 		}
-		if a.Type == "up" || !v.LessThanOrEqual(dd[i]) {
+		if a.Type == "up" && v.LessThanOrEqual(dd[i]) || a.Type == "down" && !v.LessThan(dd[i]) {
 			v = dd[i]
-			p = p.Add(decimal.NewFromInt(1))
-		} else if v.LessThan(dd[i]) {
-			v = dd[i]
-			p = p.Add(decimal.NewFromInt(1))
+			p = decimal.NewFromInt(int64(a.Length - i - 1))
 		}
 	}
 
-	return ((decimal.NewFromInt(int64(a.Length)).Sub(p)).Div(decimal.NewFromInt(int64(a.Length)))).Mul(decimal.NewFromInt(100)), nil
+	return decimal.NewFromInt(int64(a.Length)).Sub(p).Mul(decimal.NewFromInt(100)).Div(decimal.NewFromInt(int64(a.Length))), nil
 }
 
 // Count determines the total amount of data points needed for Aroon
