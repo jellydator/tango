@@ -2,6 +2,7 @@
 Market data aggregation and indicator formation library
 
 Currently hosted indicators (alphabetical order)
+ - AROON
  - CCI
  - DEMA
  - EMA

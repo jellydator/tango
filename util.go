@@ -17,6 +17,10 @@ var (
 
 	// ErrMANotSet is returned when ma field is nil.
 	ErrMANotSet = errors.New("ma value not set")
+
+	// ErrInvalidType is returned when tools selected type doesn't match any of the
+	// available types.
+	ErrInvalidType = errors.New("invalid tool type")
 )
 
 // resize cuts given array based on length to use for

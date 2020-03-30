@@ -2,6 +2,15 @@ package indc
 
 import "github.com/shopspring/decimal"
 
+// Aroon holds all the neccesary information needed to calculate aroon.
+type Aroon struct {
+	// Type configures aroon type (it can either be up or down).
+	Type string `json:"type"`
+
+	// Length specifies how many data points should be used.
+	Length int `json:"length"`
+}
+
 // CCI holds all the neccesary information needed to calculate commodity
 // channel index.
 type CCI struct {
