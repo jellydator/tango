@@ -114,14 +114,13 @@ func (e EMA) Validate() error {
 
 // Calc calculates EMA value by using settings stored in the func receiver.
 func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-	// return decimal.Zero, nil
 	dd, err := resize(dd, e.Count())
 	if err != nil {
 		return decimal.Zero, err
 	}
 
 	sma := SMA{Length: e.Length}
-	res, err := sma.Calc(dd[len(dd)-e.Length:])
+	res, err := sma.Calc(dd[:e.Length])
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -147,7 +146,7 @@ func (e EMA) multiplier() decimal.Decimal {
 // Count determines the total amount of data points needed for EMA
 // calculation by using settings stored in the receiver.
 func (e EMA) Count() int {
-	return e.Length * 2
+	return e.Length*2 - 1
 }
 
 // MACD holds all the neccesary information needed to calculate moving averages
