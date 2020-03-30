@@ -1,4 +1,4 @@
-# Technical market analysis
+# Technical market analysis tools
 Market data aggregation and indicator formation library
 
 Currently hosted indicators (alphabetical order)
