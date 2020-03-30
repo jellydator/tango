@@ -129,7 +129,7 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		res = e.CalcNext(res, dd[i])
 	}
 
-	return res, nil
+	return res.Round(8), nil
 }
 
 // CalcNext calculates sequential EMA value by using previous ema.

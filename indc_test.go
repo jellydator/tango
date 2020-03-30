@@ -258,7 +258,7 @@ func TestEMACalc(t *testing.T) {
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(31),
 			},
-			Result: decimal.NewFromFloat(31),
+			Result: decimal.NewFromFloat(30.83333333),
 		},
 	}
 
