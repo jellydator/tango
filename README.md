@@ -1,8 +1,9 @@
 # indc
 Market data aggregation and indicator formation library
 
-Currently hosted indices (alphabetical order)
+Currently hosted indicators (alphabetical order)
  - CCI
+ - DEMA
  - EMA
  - MACD
  - ROC
