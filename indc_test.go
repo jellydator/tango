@@ -7,6 +7,105 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestAroonValidation(t *testing.T) {
+	cc := map[string]struct {
+		Type   string
+		Length int
+		Error  error
+	}{
+		"Invalid Aroon type": {
+			Type:   "downn",
+			Length: 5,
+			Error:  ErrInvalidType,
+		},
+		"Length cannot be less than 1": {
+			Type:   "down",
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful validation": {
+			Type:   "down",
+			Length: 5,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			a := Aroon{Type: c.Type, Length: c.Length}
+			err := a.Validate()
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestAroonCalc(t *testing.T) {
+	cc := map[string]struct {
+		Type   string
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Insufficient amount of data points": {
+			Type:   "down",
+			Length: 5,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful calculation": {
+			Type:   "up",
+			Length: 5,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(25),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(29),
+				decimal.NewFromInt(29),
+			},
+			Result: decimal.NewFromFloat(40),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			a := Aroon{Type: c.Type, Length: c.Length}
+			res, err := a.Calc(c.Data)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
+
+func TestAroonCount(t *testing.T) {
+	a := Aroon{Type: "down", Length: 5}
+	assert.Equal(t, 5, a.Count())
+}
+
 func TestCCIValidation(t *testing.T) {
 	cc := map[string]struct {
 		MA    MA
