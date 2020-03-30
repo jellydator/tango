@@ -285,7 +285,7 @@ func TestEMACalc(t *testing.T) {
 
 func TestEMACount(t *testing.T) {
 	e := EMA{Length: 15}
-	assert.Equal(t, 30, e.Count())
+	assert.Equal(t, 29, e.Count())
 }
 
 func TestEMAMultiplier(t *testing.T) {
