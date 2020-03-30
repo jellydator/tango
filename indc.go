@@ -11,6 +11,53 @@ type Aroon struct {
 	Length int `json:"length"`
 }
 
+// Validate checks all Aroon settings stored in func receiver to make sure that
+// they're meeting each of their own requirements.
+func (a Aroon) Validate() error {
+	if a.Type != "down" && a.Type != "up" {
+		return ErrInvalidType
+	}
+
+	if a.Length < 1 {
+		return ErrInvalidLength
+	}
+
+	return nil
+}
+
+// Calc calculates Aroon value by using settings stored in the func receiver.
+func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, a.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	v := decimal.Zero
+	p := decimal.Zero
+
+	for i := 0; i < len(dd); i++ {
+		if v.Equal(decimal.Zero) {
+			v = dd[i]
+			p = decimal.NewFromInt(1)
+		}
+		if a.Type == "up" || !v.LessThanOrEqual(dd[i]) {
+			v = dd[i]
+			p = p.Add(decimal.NewFromInt(1))
+		} else if v.LessThan(dd[i]) {
+			v = dd[i]
+			p = p.Add(decimal.NewFromInt(1))
+		}
+	}
+
+	return ((decimal.NewFromInt(int64(a.Length)).Sub(p)).Div(decimal.NewFromInt(int64(a.Length)))).Mul(decimal.NewFromInt(100)), nil
+}
+
+// Count determines the total amount of data points needed for Aroon
+// calculation by using settings stored in the receiver.
+func (a Aroon) Count() int {
+	return a.Length
+}
+
 // CCI holds all the neccesary information needed to calculate commodity
 // channel index.
 type CCI struct {
@@ -59,6 +106,15 @@ type DEMA struct {
 	Length int `json:"length"`
 }
 
+// Validate checks all DEMA settings stored in func receiver to make sure that
+// they're meeting each of their own requirements.
+func (d DEMA) Validate() error {
+	if d.Length < 1 {
+		return ErrInvalidLength
+	}
+	return nil
+}
+
 // Calc calculates DEMA value by using settings stored in the func receiver.
 func (d DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, d.Count())
@@ -93,15 +149,6 @@ func (d DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // calculation by using settings stored in the receiver.
 func (d DEMA) Count() int {
 	return d.Length*2 - 1
-}
-
-// Validate checks all DEMA settings stored in func receiver to make sure that
-// they're meeting each of their own requirements.
-func (d DEMA) Validate() error {
-	if d.Length < 1 {
-		return ErrInvalidLength
-	}
-	return nil
 }
 
 // EMA holds all the neccesary information needed to calculate exponential
