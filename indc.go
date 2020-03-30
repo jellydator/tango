@@ -59,12 +59,14 @@ func (d DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	r := make([]decimal.Decimal, d.Length)
 
-	e := EMA{Length: d.Length}
+	s := SMA{Length: d.Length}
 
-	r[0], err = e.Calc(dd[:d.Length])
+	r[0], err = s.Calc(dd[:d.Length])
 	if err != nil {
 		return decimal.Zero, err
 	}
+
+	e := EMA{Length: d.Length}
 
 	for i := d.Length + 1; i < len(dd); i++ {
 		r[i-d.Length] = e.CalcNext(r[i-d.Length-1], dd[i])
