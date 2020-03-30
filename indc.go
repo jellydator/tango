@@ -52,7 +52,31 @@ type DEMA struct {
 
 // Calc calculates DEMA value by using settings stored in the func receiver.
 func (d DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-	return decimal.Zero, nil
+	dd, err := resize(dd, d.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	r := make([]decimal.Decimal, d.Length)
+
+	e := EMA{Length: d.Length}
+
+	r[0], err = e.Calc(dd[:d.Length])
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	for i := d.Length + 1; i < len(dd); i++ {
+		r[i-d.Length] = e.CalcNext(r[i-d.Length-1], dd[i])
+	}
+
+	v := r[0]
+
+	for i := 0; i < len(r); i++ {
+		v = e.CalcNext(v, r[i])
+	}
+
+	return v, nil
 }
 
 // Count determines the total amount of data points needed for DEMA
