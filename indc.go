@@ -43,6 +43,13 @@ func (c CCI) Count() int {
 	return c.MA.Count()
 }
 
+//D EMA holds all the neccesary information needed to calculate double exponential
+// moving average.
+type DEMA struct {
+	// Length specifies how many data points should be used.
+	Length int `json:"length"`
+}
+
 // EMA holds all the neccesary information needed to calculate exponential
 // moving average.
 type EMA struct {
@@ -73,13 +80,17 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	mul := e.multiplier()
-
 	for i := e.Length; i < len(dd); i++ {
-		res = dd[i].Mul(mul).Add(res.Mul(decimal.NewFromInt(1).Sub(mul)))
+		res = e.CalcNext(res, dd[i])
 	}
 
 	return res, nil
+}
+
+// CalcNext calculates sequential EMA value by using previous ema.
+func (e EMA) CalcNext(l, n decimal.Decimal) decimal.Decimal {
+	mul := e.multiplier()
+	return n.Mul(mul).Add(l.Mul(decimal.NewFromInt(1).Sub(mul)))
 }
 
 // multiplier calculates EMA multiplier value by using settings stored in the func receiver.
