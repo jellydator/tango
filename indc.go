@@ -6,8 +6,8 @@ import (
 
 // Aroon holds all the neccesary information needed to calculate aroon.
 type Aroon struct {
-	// Type configures aroon type (it can either be up or down).
-	Type string `json:"type"`
+	// Trend configures which aroon trend to measure (it can either be up or down).
+	Trend string `json:"trend"`
 
 	// Length specifies how many data points should be used.
 	Length int `json:"length"`
@@ -16,7 +16,7 @@ type Aroon struct {
 // Validate checks all Aroon settings stored in func receiver to make sure that
 // they're meeting each of their own requirements.
 func (a Aroon) Validate() error {
-	if a.Type != "down" && a.Type != "up" {
+	if a.Trend != "down" && a.Trend != "up" {
 		return ErrInvalidType
 	}
 
@@ -41,7 +41,7 @@ func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		if v.Equal(decimal.Zero) {
 			v = dd[i]
 		}
-		if a.Type == "up" && v.LessThanOrEqual(dd[i]) || a.Type == "down" && !v.LessThan(dd[i]) {
+		if a.Trend == "up" && v.LessThanOrEqual(dd[i]) || a.Trend == "down" && !v.LessThan(dd[i]) {
 			v = dd[i]
 			p = decimal.NewFromInt(int64(a.Length - i - 1))
 		}

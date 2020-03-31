@@ -9,26 +9,26 @@ import (
 
 func TestAroonValidation(t *testing.T) {
 	cc := map[string]struct {
-		Type   string
+		Trend  string
 		Length int
 		Error  error
 	}{
-		"Invalid Aroon type": {
-			Type:   "downn",
+		"Invalid Aroon trend": {
+			Trend:  "downn",
 			Length: 5,
 			Error:  ErrInvalidType,
 		},
 		"Length cannot be less than 1": {
-			Type:   "down",
+			Trend:  "down",
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
-		"Successful validation with up type": {
-			Type:   "up",
+		"Successful validation with up trend": {
+			Trend:  "up",
 			Length: 5,
 		},
-		"Successful validation with down type": {
-			Type:   "down",
+		"Successful validation with down trend": {
+			Trend:  "down",
 			Length: 5,
 		},
 	}
@@ -38,7 +38,7 @@ func TestAroonValidation(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			a := Aroon{Type: c.Type, Length: c.Length}
+			a := Aroon{Trend: c.Trend, Length: c.Length}
 			err := a.Validate()
 			if c.Error != nil {
 				if c.Error == assert.AnError {
@@ -55,22 +55,22 @@ func TestAroonValidation(t *testing.T) {
 
 func TestAroonCalc(t *testing.T) {
 	cc := map[string]struct {
-		Type   string
+		Trend  string
 		Length int
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
 		"Insufficient amount of data points": {
-			Type:   "down",
+			Trend:  "down",
 			Length: 5,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataPointCount,
 		},
-		"Successful calculation with up type": {
-			Type:   "up",
+		"Successful calculation with up trend": {
+			Trend:  "up",
 			Length: 5,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(25),
@@ -82,8 +82,8 @@ func TestAroonCalc(t *testing.T) {
 			},
 			Result: decimal.NewFromFloat(40),
 		},
-		"Successful calculation with down type": {
-			Type:   "down",
+		"Successful calculation with down trend": {
+			Trend:  "down",
 			Length: 5,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(25),
@@ -102,7 +102,7 @@ func TestAroonCalc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			a := Aroon{Type: c.Type, Length: c.Length}
+			a := Aroon{Trend: c.Trend, Length: c.Length}
 			res, err := a.Calc(c.Data)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
@@ -119,7 +119,7 @@ func TestAroonCalc(t *testing.T) {
 }
 
 func TestAroonCount(t *testing.T) {
-	a := Aroon{Type: "down", Length: 5}
+	a := Aroon{Trend: "down", Length: 5}
 	assert.Equal(t, 5, a.Count())
 }
 
