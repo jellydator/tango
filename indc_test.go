@@ -23,7 +23,11 @@ func TestAroonValidation(t *testing.T) {
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
-		"Successful validation": {
+		"Successful validation with up type": {
+			Type:   "up",
+			Length: 5,
+		},
+		"Successful validation with down type": {
 			Type:   "down",
 			Length: 5,
 		},
@@ -65,7 +69,7 @@ func TestAroonCalc(t *testing.T) {
 			},
 			Error: ErrInvalidDataPointCount,
 		},
-		"Successful calculation": {
+		"Successful calculation with up type": {
 			Type:   "up",
 			Length: 5,
 			Data: []decimal.Decimal{
@@ -77,6 +81,19 @@ func TestAroonCalc(t *testing.T) {
 				decimal.NewFromInt(29),
 			},
 			Result: decimal.NewFromFloat(40),
+		},
+		"Successful calculation with down type": {
+			Type:   "down",
+			Length: 5,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(25),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(29),
+				decimal.NewFromInt(29),
+			},
+			Result: decimal.NewFromFloat(100),
 		},
 	}
 
