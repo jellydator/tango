@@ -7,6 +7,122 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestAroonValidation(t *testing.T) {
+	cc := map[string]struct {
+		Trend  string
+		Length int
+		Error  error
+	}{
+		"Invalid Aroon trend": {
+			Trend:  "downn",
+			Length: 5,
+			Error:  ErrInvalidType,
+		},
+		"Length cannot be less than 1": {
+			Trend:  "down",
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful validation with up trend": {
+			Trend:  "up",
+			Length: 5,
+		},
+		"Successful validation with down trend": {
+			Trend:  "down",
+			Length: 5,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			a := Aroon{Trend: c.Trend, Length: c.Length}
+			err := a.Validate()
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestAroonCalc(t *testing.T) {
+	cc := map[string]struct {
+		Trend  string
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Insufficient amount of data points": {
+			Trend:  "down",
+			Length: 5,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful calculation with up trend": {
+			Trend:  "up",
+			Length: 5,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(25),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(29),
+				decimal.NewFromInt(29),
+			},
+			Result: decimal.NewFromFloat(40),
+		},
+		"Successful calculation with down trend": {
+			Trend:  "down",
+			Length: 5,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(25),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(29),
+				decimal.NewFromInt(29),
+			},
+			Result: decimal.NewFromFloat(100),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			a := Aroon{Trend: c.Trend, Length: c.Length}
+			res, err := a.Calc(c.Data)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
+
+func TestAroonCount(t *testing.T) {
+	a := Aroon{Trend: "down", Length: 5}
+	assert.Equal(t, 5, a.Count())
+}
+
 func TestCCIValidation(t *testing.T) {
 	cc := map[string]struct {
 		MA    MA
