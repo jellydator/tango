@@ -231,7 +231,7 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	l := int(math.Sqrt(float64(h.Count())))
 
-	w1 := WMA{Length: h.Count( / 2)}
+	w1 := WMA{Length: h.Count() / 2}
 	w2 := h.WMA
 	w3 := WMA{Length: l}
 
@@ -277,16 +277,16 @@ type MACD struct {
 
 // Validate checks all MACD settings stored in func receiver to make sure that
 // they're meeting each of their own requirements.
-func (macd MACD) Validate() error {
-	if macd.MA1 == nil || macd.MA2 == nil {
+func (m MACD) Validate() error {
+	if m.MA1 == nil || m.MA2 == nil {
 		return ErrMANotSet
 	}
 
-	if err := macd.MA1.Validate(); err != nil {
+	if err := m.MA1.Validate(); err != nil {
 		return err
 	}
 
-	if err := macd.MA2.Validate(); err != nil {
+	if err := m.MA2.Validate(); err != nil {
 		return err
 	}
 
@@ -294,18 +294,18 @@ func (macd MACD) Validate() error {
 }
 
 // Calc calculates MACD value by using settings stored in the func receiver.
-func (macd MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-	dd, err := resize(dd, macd.Count())
+func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, m.Count())
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	r1, err := macd.MA1.Calc(dd)
+	r1, err := m.MA1.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	r2, err := macd.MA2.Calc(dd)
+	r2, err := m.MA2.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -317,9 +317,9 @@ func (macd MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 // Count determines the total amount of data points needed for MACD
 // calculation by using settings stored in the receiver.
-func (macd MACD) Count() int {
-	c1 := macd.MA1.Count()
-	c2 := macd.MA2.Count()
+func (m MACD) Count() int {
+	c1 := m.MA1.Count()
+	c2 := m.MA2.Count()
 
 	if c1 > c2 {
 		return c1
