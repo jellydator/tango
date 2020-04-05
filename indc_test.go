@@ -198,7 +198,7 @@ func TestCCICalc(t *testing.T) {
 				decimal.NewFromFloat(25.20),
 				decimal.NewFromFloat(25.06),
 			},
-			Result: decimal.NewFromFloat(101.91846523),
+			Result: decimal.NewFromFloat(101.91846522781775),
 		},
 	}
 
@@ -217,7 +217,7 @@ func TestCCICalc(t *testing.T) {
 				}
 			} else {
 				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
 			}
 		})
 	}
@@ -262,6 +262,60 @@ func TestDEMAValidation(t *testing.T) {
 	}
 }
 
+func TestDEMACalc(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Insufficient amount of data points": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful calculation": {
+			Length: 2,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(31),
+			},
+			Result: decimal.NewFromFloat(30.72222222222222),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			d := DEMA{Length: c.Length}
+			res, err := d.Calc(c.Data)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
+			}
+		})
+	}
+}
+
+func TestDEMACount(t *testing.T) {
+	d := DEMA{Length: 15}
+	assert.Equal(t, 29, d.Count())
+}
+
 func TestEMAValidation(t *testing.T) {
 	cc := map[string]struct {
 		Length int
@@ -296,60 +350,6 @@ func TestEMAValidation(t *testing.T) {
 	}
 }
 
-func TestDEMACalc(t *testing.T) {
-	cc := map[string]struct {
-		Length int
-		Data   []decimal.Decimal
-		Result decimal.Decimal
-		Error  error
-	}{
-		"Insufficient amount of data points": {
-			Length: 3,
-			Data: []decimal.Decimal{
-				decimal.NewFromInt(30),
-			},
-			Error: ErrInvalidDataPointCount,
-		},
-		"Successful calculation": {
-			Length: 2,
-			Data: []decimal.Decimal{
-				decimal.NewFromInt(30),
-				decimal.NewFromInt(31),
-				decimal.NewFromInt(32),
-				decimal.NewFromInt(30),
-				decimal.NewFromInt(31),
-				decimal.NewFromInt(31),
-			},
-			Result: decimal.NewFromFloat(30.72222222),
-		},
-	}
-
-	for cn, c := range cc {
-		c := c
-		t.Run(cn, func(t *testing.T) {
-			t.Parallel()
-
-			d := DEMA{Length: c.Length}
-			res, err := d.Calc(c.Data)
-			if c.Error != nil {
-				if c.Error == assert.AnError {
-					assert.NotNil(t, err)
-				} else {
-					assert.Equal(t, c.Error, err)
-				}
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
-			}
-		})
-	}
-}
-
-func TestDEMACount(t *testing.T) {
-	d := DEMA{Length: 15}
-	assert.Equal(t, 29, d.Count())
-}
-
 func TestEMACalc(t *testing.T) {
 	cc := map[string]struct {
 		Length int
@@ -374,7 +374,7 @@ func TestEMACalc(t *testing.T) {
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(31),
 			},
-			Result: decimal.NewFromFloat(30.83333333),
+			Result: decimal.NewFromFloat(30.83333333333333),
 		},
 	}
 
@@ -393,7 +393,7 @@ func TestEMACalc(t *testing.T) {
 				}
 			} else {
 				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
 			}
 		})
 	}
@@ -407,6 +407,97 @@ func TestEMACount(t *testing.T) {
 func TestEMAMultiplier(t *testing.T) {
 	e := EMA{Length: 3}
 	assert.Equal(t, decimal.NewFromFloat(0.5), e.multiplier())
+}
+
+func TestHMAValidation(t *testing.T) {
+	cc := map[string]struct {
+		WMA WMA
+		Error  error
+	}{
+		"WMA returns an error": {
+			WMA:   WMA{Length: -1},
+			Error: assert.AnError,
+		},
+		"WMA not set": {
+			Error: ErrMANotSet,
+		},
+		"Successful validation": {
+			WMA: WMA{Length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			h := HMA{WMA: c.WMA}
+			err := h.Validate()
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestHMACalc(t *testing.T) {
+	cc := map[string]struct {
+		WMA WMA
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Insufficient amount of data points": {
+			WMA: WMA{Length: 5},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful calculation": {
+			WMA: WMA{Length: 3},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+			},
+			Result: decimal.NewFromFloat(31.5),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			h := HMA{WMA: c.WMA}
+			res, err := h.Calc(c.Data)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
+
+func TestHMACount(t *testing.T) {
+	h := HMA{WMA: WMA{Length: 15}}
+	assert.Equal(t, 29, h.Count())
 }
 
 func TestMACDValidation(t *testing.T) {
@@ -444,8 +535,8 @@ func TestMACDValidation(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			macd := MACD{MA1: c.MA1, MA2: c.MA2}
-			err := macd.Validate()
+			m := MACD{MA1: c.MA1, MA2: c.MA2}
+			err := m.Validate()
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -503,8 +594,8 @@ func TestMACDCalc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			macd := MACD{MA1: c.MA1, MA2: c.MA2}
-			res, err := macd.Calc(c.Data)
+			m := MACD{MA1: c.MA1, MA2: c.MA2}
+			res, err := m.Calc(c.Data)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -520,11 +611,11 @@ func TestMACDCalc(t *testing.T) {
 }
 
 func TestMACDCount(t *testing.T) {
-	macd := MACD{MA1: EMA{Length: 10}, MA2: EMA{Length: 1}}
-	assert.Equal(t, macd.MA1.Count(), macd.Count())
+	m := MACD{MA1: EMA{Length: 10}, MA2: EMA{Length: 1}}
+	assert.Equal(t, m.Count(), 19)
 
-	macd = MACD{MA1: EMA{Length: 2}, MA2: EMA{Length: 9}}
-	assert.Equal(t, macd.MA2.Count(), macd.Count())
+	m = MACD{MA1: EMA{Length: 2}, MA2: EMA{Length: 9}}
+	assert.Equal(t, m.Count(), 17)
 }
 
 func TestROCValidation(t *testing.T) {
@@ -584,7 +675,7 @@ func TestROCCalc(t *testing.T) {
 				decimal.NewFromInt(420),
 				decimal.NewFromInt(10),
 			},
-			Result: decimal.NewFromFloat(42.85714286),
+			Result: decimal.NewFromFloat(42.85714285714286),
 		},
 	}
 
@@ -680,7 +771,7 @@ func TestRSICalc(t *testing.T) {
 				decimal.NewFromFloat32(45.61),
 				decimal.NewFromFloat32(46.28),
 			},
-			Result: decimal.NewFromFloat(70.46413502),
+			Result: decimal.NewFromFloat(70.46413502109705),
 		},
 	}
 
@@ -699,7 +790,7 @@ func TestRSICalc(t *testing.T) {
 				}
 			} else {
 				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
 			}
 		})
 	}

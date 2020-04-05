@@ -6,6 +6,7 @@ Currently hosted indicators (alphabetical order)
  - CCI
  - DEMA
  - EMA
+ - HMA
  - MACD
  - ROC
  - RSI
