@@ -535,8 +535,8 @@ func TestMACDValidation(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			macd := MACD{MA1: c.MA1, MA2: c.MA2}
-			err := macd.Validate()
+			m := MACD{MA1: c.MA1, MA2: c.MA2}
+			err := m.Validate()
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -594,8 +594,8 @@ func TestMACDCalc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			macd := MACD{MA1: c.MA1, MA2: c.MA2}
-			res, err := macd.Calc(c.Data)
+			m := MACD{MA1: c.MA1, MA2: c.MA2}
+			res, err := m.Calc(c.Data)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -611,11 +611,11 @@ func TestMACDCalc(t *testing.T) {
 }
 
 func TestMACDCount(t *testing.T) {
-	macd := MACD{MA1: EMA{Length: 10}, MA2: EMA{Length: 1}}
-	assert.Equal(t, macd.MA1.Count(), macd.Count())
+	m := MACD{MA1: EMA{Length: 10}, MA2: EMA{Length: 1}}
+	assert.Equal(t, m.Count(), 19)
 
-	macd = MACD{MA1: EMA{Length: 2}, MA2: EMA{Length: 9}}
-	assert.Equal(t, macd.MA2.Count(), macd.Count())
+	m = MACD{MA1: EMA{Length: 2}, MA2: EMA{Length: 9}}
+	assert.Equal(t, m.Count(), 17)
 }
 
 func TestROCValidation(t *testing.T) {
