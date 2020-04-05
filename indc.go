@@ -85,12 +85,12 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	ma, err := c.MA.Calc(dd)
+	m, err := c.MA.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	return dd[len(dd)-1].Sub(ma).Div(decimal.NewFromFloat(0.015).Mul(meanDeviation(dd))).Round(8), nil
+	return dd[len(dd)-1].Sub(m).Div(decimal.NewFromFloat(0.015).Mul(meanDeviation(dd))), nil
 }
 
 // Count determines the total amount of data points needed for CCI
@@ -122,10 +122,10 @@ func (d DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	r := make([]decimal.Decimal, d.Length)
+	v := make([]decimal.Decimal, d.Length)
 
-	sma := SMA{Length: d.Length}
-	r[0], err = sma.Calc(dd[:d.Length])
+	s := SMA{Length: d.Length}
+	v[0], err = s.Calc(dd[:d.Length])
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -133,16 +133,16 @@ func (d DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	e := EMA{Length: d.Length}
 
 	for i := d.Length; i < len(dd); i++ {
-		r[i-d.Length+1] = e.CalcNext(r[i-d.Length], dd[i])
+		v[i-d.Length+1] = e.CalcNext(v[i-d.Length], dd[i])
 	}
 
-	v := r[0]
+	r := v[0]
 
-	for i := 0; i < len(r); i++ {
-		v = e.CalcNext(v, r[i])
+	for i := 0; i < len(v); i++ {
+		r = e.CalcNext(r, v[i])
 	}
 
-	return v.Round(8), nil
+	return r, nil
 }
 
 // Count determines the total amount of data points needed for DEMA
@@ -184,13 +184,13 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		r = e.CalcNext(r, dd[i])
 	}
 
-	return r.Round(8), nil
+	return r, nil
 }
 
 // CalcNext calculates sequential EMA value by using previous ema.
 func (e EMA) CalcNext(l, n decimal.Decimal) decimal.Decimal {
-	mul := e.multiplier()
-	return n.Mul(mul).Add(l.Mul(decimal.NewFromInt(1).Sub(mul)))
+	m := e.multiplier()
+	return n.Mul(m).Add(l.Mul(decimal.NewFromInt(1).Sub(m)))
 }
 
 // multiplier calculates EMA multiplier value by using settings stored in the func receiver.
@@ -350,10 +350,10 @@ func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	l := dd[len(dd)-1]
-	s := dd[0]
+	n := dd[len(dd)-1]
+	l := dd[0]
 
-	return l.Sub(s).Div(s).Mul(decimal.NewFromInt(100)).Round(8), nil
+	return n.Sub(l).Div(l).Mul(decimal.NewFromInt(100)), nil
 }
 
 // Count determines the total amount of data points needed for ROC
@@ -399,7 +399,7 @@ func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	ag = ag.Div(decimal.NewFromInt(int64(r.Length)))
 	al = al.Div(decimal.NewFromInt(int64(r.Length)))
 
-	return decimal.NewFromInt(100).Sub(decimal.NewFromInt(100).Div(decimal.NewFromInt(1).Add(ag.Div(al)))).Round(8), nil
+	return decimal.NewFromInt(100).Sub(decimal.NewFromInt(100).Div(decimal.NewFromInt(1).Add(ag.Div(al)))), nil
 }
 
 // Count determines the total amount of data points needed for RSI
