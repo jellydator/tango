@@ -229,38 +229,40 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	w1 := WMA{Length: h.Count() / 2}
 	l := int(math.Sqrt(float64(h.Count())))
+
+	w1 := WMA{Length: h.Count( / 2)}
+	w2 := h.WMA
+	w3 := WMA{Length: l}
+
 	v := make([]decimal.Decimal, l)
 
 	for i := 0; i < l; i++ {
-		v1, err := w1.Calc(dd[:h.Count()-l+i])
+		r1, err := w1.Calc(dd[:len(dd)-l+i])
 		if err != nil {
-			return decimal.Zero, err
+			return decimal.Zero, nil
 		}
 
-		v2, err := h.WMA.Calc(dd[:h.Count()-l+i])
+		r2, err := w2.Calc(dd[:len(dd)-l+i])
 		if err != nil {
-			return decimal.Zero, err
+			return decimal.Zero, nil
 		}
 
-		v[i] = v1.Mul(decimal.NewFromInt(2)).Sub(v2)
+		v[i] = r1.Mul(decimal.NewFromInt(2)).Sub(r2)
 	}
 
-	w2 := WMA{Length: l}
-
-	r, err := w2.Calc(v)
+	r, err := w3.Calc(v)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	return r.Round(8), nil
+	return r, nil
 }
 
 // Count determines the total amount of data points needed for HMA
 // calculation by using settings stored in the receiver.
 func (h HMA) Count() int {
-	return h.WMA.Count()
+	return h.WMA.Count()*2 - 1
 }
 
 // MACD holds all the neccesary information needed to calculate moving averages
