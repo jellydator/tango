@@ -15,12 +15,12 @@ var (
 	// ErrInvalidLength is returned when provided length is less than 1.
 	ErrInvalidLength = errors.New("length cannot be less than 1")
 
-	// ErrMANotSet is returned when ma field is nil.
-	ErrMANotSet = errors.New("ma value not set")
+	// ErrIndicatorNotSet is returned when indicator field is nil.
+	ErrIndicatorNotSet = errors.New("indicator value not set")
 
-	// ErrInvalidType is returned when tools selected type doesn't match any of the
+	// ErrInvalidType is returned when indicator selected type doesn't match any of the
 	// available types.
-	ErrInvalidType = errors.New("invalid tool type")
+	ErrInvalidType = errors.New("invalid indicator type")
 )
 
 // resize cuts given array based on length to use for
