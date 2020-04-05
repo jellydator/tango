@@ -229,21 +229,21 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	l := int(math.Sqrt(float64(h.Count())))
+	l := int(math.Sqrt(float64(h.WMA.Count())))
 
-	w1 := WMA{Length: h.Count() / 2}
+	w1 := WMA{Length: h.WMA.Count() / 2}
 	w2 := h.WMA
 	w3 := WMA{Length: l}
 
 	v := make([]decimal.Decimal, l)
 
 	for i := 0; i < l; i++ {
-		r1, err := w1.Calc(dd[:len(dd)-l+i])
+		r1, err := w1.Calc(dd[:len(dd)-l+i + 1])
 		if err != nil {
 			return decimal.Zero, nil
 		}
 
-		r2, err := w2.Calc(dd[:len(dd)-l+i])
+		r2, err := w2.Calc(dd[:len(dd)-l+i + 1])
 		if err != nil {
 			return decimal.Zero, nil
 		}
@@ -255,7 +255,6 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if err != nil {
 		return decimal.Zero, err
 	}
-
 	return r, nil
 }
 

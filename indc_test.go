@@ -461,16 +461,16 @@ func TestHMACalc(t *testing.T) {
 			Error: ErrInvalidDataPointCount,
 		},
 		"Successful calculation": {
-			WMA: WMA{Length: 2},
+			WMA: WMA{Length: 3},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(32),
 				decimal.NewFromInt(30),
-				decimal.NewFromInt(31),
+				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
 			},
-			Result: decimal.NewFromFloat(30.83333333),
+			Result: decimal.NewFromFloat(31.5),
 		},
 	}
 
