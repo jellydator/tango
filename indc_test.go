@@ -446,58 +446,58 @@ func TestHMAValidation(t *testing.T) {
 	}
 }
 
-// func TestHMACalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Insufficient amount of data points": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation": {
-// 			Length: 2,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(31),
-// 			},
-// 			Result: decimal.NewFromFloat(30.83333333),
-// 		},
-// 	}
+func TestHMACalc(t *testing.T) {
+	cc := map[string]struct {
+		WMA WMA
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Insufficient amount of data points": {
+			WMA: WMA{Length: 5},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful calculation": {
+			WMA: WMA{Length: 2},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(31),
+			},
+			Result: decimal.NewFromFloat(30.83333333),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			e := EMA{Length: c.Length}
-// 			res, err := e.Calc(c.Data)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.String())
-// 			}
-// 		})
-// 	}
-// }
+			h := HMA{WMA: c.WMA}
+			res, err := h.Calc(c.Data)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
 
 func TestHMACount(t *testing.T) {
 	h := HMA{WMA: WMA{Length: 15}}
-	assert.Equal(t, 15, h.Count())
+	assert.Equal(t, 29, h.Count())
 }
 
 func TestMACDValidation(t *testing.T) {
