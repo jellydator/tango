@@ -213,6 +213,9 @@ type HMA struct {
 // Validate checks all HMA settings stored in func receiver to make sure that
 // they're meeting each of their own requirements.
 func (h HMA) Validate() error {
+	if h.WMA == (WMA{}) {
+		return ErrMANotSet
+	}
 	if h.WMA.Length < 1 {
 		return ErrInvalidLength
 	}
