@@ -216,9 +216,11 @@ func (h HMA) Validate() error {
 	if h.WMA == (WMA{}) {
 		return ErrMANotSet
 	}
+
 	if h.WMA.Length < 1 {
 		return ErrInvalidLength
 	}
+	
 	return nil
 }
 
