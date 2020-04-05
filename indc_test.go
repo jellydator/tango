@@ -495,10 +495,10 @@ func TestHMAValidation(t *testing.T) {
 // 	}
 // }
 
-// func TestHMACount(t *testing.T) {
-// 	h := HMA{WMA: WMA{Length: 15}}
-// 	assert.Equal(t, 15, h.Count())
-// }
+func TestHMACount(t *testing.T) {
+	h := HMA{WMA: WMA{Length: 15}}
+	assert.Equal(t, 15, h.Count())
+}
 
 func TestMACDValidation(t *testing.T) {
 	cc := map[string]struct {
