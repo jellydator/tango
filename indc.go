@@ -1,6 +1,8 @@
 package indc
 
 import (
+	"math"
+
 	"github.com/shopspring/decimal"
 )
 
@@ -200,6 +202,62 @@ func (e EMA) multiplier() decimal.Decimal {
 // calculation by using settings stored in the receiver.
 func (e EMA) Count() int {
 	return e.Length*2 - 1
+}
+
+// HMA holds all the neccesary information needed to calculate hull moving average.
+type HMA struct {
+	// WMA configures base moving average.
+	WMA WMA `json:"wma"`
+}
+
+// Validate checks all HMA settings stored in func receiver to make sure that
+// they're meeting each of their own requirements.
+func (h HMA) Validate() error {
+	if h.WMA.Length < 1 {
+		return ErrInvalidLength
+	}
+	return nil
+}
+
+// Calc calculates HMA value by using settings stored in the func receiver.
+func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, h.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	w1 := WMA{Length: h.Count() / 2}
+	l := int(math.Sqrt(float64(h.Count())))
+	v := make([]decimal.Decimal, l)
+
+	for i := 0; i < l; i++ {
+		v1, err := w1.Calc(dd[:h.Count()-l+i])
+		if err != nil {
+			return decimal.Zero, err
+		}
+
+		v2, err := h.WMA.Calc(dd[:h.Count()-l+i])
+		if err != nil {
+			return decimal.Zero, err
+		}
+
+		v[i] = v1.Mul(decimal.NewFromInt(2)).Sub(v2)
+	}
+
+	w2 := WMA{Length: l}
+
+	r, err := w2.Calc(v)
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	return r.Round(8), nil
+}
+
+// Count determines the total amount of data points needed for HMA
+// calculation by using settings stored in the receiver.
+func (h HMA) Count() int {
+	return h.WMA.Count()
 }
 
 // MACD holds all the neccesary information needed to calculate moving averages
