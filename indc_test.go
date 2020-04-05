@@ -198,7 +198,7 @@ func TestCCICalc(t *testing.T) {
 				decimal.NewFromFloat(25.20),
 				decimal.NewFromFloat(25.06),
 			},
-			Result: decimal.NewFromFloat(101.91846523),
+			Result: decimal.NewFromFloat(101.91846522781775),
 		},
 	}
 
@@ -217,7 +217,7 @@ func TestCCICalc(t *testing.T) {
 				}
 			} else {
 				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
 			}
 		})
 	}
@@ -286,7 +286,7 @@ func TestDEMACalc(t *testing.T) {
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(31),
 			},
-			Result: decimal.NewFromFloat(30.72222222),
+			Result: decimal.NewFromFloat(30.72222222222222),
 		},
 	}
 
@@ -305,7 +305,7 @@ func TestDEMACalc(t *testing.T) {
 				}
 			} else {
 				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
 			}
 		})
 	}
@@ -374,7 +374,7 @@ func TestEMACalc(t *testing.T) {
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(31),
 			},
-			Result: decimal.NewFromFloat(30.83333333),
+			Result: decimal.NewFromFloat(30.83333333333333),
 		},
 	}
 
@@ -393,7 +393,7 @@ func TestEMACalc(t *testing.T) {
 				}
 			} else {
 				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
 			}
 		})
 	}
@@ -675,7 +675,7 @@ func TestROCCalc(t *testing.T) {
 				decimal.NewFromInt(420),
 				decimal.NewFromInt(10),
 			},
-			Result: decimal.NewFromFloat(42.85714286),
+			Result: decimal.NewFromFloat(42.85714285714286),
 		},
 	}
 
@@ -771,7 +771,7 @@ func TestRSICalc(t *testing.T) {
 				decimal.NewFromFloat32(45.61),
 				decimal.NewFromFloat32(46.28),
 			},
-			Result: decimal.NewFromFloat(70.46413502),
+			Result: decimal.NewFromFloat(70.46413502109705),
 		},
 	}
 
@@ -790,7 +790,7 @@ func TestRSICalc(t *testing.T) {
 				}
 			} else {
 				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
 			}
 		})
 	}
