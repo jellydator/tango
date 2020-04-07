@@ -15,11 +15,11 @@ var (
 	// ErrInvalidLength is returned when provided length is less than 1.
 	ErrInvalidLength = errors.New("length cannot be less than 1")
 
-	// ErrSrcNotSet is returned when src field is nil.
-	ErrSrcNotSet = errors.New("src value not set")
-
 	// ErrSrcIndicatorNotSet is returned when src indicator field is nil.
 	ErrSrcIndicatorNotSet = errors.New("src indicator value not set")
+
+	// ErrInvalidIndicatorName is returned when provided indicator name isn't recognized.
+	ErrInvalidIndicatorName = errors.New("unrecognized indicator name in src")
 
 	// ErrSrcIndicatorNotSet is returned when indicator field is nil.
 	ErrMAIndicatorNotSet = errors.New("ma indicator value not set")
@@ -84,4 +84,35 @@ func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	}
 
 	return rez.Div(decimal.NewFromInt(int64(len(dd)))).Round(8)
+}
+
+// createEmptyIndicator finds and returns empty indicator of the specified type
+// if found.
+func createEmptyIndicator(n string) (Indicator, error) {
+	switch n {
+	case "aroon":
+		return Aroon{}, nil
+	case "cci":
+		return CCI{}, nil
+	case "dema":
+		return DEMA{}, nil
+	case "ema":
+		return EMA{}, nil
+	case "hma":
+		return HMA{}, nil
+	case "macd":
+		return MACD{}, nil
+	case "roc":
+		return ROC{}, nil
+	case "rsi":
+		return RSI{}, nil
+	case "sma":
+		return SMA{}, nil
+	case "stoch":
+		return Stoch{}, nil
+	case "wma":
+		return WMA{}, nil
+	default:
+		return nil, ErrInvalidIndicatorName
+	}
 }
