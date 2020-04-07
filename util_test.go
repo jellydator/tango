@@ -223,3 +223,35 @@ func TestNewIndicator(t *testing.T) {
 		})
 	}
 }
+
+func TestIndicatorName(t *testing.T) {
+	cc := map[string]struct {
+		Indicator   Indicator
+		Result 		string
+		Error  		error
+	}{
+		"Successful reading of indicator name": {
+			Indicator:   EMA{Length: 1},
+			Result: "ema",
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := indicatorName(c.Indicator)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, res)
+			}
+		})
+	}
+}
