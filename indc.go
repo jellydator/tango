@@ -11,12 +11,12 @@ type Aroon struct {
 	// Trend configures which aroon trend to measure (it can either be up or down).
 	Trend string `json:"trend"`
 
-	// Length specifies how many data points should be used.
+	// Length specifies how many data points should be used in calculations.
 	Length int `json:"length"`
 }
 
 // Validate checks all Aroon settings stored in func receiver to make sure that
-// they're meeting each of their own requirements.
+// they're matching their requirements.
 func (a Aroon) Validate() error {
 	if a.Trend != "down" && a.Trend != "up" {
 		return ErrInvalidType
@@ -66,7 +66,7 @@ type CCI struct {
 }
 
 // Validate checks all CCI settings stored in func receiver to make sure that
-// they're meeting each of their own requirements.
+// they're matching their requirements.
 func (c CCI) Validate() error {
 	if err := c.Src.Validate(); err != nil {
 		return err
@@ -99,12 +99,12 @@ func (c CCI) Count() int {
 // DEMA holds all the neccesary information needed to calculate double exponential
 // moving average.
 type DEMA struct {
-	// Length specifies how many data points should be used.
+	// Length specifies how many data points should be used in calculations.
 	Length int `json:"length"`
 }
 
 // Validate checks all DEMA settings stored in func receiver to make sure that
-// they're meeting each of their own requirements.
+// they're matching their requirements.
 func (d DEMA) Validate() error {
 	if d.Length < 1 {
 		return ErrInvalidLength
@@ -151,12 +151,12 @@ func (d DEMA) Count() int {
 // EMA holds all the neccesary information needed to calculate exponential
 // moving average.
 type EMA struct {
-	// Length specifies how many data points should be used.
+	// Length specifies how many data points should be used in calculations.
 	Length int `json:"length"`
 }
 
 // Validate checks all EMA settings stored in func receiver to make sure that
-// they're meeting each of their own requirements.
+// they're matching their requirements.
 func (e EMA) Validate() error {
 	if e.Length < 1 {
 		return ErrInvalidLength
@@ -208,7 +208,7 @@ type HMA struct {
 }
 
 // Validate checks all HMA settings stored in func receiver to make sure that
-// they're meeting each of their own requirements.
+// they're matching their requirements.
 func (h HMA) Validate() error {
 	if h.WMA == (WMA{}) {
 		return ErrMAIndicatorNotSet
@@ -274,7 +274,7 @@ type MACD struct {
 }
 
 // Validate checks all MACD settings stored in func receiver to make sure that
-// they're meeting each of their own requirements.
+// they're matching their requirements.
 func (m MACD) Validate() error {
 	if err := m.Src1.Validate(); err != nil {
 		return err
@@ -325,12 +325,12 @@ func (m MACD) Count() int {
 // ROC holds all the neccesary information needed to calculate rate
 // of change.
 type ROC struct {
-	// Length specifies how many data points should be used.
+	// Length specifies how many data points should be used in calculations.
 	Length int `json:"length"`
 }
 
 // Validate checks all ROC settings stored in func receiver to make sure that
-// they're meeting each of their own requirements.
+// they're matching their requirements.
 func (r ROC) Validate() error {
 	if r.Length < 1 {
 		return ErrInvalidLength
@@ -360,12 +360,12 @@ func (r ROC) Count() int {
 // RSI holds all the neccesary information needed to calculate relative
 // strength index.
 type RSI struct {
-	// Length specifies how many data points should be used.
+	// Length specifies how many data points should be used in calculations.
 	Length int `json:"length"`
 }
 
 // Validate checks all RSI settings stored in func receiver to make sure that
-// they're meeting each of their own requirements.
+// they're matching their requirements.
 func (r RSI) Validate() error {
 	if r.Length < 1 {
 		return ErrInvalidLength
@@ -406,12 +406,12 @@ func (r RSI) Count() int {
 // SMA holds all the neccesary information needed to calculate simple
 // moving average.
 type SMA struct {
-	// Length specifies how many data points should be used.
+	// Length specifies how many data points should be used in calculations.
 	Length int `json:"length"`
 }
 
 // Validate checks all SMA settings stored in func receiver to make sure that
-// they're meeting each of their own requirements.
+// they're matching their requirements.
 func (s SMA) Validate() error {
 	if s.Length < 1 {
 		return ErrInvalidLength
@@ -444,12 +444,12 @@ func (s SMA) Count() int {
 // Stoch holds all the neccesary information needed to calculate stochastic
 // oscillator.
 type Stoch struct {
-	// Length specifies how many data points should be used.
+	// Length specifies how many data points should be used in calculations.
 	Length int `json:"length"`
 }
 
 // Validate checks all stochastic settings stored in func receiver to make sure that
-// they're meeting each of their own requirements.
+// they're matching their requirements.
 func (s Stoch) Validate() error {
 	if s.Length < 1 {
 		return ErrInvalidLength
@@ -488,12 +488,12 @@ func (s Stoch) Count() int {
 // WMA holds all the neccesary information needed to calculate weighted
 // moving average.
 type WMA struct {
-	// Length specifies how many data points should be used.
+	// Length specifies how many data points should be used in calculations.
 	Length int `json:"length"`
 }
 
 // Validate checks all WMA settings stored in func receiver to make sure that
-// they're meeting each of their own requirements.
+// they're matching their requirements.
 func (w WMA) Validate() error {
 	if w.Length < 1 {
 		return ErrInvalidLength
