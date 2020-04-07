@@ -8,24 +8,25 @@ import (
 )
 
 var (
-	// ErrInvalidDataPointCount is returned when insufficient amount of data points is
-	// provided.
+	// ErrInvalidDataPointCount is returned when insufficient amount of
+	// data points is provided.
 	ErrInvalidDataPointCount = errors.New("insufficient amount of data points")
 
 	// ErrInvalidLength is returned when provided length is less than 1.
 	ErrInvalidLength = errors.New("length cannot be less than 1")
 
 	// ErrSrcIndicatorNotSet is returned when src indicator field is nil.
-	ErrSrcIndicatorNotSet = errors.New("src indicator value not set")
+	ErrSrcNotSet = errors.New("source indicator is not set")
 
-	// ErrInvalidIndicatorName is returned when provided indicator name isn't recognized.
-	ErrInvalidIndicatorName = errors.New("unrecognized indicator name in src")
+	// ErrInvalidSrcName is returned when provided indicator name
+	// isn't recognized.
+	ErrInvalidSrcName = errors.New("unrecognized source indicator name")
 
 	// ErrSrcIndicatorNotSet is returned when indicator field is nil.
 	ErrMAIndicatorNotSet = errors.New("ma indicator value not set")
 
-	// ErrInvalidType is returned when indicator selected type doesn't match any of the
-	// available types.
+	// ErrInvalidType is returned when indicator type doesn't match any
+	// of the available types.
 	ErrInvalidType = errors.New("invalid indicator type")
 )
 
@@ -86,9 +87,8 @@ func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	return rez.Div(decimal.NewFromInt(int64(len(dd)))).Round(8)
 }
 
-// createEmptyIndicator finds and returns empty indicator of the specified type
-// if found.
-func createEmptyIndicator(n string) (Indicator, error) {
+// newIndicator finds and returns an empty indicator of the specified name.
+func newIndicator(n string) (Indicator, error) {
 	switch n {
 	case "aroon":
 		return Aroon{}, nil
@@ -112,7 +112,37 @@ func createEmptyIndicator(n string) (Indicator, error) {
 		return Stoch{}, nil
 	case "wma":
 		return WMA{}, nil
-	default:
-		return nil, ErrInvalidIndicatorName
 	}
+
+	return nil, ErrInvalidType
+}
+
+// indicatorname determines the name of the specified indicator.
+func indicatorName(ind Indicator) (string, error) {
+	switch ind.(type) {
+	case Aroon:
+		return "aroon", nil
+	case CCI:
+		return "cci", nil
+	case DEMA:
+		return "dema", nil
+	case EMA:
+		return "ema", nil
+	case HMA:
+		return "hma", nil
+	case MACD:
+		return "macd", nil
+	case ROC:
+		return "roc", nil
+	case RSI:
+		return "rsi", nil
+	case SMA:
+		return "sma", nil
+	case Stoch:
+		return "stoch", nil
+	case WMA:
+		return "wma", nil
+	}
+
+	return "", ErrInvalidType
 }

@@ -125,11 +125,11 @@ func TestAroonCount(t *testing.T) {
 
 func TestCCIValidation(t *testing.T) {
 	cc := map[string]struct {
-		Src    Source
+		Src   Source
 		Error error
 	}{
 		"Source returns an error": {
-			Src:    Source{Indicator: EMA{Length: -1}},
+			Src:   Source{Indicator: EMA{Length: -1}},
 			Error: assert.AnError,
 		},
 		"Successful validation": {
@@ -159,7 +159,7 @@ func TestCCIValidation(t *testing.T) {
 
 func TestCCICalc(t *testing.T) {
 	cc := map[string]struct {
-		Src     Source
+		Src    Source
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
@@ -408,8 +408,8 @@ func TestEMAMultiplier(t *testing.T) {
 
 func TestHMAValidation(t *testing.T) {
 	cc := map[string]struct {
-		WMA WMA
-		Error  error
+		WMA   WMA
+		Error error
 	}{
 		"WMA returns an error": {
 			WMA:   WMA{Length: -1},
@@ -445,7 +445,7 @@ func TestHMAValidation(t *testing.T) {
 
 func TestHMACalc(t *testing.T) {
 	cc := map[string]struct {
-		WMA WMA
+		WMA    WMA
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
@@ -499,18 +499,18 @@ func TestHMACount(t *testing.T) {
 
 func TestMACDValidation(t *testing.T) {
 	cc := map[string]struct {
-		Src1   Source
-		Src2   Source
+		Src1  Source
+		Src2  Source
 		Error error
 	}{
 		"Src1 returns an error": {
-			Src1:   Source{Indicator: EMA{Length: -1}},
-			Src2:   Source{Indicator: EMA{Length: 1}},
+			Src1:  Source{Indicator: EMA{Length: -1}},
+			Src2:  Source{Indicator: EMA{Length: 1}},
 			Error: assert.AnError,
 		},
 		"Src2 returns an error": {
-			Src1:   Source{Indicator: EMA{Length: 1}},
-			Src2:   Source{Indicator: EMA{Length: -1}},
+			Src1:  Source{Indicator: EMA{Length: 1}},
+			Src2:  Source{Indicator: EMA{Length: -1}},
 			Error: assert.AnError,
 		},
 		"Successful validation": {
@@ -541,8 +541,8 @@ func TestMACDValidation(t *testing.T) {
 
 func TestMACDCalc(t *testing.T) {
 	cc := map[string]struct {
-		Src1    Source
-		Src2    Source
+		Src1   Source
+		Src2   Source
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
@@ -1054,16 +1054,16 @@ func TestWMACount(t *testing.T) {
 func TestSrcValidation(t *testing.T) {
 	cc := map[string]struct {
 		Indicator Indicator
-		Name string
-		Error error
+		Name      string
+		Error     error
 	}{
 		"Indicator returns an error": {
-			Name: "EMA",
+			Name:      "EMA",
 			Indicator: EMA{Length: -1},
-			Error: assert.AnError,
+			Error:     assert.AnError,
 		},
 		"Successful validation": {
-			Name: "EMA",
+			Name:      "EMA",
 			Indicator: EMA{Length: 1},
 		},
 	}
@@ -1073,7 +1073,7 @@ func TestSrcValidation(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := Source{Name: c.Name, Indicator: c.Indicator}
+			s := Source{Indicator: c.Indicator}
 			err := s.Validate()
 			if c.Error != nil {
 				if c.Error == assert.AnError {

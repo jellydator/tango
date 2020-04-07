@@ -45,7 +45,6 @@ func TestResize(t *testing.T) {
 		},
 	}
 
-
 	for cn, c := range cc {
 		c := c
 		t.Run(cn, func(t *testing.T) {
@@ -189,19 +188,19 @@ func TestMeanDeviation(t *testing.T) {
 	}
 }
 
-func TestCreateEmptyIndicator(t *testing.T) {
+func TestNewIndicator(t *testing.T) {
 	cc := map[string]struct {
-		Name string
+		Name   string
 		Result Indicator
-		Error error
+		Error  error
 	}{
 		"Successful creation of empty indicator": {
-			Name: "ema",
+			Name:   "ema",
 			Result: EMA{},
 		},
 		"Invalid indicator name": {
-			Name: "tema",
-			Error: ErrInvalidIndicatorName,
+			Name:  "tema",
+			Error: ErrInvalidType,
 		},
 	}
 
@@ -210,7 +209,7 @@ func TestCreateEmptyIndicator(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res, err := createEmptyIndicator(c.Name)
+			res, err := newIndicator(c.Name)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
