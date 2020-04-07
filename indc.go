@@ -9,10 +9,10 @@ import (
 // Aroon holds all the neccesary information needed to calculate aroon.
 type Aroon struct {
 	// Trend configures which aroon trend to measure (it can either be up or down).
-	Trend string `json: "trend"`
+	Trend string `json:"trend"`
 
 	// Length specifies how many data points should be used.
-	Length int `json: "length"`
+	Length int `json:"length"`
 }
 
 // Validate checks all Aroon settings stored in func receiver to make sure that
@@ -61,20 +61,17 @@ func (a Aroon) Count() int {
 // CCI holds all the neccesary information needed to calculate commodity
 // channel index.
 type CCI struct {
-	// MA configures moving average.
-	Indicator Indicator `json: "indicator"`
+	// Src configures moving average.
+	Src Source `json:"source"`
 }
 
 // Validate checks all CCI settings stored in func receiver to make sure that
 // they're meeting each of their own requirements.
 func (c CCI) Validate() error {
-	if c.Indicator == nil {
-		return ErrIndicatorNotSet
-	}
-
-	if err := c.Indicator.Validate(); err != nil {
+	if err := c.Src.Validate(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -85,7 +82,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	m, err := c.Indicator.Calc(dd)
+	m, err := c.Src.Indicator.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -96,14 +93,14 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for CCI
 // calculation by using settings stored in the receiver.
 func (c CCI) Count() int {
-	return c.Indicator.Count()
+	return c.Src.Indicator.Count()
 }
 
 // DEMA holds all the neccesary information needed to calculate double exponential
 // moving average.
 type DEMA struct {
 	// Length specifies how many data points should be used.
-	Length int `json: "length"`
+	Length int `json:"length"`
 }
 
 // Validate checks all DEMA settings stored in func receiver to make sure that
@@ -155,7 +152,7 @@ func (d DEMA) Count() int {
 // moving average.
 type EMA struct {
 	// Length specifies how many data points should be used.
-	Length int `json: "length"`
+	Length int `json:"length"`
 }
 
 // Validate checks all EMA settings stored in func receiver to make sure that
@@ -207,14 +204,14 @@ func (e EMA) Count() int {
 // HMA holds all the neccesary information needed to calculate hull moving average.
 type HMA struct {
 	// WMA configures base moving average.
-	WMA WMA `json: "wma"`
+	WMA WMA `json:"wma"`
 }
 
 // Validate checks all HMA settings stored in func receiver to make sure that
 // they're meeting each of their own requirements.
 func (h HMA) Validate() error {
 	if h.WMA == (WMA{}) {
-		return ErrIndicatorNotSet
+		return ErrMAIndicatorNotSet
 	}
 
 	if h.WMA.Length < 1 {
@@ -266,28 +263,24 @@ func (h HMA) Count() int {
 	return h.WMA.Count()*2 - 1
 }
 
-// MACD holds all the neccesary information needed to calculate moving averages
-// convergence divergence.
+// MACD holds all the neccesary information needed to calculate difference between
+// two source indicators.
 type MACD struct {
-	// Indicator1 configures first moving average.
-	Indicator1 Indicator `json: "indicator1"`
+	// Src1 configures first source of indicator.
+	Src1 Source `json:"src1"`
 
-	// Indicator2 configures second moving average.
-	Indicator2 Indicator `json: "indicator2"`
+	// Src2 configures second source of indicator.
+	Src2 Source `json:"src2"`
 }
 
 // Validate checks all MACD settings stored in func receiver to make sure that
 // they're meeting each of their own requirements.
 func (m MACD) Validate() error {
-	if m.Indicator1 == nil || m.Indicator2 == nil {
-		return ErrIndicatorNotSet
-	}
-
-	if err := m.Indicator1.Validate(); err != nil {
+	if err := m.Src1.Validate(); err != nil {
 		return err
 	}
 
-	if err := m.Indicator2.Validate(); err != nil {
+	if err := m.Src2.Validate(); err != nil {
 		return err
 	}
 
@@ -301,12 +294,12 @@ func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	r1, err := m.Indicator1.Calc(dd)
+	r1, err := m.Src1.Indicator.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	r2, err := m.Indicator2.Calc(dd)
+	r2, err := m.Src2.Indicator.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -319,8 +312,8 @@ func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for MACD
 // calculation by using settings stored in the receiver.
 func (m MACD) Count() int {
-	c1 := m.Indicator1.Count()
-	c2 := m.Indicator2.Count()
+	c1 := m.Src1.Indicator.Count()
+	c2 := m.Src2.Indicator.Count()
 
 	if c1 > c2 {
 		return c1
@@ -333,7 +326,7 @@ func (m MACD) Count() int {
 // of change.
 type ROC struct {
 	// Length specifies how many data points should be used.
-	Length int `json: "length"`
+	Length int `json:"length"`
 }
 
 // Validate checks all ROC settings stored in func receiver to make sure that
@@ -368,7 +361,7 @@ func (r ROC) Count() int {
 // strength index.
 type RSI struct {
 	// Length specifies how many data points should be used.
-	Length int `json: "length"`
+	Length int `json:"length"`
 }
 
 // Validate checks all RSI settings stored in func receiver to make sure that
@@ -414,7 +407,7 @@ func (r RSI) Count() int {
 // moving average.
 type SMA struct {
 	// Length specifies how many data points should be used.
-	Length int `json: "length"`
+	Length int `json:"length"`
 }
 
 // Validate checks all SMA settings stored in func receiver to make sure that
@@ -452,7 +445,7 @@ func (s SMA) Count() int {
 // oscillator.
 type Stoch struct {
 	// Length specifies how many data points should be used.
-	Length int `json: "length"`
+	Length int `json:"length"`
 }
 
 // Validate checks all stochastic settings stored in func receiver to make sure that
@@ -496,7 +489,7 @@ func (s Stoch) Count() int {
 // moving average.
 type WMA struct {
 	// Length specifies how many data points should be used.
-	Length int `json: "length"`
+	Length int `json:"length"`
 }
 
 // Validate checks all WMA settings stored in func receiver to make sure that
@@ -546,48 +539,64 @@ type Indicator interface {
 	Count() int
 }
 
-// UnmarshalJSON reads and creates any provided Indicator
-func UnmarshalJSON(d []byte) (Indicator, error ){
-	var j struct {
-		Name string `json: "name"`
+type Source struct {
+	// Indicator is used to compute various calculations.
+	Indicator Indicator
+
+	// Name lets determine indicator type.
+	Name string
+}
+
+// Validate checks all Source values stored in func receiver to make sure that
+// they're matching provided requirements.
+func (s Source) Validate() error {
+	if s.Indicator == nil {
+		return ErrSrcIndicatorNotSet
 	}
 
-	if err := json.Unmarshal(d, &j); err != nil {
-		return nil, err
+	if err := s.Indicator.Validate(); err != nil {
+		return err
 	}
 
-	var i Indicator
+	return nil
+}
 
-	switch j.Name {
+// UnmarshalJSON reads and creates a source with an indicator for calculations
+func (s *Source) UnmarshalJSON(d []byte) error {
+	if err := json.Unmarshal(d, &s); err != nil {
+		return err
+	}
+
+	switch s.Name {
 	case "aroon":
-		i = Aroon{}
+		s.Indicator = Aroon{}
 	case "cci":
-		i = CCI{}
+		s.Indicator = CCI{}
 	case "dema":
-		i = DEMA{}
+		s.Indicator = DEMA{}
 	case "ema":
-		i = EMA{}
+		s.Indicator = EMA{}
 	case "hma":
-		i = HMA{}
+		s.Indicator = HMA{}
 	case "macd":
-		i = MACD{}
+		s.Indicator = MACD{}
 	case "roc":
-		i = ROC{}
+		s.Indicator = ROC{}
 	case "rsi":
-		i = RSI{}
+		s.Indicator = RSI{}
 	case "sma":
-		i = SMA{}
+		s.Indicator = SMA{}
 	case "stoch":
-		i = Stoch{}
+		s.Indicator = Stoch{}
 	case "wma":
-		i = WMA{}
+		s.Indicator = WMA{}
 	default:
-		return nil, ErrIndicatorNotSet
+		return ErrSrcIndicatorNotSet
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
-		return nil, err
+	if err := json.Unmarshal(d, &s.Indicator); err != nil {
+		return err
 	}
 
-	return i, nil
+	return nil
 }
