@@ -540,16 +540,21 @@ type Indicator interface {
 }
 
 type Source struct {
-	// Indicator is used to compute various calculations.
-	Indicator Indicator
-
 	// Name lets determine indicator type.
 	Name string
+
+	// Indicator is used to compute various calculations.
+	Indicator Indicator
 }
 
 // Validate checks all Source values stored in func receiver to make sure that
 // they're matching provided requirements.
 func (s Source) Validate() error {
+	_, err := createEmptyIndicator(s.Name)
+	if err == nil {
+		return ErrSrcIndicatorNotSet
+	}
+
 	if s.Indicator == nil {
 		return ErrSrcIndicatorNotSet
 	}
@@ -566,37 +571,19 @@ func (s *Source) UnmarshalJSON(d []byte) error {
 	if err := json.Unmarshal(d, &s); err != nil {
 		return err
 	}
-
-	switch s.Name {
-	case "aroon":
-		s.Indicator = Aroon{}
-	case "cci":
-		s.Indicator = CCI{}
-	case "dema":
-		s.Indicator = DEMA{}
-	case "ema":
-		s.Indicator = EMA{}
-	case "hma":
-		s.Indicator = HMA{}
-	case "macd":
-		s.Indicator = MACD{}
-	case "roc":
-		s.Indicator = ROC{}
-	case "rsi":
-		s.Indicator = RSI{}
-	case "sma":
-		s.Indicator = SMA{}
-	case "stoch":
-		s.Indicator = Stoch{}
-	case "wma":
-		s.Indicator = WMA{}
-	default:
-		return ErrSrcIndicatorNotSet
-	}
-
-	if err := json.Unmarshal(d, &s.Indicator); err != nil {
+	
+	var i Indicator
+	
+	i, err := createEmptyIndicator(s.Name)
+	if err != nil {
 		return err
 	}
+
+	if err := json.Unmarshal(d, &i); err != nil {
+		return err
+	}
+
+	s.Indicator = i
 
 	return nil
 }

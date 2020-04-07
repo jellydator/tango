@@ -1050,3 +1050,40 @@ func TestWMACount(t *testing.T) {
 	w := WMA{Length: 15}
 	assert.Equal(t, 15, w.Count())
 }
+
+func TestSrcValidation(t *testing.T) {
+	cc := map[string]struct {
+		Indicator Indicator
+		Name string
+		Error error
+	}{
+		"Indicator returns an error": {
+			Name: "EMA",
+			Indicator: EMA{Length: -1},
+			Error: assert.AnError,
+		},
+		"Successful validation": {
+			Name: "EMA",
+			Indicator: EMA{Length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			s := Source{Name: c.Name, Indicator: c.Indicator}
+			err := s.Validate()
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
