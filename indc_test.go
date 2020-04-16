@@ -7,6 +7,49 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type IndicatorMock struct{}
+
+func (im IndicatorMock) Validate() error                                    { return nil }
+func (im IndicatorMock) Calc(dd []decimal.Decimal) (decimal.Decimal, error) { return decimal.Zero, nil }
+func (im IndicatorMock) Count() int                                         { return 0 }
+
+func TestAroonInit(t *testing.T) {
+	cc := map[string]struct {
+		Trend  string
+		Length int
+		Result Aroon
+		Error  error
+	}{
+		"Aroon throws an error": {
+			Trend:  "downn",
+			Length: 5,
+			Error:  assert.AnError,
+		},
+		"Successful Aroon initialization": {
+			Trend:  "down",
+			Length: 5,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			a, err := InitAroon(c.Trend, c.Length)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Result, a)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
 func TestAroonValidation(t *testing.T) {
 	cc := map[string]struct {
 		Trend  string
@@ -121,6 +164,40 @@ func TestAroonCalc(t *testing.T) {
 func TestAroonCount(t *testing.T) {
 	a := Aroon{Trend: "down", Length: 5}
 	assert.Equal(t, 5, a.Count())
+}
+
+func TestCCIInit(t *testing.T) {
+	cc := map[string]struct {
+		Origin Source
+		Result CCI
+		Error  error
+	}{
+		"CCI throws an error": {
+			Origin: Source{IndicatorMock{}},
+			Error:  assert.AnError,
+		},
+		"Successful CCI initialization": {
+			Origin: Source{EMA{Length: 1}},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			cci, err := InitCCI(c.Origin)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Result, cci)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
 }
 
 func TestCCIValidation(t *testing.T) {

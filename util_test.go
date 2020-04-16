@@ -224,7 +224,7 @@ func TestNewIndicator(t *testing.T) {
 	}
 }
 
-func TestIndicatorName(t *testing.T) {
+func TestExtractIndicatorName(t *testing.T) {
 	cc := map[string]struct {
 		Indicator Indicator
 		Result    string
@@ -241,7 +241,7 @@ func TestIndicatorName(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res, err := indicatorName(c.Indicator)
+			res, err := extractIndicatorName(c.Indicator)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)

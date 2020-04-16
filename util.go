@@ -117,8 +117,8 @@ func newIndicator(n string) (Indicator, error) {
 	return nil, ErrInvalidType
 }
 
-// indicatorName determines the name of the specified indicator.
-func indicatorName(ind Indicator) (string, error) {
+// extractIndicatorName determines the name of the specified indicator.
+func extractIndicatorName(ind Indicator) (string, error) {
 	switch ind.(type) {
 	case Aroon:
 		return "aroon", nil
