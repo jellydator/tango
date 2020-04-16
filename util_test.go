@@ -226,13 +226,13 @@ func TestNewIndicator(t *testing.T) {
 
 func TestIndicatorName(t *testing.T) {
 	cc := map[string]struct {
-		Indicator   Indicator
-		Result 		string
-		Error  		error
+		Indicator Indicator
+		Result    string
+		Error     error
 	}{
 		"Successful reading of indicator name": {
-			Indicator:   EMA{Length: 1},
-			Result: "ema",
+			Indicator: EMA{Length: 1},
+			Result:    "ema",
 		},
 	}
 

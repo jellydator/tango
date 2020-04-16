@@ -15,15 +15,15 @@ var (
 	// ErrInvalidLength is returned when provided length is less than 1.
 	ErrInvalidLength = errors.New("length cannot be less than 1")
 
-	// ErrSrcIndicatorNotSet is returned when src indicator field is nil.
+	// ErrSrcNotSet is returned when src indicator field is nil.
 	ErrSrcNotSet = errors.New("source indicator is not set")
 
 	// ErrInvalidSrcName is returned when provided indicator name
 	// isn't recognized.
 	ErrInvalidSrcName = errors.New("unrecognized source indicator name")
 
-	// ErrSrcIndicatorNotSet is returned when indicator field is nil.
-	ErrMAIndicatorNotSet = errors.New("ma indicator value not set")
+	// ErrMANotSet is returned when indicator field is nil.
+	ErrMANotSet = errors.New("ma value not set")
 
 	// ErrInvalidType is returned when indicator type doesn't match any
 	// of the available types.
