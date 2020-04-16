@@ -633,6 +633,18 @@ type WMA struct {
 	Length int `json:"length"`
 }
 
+// InitWMA verifies provided values and
+// initializes weighted moving average indicator.
+func InitWMA(lh int) (WMA, error) {
+	w := WMA{Length: lh}
+
+	if err := w.Validate(); err != nil {
+		return WMA{}, err
+	}
+
+	return w, nil
+}
+
 // Validate checks all WMA settings stored in func receiver to make sure that
 // they're matching their requirements.
 func (w WMA) Validate() error {
