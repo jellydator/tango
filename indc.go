@@ -416,6 +416,18 @@ type ROC struct {
 	Length int `json:"length"`
 }
 
+// InitROC verifies provided values and
+// initializes rate of change indicator.
+func InitROC(lh int) (ROC, error) {
+	r := ROC{Length: lh}
+
+	if err := r.Validate(); err != nil {
+		return ROC{}, err
+	}
+
+	return r, nil
+}
+
 // Validate checks all ROC settings stored in func receiver to make sure that
 // they're matching their requirements.
 func (r ROC) Validate() error {
@@ -450,6 +462,18 @@ type RSI struct {
 	// Length specifies how many data points should be used
 	// in calculations.
 	Length int `json:"length"`
+}
+
+// InitRSI verifies provided values and
+// initializes relative strength index indicator.
+func InitRSI(lh int) (RSI, error) {
+	r := RSI{Length: lh}
+
+	if err := r.Validate(); err != nil {
+		return RSI{}, err
+	}
+
+	return r, nil
 }
 
 // Validate checks all RSI settings stored in func receiver to make sure that
