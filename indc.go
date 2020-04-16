@@ -135,6 +135,18 @@ type DEMA struct {
 	Length int `json:"length"`
 }
 
+// InitDEMA verifies provided values and
+// initializes double exponential moving average indicator.
+func InitDEMA(lh int) (DEMA, error) {
+	d := DEMA{Length: lh}
+
+	if err := d.Validate(); err != nil {
+		return DEMA{}, err
+	}
+
+	return d, nil
+}
+
 // Validate checks all DEMA settings stored in func receiver to
 // make sure that they're matching their requirements.
 func (d DEMA) Validate() error {
