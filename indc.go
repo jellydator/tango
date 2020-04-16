@@ -30,6 +30,19 @@ func InitAroon(t string, lh int) (Aroon, error) {
 	return a, nil
 }
 
+// UnmarshalJSON parse JSON into an aroon source.
+func (a *Aroon) UnmarshalJSON(d []byte) error {
+	if err := json.Unmarshal(d, &a); err != nil {
+		return err
+	}
+
+	if err := a.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Validate checks all Aroon settings stored in func receiver to
 // make sure that they're matching their requirements.
 func (a Aroon) Validate() error {
@@ -166,10 +179,7 @@ func (d DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	v := make([]decimal.Decimal, d.Length)
 
 	s := SMA{Length: d.Length}
-	v[0], err = s.Calc(dd[:d.Length])
-	if err != nil {
-		return decimal.Zero, err
-	}
+	v[0], _ = s.Calc(dd[:d.Length])
 
 	e := EMA{Length: d.Length}
 
@@ -229,10 +239,7 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	}
 
 	s := SMA{Length: e.Length}
-	r, err := s.Calc(dd[:e.Length])
-	if err != nil {
-		return decimal.Zero, err
-	}
+	r, _ := s.Calc(dd[:e.Length])
 
 	for i := e.Length; i < len(dd); i++ {
 		r = e.CalcNext(r, dd[i])
@@ -308,23 +315,14 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	v := make([]decimal.Decimal, l)
 
 	for i := 0; i < l; i++ {
-		r1, err := w1.Calc(dd[:len(dd)-l+i+1])
-		if err != nil {
-			return decimal.Zero, nil
-		}
+		r1, _ := w1.Calc(dd[:len(dd)-l+i+1])
 
-		r2, err := w2.Calc(dd[:len(dd)-l+i+1])
-		if err != nil {
-			return decimal.Zero, nil
-		}
+		r2, _ := w2.Calc(dd[:len(dd)-l+i+1])
 
 		v[i] = r1.Mul(decimal.NewFromInt(2)).Sub(r2)
 	}
 
-	r, err := w3.Calc(v)
-	if err != nil {
-		return decimal.Zero, err
-	}
+	r, _ := w3.Calc(v)
 
 	return r, nil
 }
@@ -701,6 +699,10 @@ type Source struct {
 // InitSource verifies provided indicator and
 // initializes source.
 func InitSource(i Indicator) (Source, error) {
+	if _, err := extractIndicatorName(i); err != nil {
+		return Source{}, ErrInvalidSrcName
+	}
+
 	if err := i.Validate(); err != nil {
 		return Source{}, err
 	}
@@ -728,7 +730,7 @@ func (s *Source) UnmarshalJSON(d []byte) error {
 		Name string `json:"name"`
 	}
 
-	if err := json.Unmarshal(d, &id.Name); err != nil {
+	if err := json.Unmarshal(d, &id); err != nil {
 		return err
 	}
 
