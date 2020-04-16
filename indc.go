@@ -524,6 +524,18 @@ type SMA struct {
 	Length int `json:"length"`
 }
 
+// InitSMA verifies provided values and
+// initializes rsimple moving average indicator.
+func InitSMA(lh int) (SMA, error) {
+	s := SMA{Length: lh}
+
+	if err := s.Validate(); err != nil {
+		return SMA{}, err
+	}
+
+	return s, nil
+}
+
 // Validate checks all SMA settings stored in func receiver to make sure that
 // they're matching their requirements.
 func (s SMA) Validate() error {
