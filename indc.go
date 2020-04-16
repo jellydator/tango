@@ -200,6 +200,18 @@ type EMA struct {
 	Length int `json:"length"`
 }
 
+// InitEMA verifies provided values and
+// initializes exponential moving average indicator.
+func InitEMA(lh int) (EMA, error) {
+	e := EMA{Length: lh}
+
+	if err := e.Validate(); err != nil {
+		return EMA{}, err
+	}
+
+	return e, nil
+}
+
 // Validate checks all EMA settings stored in func receiver to make sure that
 // they're matching their requirements.
 func (e EMA) Validate() error {
