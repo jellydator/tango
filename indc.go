@@ -80,7 +80,7 @@ func (a Aroon) Count() int {
 // channel index.
 type CCI struct {
 	// Origin configures what calculations to use when computing CCI value.
-	Origin Source `json:"source"`
+	Origin Source `json:"origin"`
 }
 
 // InitCCI verifies provided values and
@@ -266,6 +266,18 @@ type HMA struct {
 	WMA WMA `json:"wma"`
 }
 
+// InitHMA verifies provided values and
+// initializes hull moving average indicator.
+func InitHMA(w WMA) (HMA, error) {
+	h := HMA{WMA: w}
+
+	if err := h.Validate(); err != nil {
+		return HMA{}, err
+	}
+
+	return h, nil
+}
+
 // Validate checks all HMA settings stored in func receiver to make sure that
 // they're matching their requirements.
 func (h HMA) Validate() error {
@@ -326,21 +338,35 @@ func (h HMA) Count() int {
 // MACD holds all the neccesary information needed to calculate
 // difference between two source indicators.
 type MACD struct {
-	// Src1 configures first source of indicator.
-	Src1 Source `json:"src1"`
+	// Origin1 configures what calculations to use when computing first
+	// macd value.
+	Origin1 Source `json:"origin1"`
 
-	// Src2 configures second source of indicator.
-	Src2 Source `json:"src2"`
+	// Origin2 configures what calculations to use when computing second
+	// macd value.
+	Origin2 Source `json:"origin2"`
+}
+
+// InitMACD verifies provided values and
+// initializes MACD indicator.
+func InitMACD(o1, o2 Source) (MACD, error) {
+	m := MACD{Origin1: o1, Origin2: o2}
+
+	if err := m.Validate(); err != nil {
+		return MACD{}, err
+	}
+
+	return m, nil
 }
 
 // Validate checks all MACD settings stored in func receiver
 // to make sure that they're matching their requirements.
 func (m MACD) Validate() error {
-	if err := m.Src1.Validate(); err != nil {
+	if err := m.Origin1.Validate(); err != nil {
 		return err
 	}
 
-	if err := m.Src2.Validate(); err != nil {
+	if err := m.Origin2.Validate(); err != nil {
 		return err
 	}
 
@@ -354,12 +380,12 @@ func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	r1, err := m.Src1.Indicator.Calc(dd)
+	r1, err := m.Origin1.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	r2, err := m.Src2.Indicator.Calc(dd)
+	r2, err := m.Origin2.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -372,8 +398,8 @@ func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for MACD
 // calculation by using settings stored in the receiver.
 func (m MACD) Count() int {
-	c1 := m.Src1.Indicator.Count()
-	c2 := m.Src2.Indicator.Count()
+	c1 := m.Origin1.Count()
+	c2 := m.Origin2.Count()
 
 	if c1 > c2 {
 		return c1
