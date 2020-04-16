@@ -18,6 +18,18 @@ type Aroon struct {
 	Length int `json:"length"`
 }
 
+// InitAroon verifies provided values and
+// initializes aroon indicator.
+func InitAroon(t string, lh int) (Aroon, error) {
+	a := Aroon{Trend: t, Length: lh}
+
+	if err := a.Validate(); err != nil {
+		return Aroon{}, err
+	}
+
+	return a, nil
+}
+
 // Validate checks all Aroon settings stored in func receiver to
 // make sure that they're matching their requirements.
 func (a Aroon) Validate() error {
@@ -67,14 +79,26 @@ func (a Aroon) Count() int {
 // CCI holds all the neccesary information needed to calculate commodity
 // channel index.
 type CCI struct {
-	// Src configures.
-	Src Source `json:"source"`
+	// Origin configures what calculations to use when computing CCI value.
+	Origin Source `json:"origin"`
+}
+
+// InitCCI verifies provided values and
+// initializes commodity channel index indicator.
+func InitCCI(o Source) (CCI, error) {
+	c := CCI{Origin: o}
+
+	if err := c.Validate(); err != nil {
+		return CCI{}, err
+	}
+
+	return c, nil
 }
 
 // Validate checks all CCI settings stored in func receiver to make sure that
 // they're matching their requirements.
 func (c CCI) Validate() error {
-	if err := c.Src.Validate(); err != nil {
+	if err := c.Origin.Validate(); err != nil {
 		return err
 	}
 
@@ -88,7 +112,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	m, err := c.Src.Indicator.Calc(dd)
+	m, err := c.Origin.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -100,7 +124,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for CCI
 // calculation by using settings stored in the receiver.
 func (c CCI) Count() int {
-	return c.Src.Indicator.Count()
+	return c.Origin.Count()
 }
 
 // DEMA holds all the neccesary information needed to calculate
@@ -109,6 +133,18 @@ type DEMA struct {
 	// Length specifies how many data points should be used
 	// in calculations.
 	Length int `json:"length"`
+}
+
+// InitDEMA verifies provided values and
+// initializes double exponential moving average indicator.
+func InitDEMA(lh int) (DEMA, error) {
+	d := DEMA{Length: lh}
+
+	if err := d.Validate(); err != nil {
+		return DEMA{}, err
+	}
+
+	return d, nil
 }
 
 // Validate checks all DEMA settings stored in func receiver to
@@ -164,6 +200,18 @@ type EMA struct {
 	Length int `json:"length"`
 }
 
+// InitEMA verifies provided values and
+// initializes exponential moving average indicator.
+func InitEMA(lh int) (EMA, error) {
+	e := EMA{Length: lh}
+
+	if err := e.Validate(); err != nil {
+		return EMA{}, err
+	}
+
+	return e, nil
+}
+
 // Validate checks all EMA settings stored in func receiver to make sure that
 // they're matching their requirements.
 func (e EMA) Validate() error {
@@ -216,6 +264,18 @@ func (e EMA) Count() int {
 type HMA struct {
 	// WMA configures base moving average.
 	WMA WMA `json:"wma"`
+}
+
+// InitHMA verifies provided values and
+// initializes hull moving average indicator.
+func InitHMA(w WMA) (HMA, error) {
+	h := HMA{WMA: w}
+
+	if err := h.Validate(); err != nil {
+		return HMA{}, err
+	}
+
+	return h, nil
 }
 
 // Validate checks all HMA settings stored in func receiver to make sure that
@@ -278,21 +338,35 @@ func (h HMA) Count() int {
 // MACD holds all the neccesary information needed to calculate
 // difference between two source indicators.
 type MACD struct {
-	// Src1 configures first source of indicator.
-	Src1 Source `json:"src1"`
+	// Origin1 configures what calculations to use when computing first
+	// macd value.
+	Origin1 Source `json:"origin1"`
 
-	// Src2 configures second source of indicator.
-	Src2 Source `json:"src2"`
+	// Origin2 configures what calculations to use when computing second
+	// macd value.
+	Origin2 Source `json:"origin2"`
+}
+
+// InitMACD verifies provided values and
+// initializes MACD indicator.
+func InitMACD(o1, o2 Source) (MACD, error) {
+	m := MACD{Origin1: o1, Origin2: o2}
+
+	if err := m.Validate(); err != nil {
+		return MACD{}, err
+	}
+
+	return m, nil
 }
 
 // Validate checks all MACD settings stored in func receiver
 // to make sure that they're matching their requirements.
 func (m MACD) Validate() error {
-	if err := m.Src1.Validate(); err != nil {
+	if err := m.Origin1.Validate(); err != nil {
 		return err
 	}
 
-	if err := m.Src2.Validate(); err != nil {
+	if err := m.Origin2.Validate(); err != nil {
 		return err
 	}
 
@@ -306,12 +380,12 @@ func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	r1, err := m.Src1.Indicator.Calc(dd)
+	r1, err := m.Origin1.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	r2, err := m.Src2.Indicator.Calc(dd)
+	r2, err := m.Origin2.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -324,8 +398,8 @@ func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for MACD
 // calculation by using settings stored in the receiver.
 func (m MACD) Count() int {
-	c1 := m.Src1.Indicator.Count()
-	c2 := m.Src2.Indicator.Count()
+	c1 := m.Origin1.Count()
+	c2 := m.Origin2.Count()
 
 	if c1 > c2 {
 		return c1
@@ -340,6 +414,18 @@ type ROC struct {
 	// Length specifies how many data points should be used
 	// in calculations.
 	Length int `json:"length"`
+}
+
+// InitROC verifies provided values and
+// initializes rate of change indicator.
+func InitROC(lh int) (ROC, error) {
+	r := ROC{Length: lh}
+
+	if err := r.Validate(); err != nil {
+		return ROC{}, err
+	}
+
+	return r, nil
 }
 
 // Validate checks all ROC settings stored in func receiver to make sure that
@@ -376,6 +462,18 @@ type RSI struct {
 	// Length specifies how many data points should be used
 	// in calculations.
 	Length int `json:"length"`
+}
+
+// InitRSI verifies provided values and
+// initializes relative strength index indicator.
+func InitRSI(lh int) (RSI, error) {
+	r := RSI{Length: lh}
+
+	if err := r.Validate(); err != nil {
+		return RSI{}, err
+	}
+
+	return r, nil
 }
 
 // Validate checks all RSI settings stored in func receiver to make sure that
@@ -426,6 +524,18 @@ type SMA struct {
 	Length int `json:"length"`
 }
 
+// InitSMA verifies provided values and
+// initializes simple moving average indicator.
+func InitSMA(lh int) (SMA, error) {
+	s := SMA{Length: lh}
+
+	if err := s.Validate(); err != nil {
+		return SMA{}, err
+	}
+
+	return s, nil
+}
+
 // Validate checks all SMA settings stored in func receiver to make sure that
 // they're matching their requirements.
 func (s SMA) Validate() error {
@@ -463,6 +573,18 @@ type Stoch struct {
 	// Length specifies how many data points should be used
 	// in calculations.
 	Length int `json:"length"`
+}
+
+// InitStoch verifies provided values and
+// initializes stochastic indicator.
+func InitStoch(lh int) (Stoch, error) {
+	s := Stoch{Length: lh}
+
+	if err := s.Validate(); err != nil {
+		return Stoch{}, err
+	}
+
+	return s, nil
 }
 
 // Validate checks all stochastic settings stored in func receiver to make
@@ -509,6 +631,18 @@ type WMA struct {
 	// Length specifies how many data points should be used
 	// in calculations.
 	Length int `json:"length"`
+}
+
+// InitWMA verifies provided values and
+// initializes weighted moving average indicator.
+func InitWMA(lh int) (WMA, error) {
+	w := WMA{Length: lh}
+
+	if err := w.Validate(); err != nil {
+		return WMA{}, err
+	}
+
+	return w, nil
 }
 
 // Validate checks all WMA settings stored in func receiver to make sure that
@@ -564,18 +698,14 @@ type Source struct {
 	Indicator
 }
 
-// Validate checks all Source values stored in func receiver to make sure
-// that they're matching provided requirements.
-func (s Source) Validate() error {
-	if s.Indicator == nil {
-		return ErrSrcNotSet
+// InitSource verifies provided indicator and
+// initializes source.
+func InitSource(i Indicator) (Source, error) {
+	if err := i.Validate(); err != nil {
+		return Source{}, err
 	}
 
-	if err := s.Indicator.Validate(); err != nil {
-		return err
-	}
-
-	return nil
+	return Source{i}, nil
 }
 
 // UnmarshalJSON parse JSON into an indicator source.
