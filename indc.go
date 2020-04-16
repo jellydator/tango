@@ -525,7 +525,7 @@ type SMA struct {
 }
 
 // InitSMA verifies provided values and
-// initializes rsimple moving average indicator.
+// initializes simple moving average indicator.
 func InitSMA(lh int) (SMA, error) {
 	s := SMA{Length: lh}
 
@@ -573,6 +573,18 @@ type Stoch struct {
 	// Length specifies how many data points should be used
 	// in calculations.
 	Length int `json:"length"`
+}
+
+// InitStoch verifies provided values and
+// initializes stochastic indicator.
+func InitStoch(lh int) (Stoch, error) {
+	s := Stoch{Length: lh}
+
+	if err := s.Validate(); err != nil {
+		return Stoch{}, err
+	}
+
+	return s, nil
 }
 
 // Validate checks all stochastic settings stored in func receiver to make
