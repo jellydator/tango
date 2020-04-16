@@ -9,9 +9,13 @@ import (
 
 type IndicatorMock struct{}
 
-func (im IndicatorMock) Validate() error                                    { return nil }
-func (im IndicatorMock) Calc(dd []decimal.Decimal) (decimal.Decimal, error) { return decimal.Zero, nil }
-func (im IndicatorMock) Count() int                                         { return 0 }
+func (im IndicatorMock) Validate() error { return assert.AnError }
+
+func (im IndicatorMock) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	return decimal.Zero, assert.AnError
+}
+
+func (im IndicatorMock) Count() int { return 1 }
 
 func TestAroonInit(t *testing.T) {
 	cc := map[string]struct {
@@ -21,9 +25,7 @@ func TestAroonInit(t *testing.T) {
 		Error  error
 	}{
 		"Aroon throws an error": {
-			Trend:  "downn",
-			Length: 5,
-			Error:  assert.AnError,
+			Error: assert.AnError,
 		},
 		"Successful Aroon initialization": {
 			Trend:  "down",
@@ -173,11 +175,11 @@ func TestCCIInit(t *testing.T) {
 		Error  error
 	}{
 		"CCI throws an error": {
-			Origin: Source{IndicatorMock{}},
-			Error:  assert.AnError,
+			Error: assert.AnError,
 		},
 		"Successful CCI initialization": {
 			Origin: Source{EMA{Length: 1}},
+			Result: CCI{Origin: Source{EMA{Length: 1}}},
 		},
 	}
 
@@ -206,8 +208,7 @@ func TestCCIValidation(t *testing.T) {
 		Error  error
 	}{
 		"Source returns an error": {
-			Origin: Source{EMA{Length: -1}},
-			Error:  assert.AnError,
+			Error: assert.AnError,
 		},
 		"Successful validation": {
 			Origin: Source{EMA{Length: 1}},
@@ -247,6 +248,13 @@ func TestCCICalc(t *testing.T) {
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataPointCount,
+		},
+		"Origin returns an error": {
+			Origin: Source{IndicatorMock{}},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: assert.AnError,
 		},
 		"Successful calculation": {
 			Origin: Source{SMA{Length: 20}},
@@ -300,6 +308,40 @@ func TestCCICalc(t *testing.T) {
 func TestCCICount(t *testing.T) {
 	c := CCI{Origin: Source{EMA{Length: 10}}}
 	assert.Equal(t, c.Origin.Count(), c.Count())
+}
+
+func TestDEMAInit(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result DEMA
+		Error  error
+	}{
+		"DEMA throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful DEMA initialization": {
+			Length: 1,
+			Result: DEMA{Length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			d, err := InitDEMA(c.Length)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Result, d)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
 }
 
 func TestDEMAValidation(t *testing.T) {
@@ -388,6 +430,40 @@ func TestDEMACalc(t *testing.T) {
 func TestDEMACount(t *testing.T) {
 	d := DEMA{Length: 15}
 	assert.Equal(t, 29, d.Count())
+}
+
+func TestEMAInit(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result EMA
+		Error  error
+	}{
+		"EMA throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful EMA initialization": {
+			Length: 1,
+			Result: EMA{Length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			e, err := InitEMA(c.Length)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Result, e)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
 }
 
 func TestEMAValidation(t *testing.T) {
@@ -483,6 +559,40 @@ func TestEMAMultiplier(t *testing.T) {
 	assert.Equal(t, decimal.NewFromFloat(0.5), e.multiplier())
 }
 
+func TestHMAInit(t *testing.T) {
+	cc := map[string]struct {
+		WMA    WMA
+		Result HMA
+		Error  error
+	}{
+		"HMA throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful HMA initialization": {
+			WMA:    WMA{Length: 1},
+			Result: HMA{WMA: WMA{Length: 1}},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			h, err := InitHMA(c.WMA)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Result, h)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
 func TestHMAValidation(t *testing.T) {
 	cc := map[string]struct {
 		WMA   WMA
@@ -574,6 +684,42 @@ func TestHMACount(t *testing.T) {
 	assert.Equal(t, 29, h.Count())
 }
 
+func TestMACDInit(t *testing.T) {
+	cc := map[string]struct {
+		Origin1 Source
+		Origin2 Source
+		Result  MACD
+		Error   error
+	}{
+		"MACD throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful MACD initialization": {
+			Origin1: Source{WMA{Length: 1}},
+			Origin2: Source{WMA{Length: 1}},
+			Result:  MACD{Origin1: Source{WMA{Length: 1}}, Origin2: Source{WMA{Length: 1}}},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			m, err := InitMACD(c.Origin1, c.Origin2)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Result, m)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
 func TestMACDValidation(t *testing.T) {
 	cc := map[string]struct {
 		Origin1 Source
@@ -640,6 +786,32 @@ func TestMACDCalc(t *testing.T) {
 			},
 			Error: ErrInvalidDataPointCount,
 		},
+		"Origin1 returns an error": {
+			Origin1: Source{IndicatorMock{}},
+			Origin2: Source{SMA{Length: 3}},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+			},
+			Error: assert.AnError,
+		},
+		"Origin2 returns an error": {
+			Origin1: Source{SMA{Length: 3}},
+			Origin2: Source{IndicatorMock{}},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+			},
+			Error: assert.AnError,
+		},
 		"Successful calculation": {
 			Origin1: Source{SMA{Length: 2}},
 			Origin2: Source{SMA{Length: 3}},
@@ -682,6 +854,40 @@ func TestMACDCount(t *testing.T) {
 
 	m = MACD{Origin1: Source{EMA{Length: 2}}, Origin2: Source{EMA{Length: 9}}}
 	assert.Equal(t, m.Count(), m.Origin2.Count())
+}
+
+func TestROCInit(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result ROC
+		Error  error
+	}{
+		"ROC throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful ROC initialization": {
+			Length: 1,
+			Result: ROC{Length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			r, err := InitROC(c.Length)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Result, r)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
 }
 
 func TestROCValidation(t *testing.T) {
@@ -769,6 +975,40 @@ func TestROCCalc(t *testing.T) {
 func TestROCCount(t *testing.T) {
 	r := ROC{Length: 15}
 	assert.Equal(t, 15, r.Count())
+}
+
+func TestRSIInit(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result RSI
+		Error  error
+	}{
+		"RSI throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful RSI initialization": {
+			Length: 1,
+			Result: RSI{Length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			r, err := InitRSI(c.Length)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Result, r)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
 }
 
 func TestRSIValidation(t *testing.T) {
@@ -867,6 +1107,40 @@ func TestRSICount(t *testing.T) {
 	assert.Equal(t, 15, r.Count())
 }
 
+func TestSMAInit(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result SMA
+		Error  error
+	}{
+		"SMA throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful SMA initialization": {
+			Length: 1,
+			Result: SMA{Length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			s, err := InitSMA(c.Length)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Result, s)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
 func TestSMAValidation(t *testing.T) {
 	cc := map[string]struct {
 		Length int
@@ -952,6 +1226,40 @@ func TestSMACount(t *testing.T) {
 	assert.Equal(t, 15, s.Count())
 }
 
+func TestStochInit(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result Stoch
+		Error  error
+	}{
+		"Stoch throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful Stoch initialization": {
+			Length: 1,
+			Result: Stoch{Length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			s, err := InitStoch(c.Length)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Result, s)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
 func TestStochValidation(t *testing.T) {
 
 	cc := map[string]struct {
@@ -1002,7 +1310,7 @@ func TestStochCalc(t *testing.T) {
 			},
 			Error: ErrInvalidDataPointCount,
 		},
-		"Successful calculation": {
+		"Successful calculation v1": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(150),
@@ -1010,6 +1318,15 @@ func TestStochCalc(t *testing.T) {
 				decimal.NewFromInt(145),
 			},
 			Result: decimal.NewFromInt(80),
+		},
+		"Successful calculation v2": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(120),
+				decimal.NewFromInt(145),
+				decimal.NewFromInt(135),
+			},
+			Result: decimal.NewFromInt(60),
 		},
 	}
 
@@ -1038,6 +1355,40 @@ func TestStochCalc(t *testing.T) {
 func TestStochCount(t *testing.T) {
 	s := Stoch{Length: 15}
 	assert.Equal(t, 15, s.Count())
+}
+
+func TestWMAInit(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result WMA
+		Error  error
+	}{
+		"WMA throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful WMA initialization": {
+			Length: 1,
+			Result: WMA{Length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			w, err := InitWMA(c.Length)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Result, w)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
 }
 
 func TestWMAValidation(t *testing.T) {
@@ -1128,7 +1479,46 @@ func TestWMACount(t *testing.T) {
 	assert.Equal(t, 15, w.Count())
 }
 
-func TestSrcValidation(t *testing.T) {
+func TestSourceInit(t *testing.T) {
+	cc := map[string]struct {
+		Indicator Indicator
+		Result    Source
+		Error     error
+	}{
+		"Invalid Indicator name": {
+			Indicator: IndicatorMock{},
+			Error:     ErrInvalidSrcName,
+		},
+		"Indicator throws an error": {
+			Indicator: SMA{Length: -1},
+			Error:     assert.AnError,
+		},
+		"Successful Source initialization": {
+			Indicator: SMA{Length: 1},
+			Result:    Source{SMA{Length: 1}},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			s, err := InitSource(c.Indicator)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Result, s)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestSourceValidation(t *testing.T) {
 	cc := map[string]struct {
 		Indicator Indicator
 		Name      string
@@ -1157,6 +1547,36 @@ func TestSrcValidation(t *testing.T) {
 					assert.NotNil(t, err)
 				} else {
 					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestSourceUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Error     error
+	}{
+		"Successful Source unmarshal": {
+			ByteArray: []byte(`{"name":"ema","length":1}`),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			s := Source{}
+			err := s.UnmarshalJSON(c.ByteArray)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, s)
 				}
 			} else {
 				assert.Nil(t, err)
