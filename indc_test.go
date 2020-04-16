@@ -416,7 +416,7 @@ func TestHMAValidation(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"WMA not set": {
-			Error: ErrMAIndicatorNotSet,
+			Error: ErrMANotSet,
 		},
 		"Successful validation": {
 			WMA: WMA{Length: 1},

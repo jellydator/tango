@@ -67,7 +67,7 @@ func (a Aroon) Count() int {
 // CCI holds all the neccesary information needed to calculate commodity
 // channel index.
 type CCI struct {
-	// Src configures moving average.
+	// Src configures.
 	Src Source `json:"source"`
 }
 
@@ -222,7 +222,7 @@ type HMA struct {
 // they're matching their requirements.
 func (h HMA) Validate() error {
 	if h.WMA == (WMA{}) {
-		return ErrMAIndicatorNotSet
+		return ErrMANotSet
 	}
 
 	if h.WMA.Length < 1 {
@@ -265,6 +265,7 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if err != nil {
 		return decimal.Zero, err
 	}
+
 	return r, nil
 }
 
@@ -610,6 +611,6 @@ func (s *Source) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(struct {
 		Indicator
-		Name string
+		Name string `json:"name"`
 	}{Indicator: s.Indicator, Name: name})
 }
