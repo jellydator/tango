@@ -79,14 +79,26 @@ func (a Aroon) Count() int {
 // CCI holds all the neccesary information needed to calculate commodity
 // channel index.
 type CCI struct {
-	// Src configures.
-	Src Source `json:"source"`
+	// Origin configures what calculations to use when computing CCI value.
+	Origin Source `json:"source"`
+}
+
+// InitCCI verifies provided values and
+// initializes commodity channel index indicator.
+func InitCCI(o Source) (CCI, error) {
+	c := CCI{Origin: o}
+
+	if err := c.Validate(); err != nil {
+		return CCI{}, err
+	}
+
+	return c, nil
 }
 
 // Validate checks all CCI settings stored in func receiver to make sure that
 // they're matching their requirements.
 func (c CCI) Validate() error {
-	if err := c.Src.Validate(); err != nil {
+	if err := c.Origin.Validate(); err != nil {
 		return err
 	}
 
@@ -100,7 +112,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	m, err := c.Src.Indicator.Calc(dd)
+	m, err := c.Origin.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -112,7 +124,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for CCI
 // calculation by using settings stored in the receiver.
 func (c CCI) Count() int {
-	return c.Src.Indicator.Count()
+	return c.Origin.Count()
 }
 
 // DEMA holds all the neccesary information needed to calculate
@@ -579,11 +591,7 @@ type Source struct {
 // Validate checks all Source values stored in func receiver to make sure
 // that they're matching provided requirements.
 func (s Source) Validate() error {
-	if s.Indicator == nil {
-		return ErrSrcNotSet
-	}
-
-	if err := s.Indicator.Validate(); err != nil {
+	if err := s.Validate(); err != nil {
 		return err
 	}
 
