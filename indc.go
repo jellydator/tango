@@ -18,6 +18,18 @@ type Aroon struct {
 	Length int `json:"length"`
 }
 
+// InitAroon verifies provided values and
+// initializes aroon indicator.
+func InitAroon(t string, lh int) (Aroon, error) {
+	a := Aroon{Trend: t, Length: lh}
+
+	if err := a.Validate(); err != nil {
+		return Aroon{}, err
+	}
+
+	return a, nil
+}
+
 // Validate checks all Aroon settings stored in func receiver to
 // make sure that they're matching their requirements.
 func (a Aroon) Validate() error {
