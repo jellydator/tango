@@ -59,7 +59,9 @@ func TestResize(t *testing.T) {
 				}
 			} else {
 				assert.Nil(t, err)
-				assert.Equal(t, c.Result, res)
+				for i := 0; i < len(c.Result); i++ {
+					assert.Equal(t, c.Result[i].Round(8), res[i].Round(8))
+				}
 			}
 		})
 	}
@@ -115,7 +117,9 @@ func TestResizeCandles(t *testing.T) {
 				}
 			} else {
 				assert.Nil(t, err)
-				assert.Equal(t, c.Result, res)
+				for i := 0; i < len(c.Result); i++ {
+					assert.Equal(t, c.Result[i].Close.Round(8), res[i].Close.Round(8))
+				}
 			}
 		})
 	}
@@ -180,6 +184,74 @@ func TestMeanDeviation(t *testing.T) {
 			res := meanDeviation(c.Data)
 
 			assert.Equal(t, c.Result, res)
+		})
+	}
+}
+
+func TestNewIndicator(t *testing.T) {
+	cc := map[string]struct {
+		Name   string
+		Result Indicator
+		Error  error
+	}{
+		"Successful creation of empty indicator": {
+			Name:   "ema",
+			Result: EMA{},
+		},
+		"Invalid indicator name": {
+			Name:  "tema",
+			Error: ErrInvalidType,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := newIndicator(c.Name)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, res)
+			}
+		})
+	}
+}
+
+func TestIndicatorName(t *testing.T) {
+	cc := map[string]struct {
+		Indicator Indicator
+		Result    string
+		Error     error
+	}{
+		"Successful reading of indicator name": {
+			Indicator: EMA{Length: 1},
+			Result:    "ema",
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := indicatorName(c.Indicator)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, res)
+			}
 		})
 	}
 }

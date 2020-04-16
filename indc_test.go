@@ -125,18 +125,15 @@ func TestAroonCount(t *testing.T) {
 
 func TestCCIValidation(t *testing.T) {
 	cc := map[string]struct {
-		MA    MA
+		Src   Source
 		Error error
 	}{
-		"MA returns an error": {
-			MA:    EMA{Length: -1},
+		"Source returns an error": {
+			Src:   Source{Indicator: EMA{Length: -1}},
 			Error: assert.AnError,
 		},
-		"MA is nil": {
-			Error: ErrMANotSet,
-		},
 		"Successful validation": {
-			MA: EMA{Length: 1},
+			Src: Source{Indicator: EMA{Length: 1}},
 		},
 	}
 
@@ -145,7 +142,7 @@ func TestCCIValidation(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			cci := CCI{MA: c.MA}
+			cci := CCI{Src: c.Src}
 			err := cci.Validate()
 			if c.Error != nil {
 				if c.Error == assert.AnError {
@@ -162,20 +159,20 @@ func TestCCIValidation(t *testing.T) {
 
 func TestCCICalc(t *testing.T) {
 	cc := map[string]struct {
-		MA     MA
+		Src    Source
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
 		"Insufficient amount of data points": {
-			MA: EMA{Length: 10},
+			Src: Source{Indicator: EMA{Length: 10}},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataPointCount,
 		},
 		"Successful calculation": {
-			MA: SMA{Length: 20},
+			Src: Source{Indicator: SMA{Length: 20}},
 			Data: []decimal.Decimal{
 				decimal.NewFromFloat(23.98),
 				decimal.NewFromFloat(23.92),
@@ -207,7 +204,7 @@ func TestCCICalc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			cci := CCI{MA: c.MA}
+			cci := CCI{Src: c.Src}
 			res, err := cci.Calc(c.Data)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
@@ -224,8 +221,8 @@ func TestCCICalc(t *testing.T) {
 }
 
 func TestCCICount(t *testing.T) {
-	c := CCI{MA: EMA{Length: 10}}
-	assert.Equal(t, c.MA.Count(), c.Count())
+	c := CCI{Src: Source{Indicator: EMA{Length: 10}}}
+	assert.Equal(t, c.Src.Indicator.Count(), c.Count())
 }
 
 func TestDEMAValidation(t *testing.T) {
@@ -411,8 +408,8 @@ func TestEMAMultiplier(t *testing.T) {
 
 func TestHMAValidation(t *testing.T) {
 	cc := map[string]struct {
-		WMA WMA
-		Error  error
+		WMA   WMA
+		Error error
 	}{
 		"WMA returns an error": {
 			WMA:   WMA{Length: -1},
@@ -448,7 +445,7 @@ func TestHMAValidation(t *testing.T) {
 
 func TestHMACalc(t *testing.T) {
 	cc := map[string]struct {
-		WMA WMA
+		WMA    WMA
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
@@ -502,31 +499,23 @@ func TestHMACount(t *testing.T) {
 
 func TestMACDValidation(t *testing.T) {
 	cc := map[string]struct {
-		MA1   MA
-		MA2   MA
+		Src1  Source
+		Src2  Source
 		Error error
 	}{
-		"MA1 returns an error": {
-			MA1:   EMA{Length: -1},
-			MA2:   EMA{Length: 1},
+		"Src1 returns an error": {
+			Src1:  Source{Indicator: EMA{Length: -1}},
+			Src2:  Source{Indicator: EMA{Length: 1}},
 			Error: assert.AnError,
 		},
-		"MA2 returns an error": {
-			MA1:   EMA{Length: 1},
-			MA2:   EMA{Length: -1},
+		"Src2 returns an error": {
+			Src1:  Source{Indicator: EMA{Length: 1}},
+			Src2:  Source{Indicator: EMA{Length: -1}},
 			Error: assert.AnError,
-		},
-		"MA1 is nil": {
-			MA2:   EMA{Length: 1},
-			Error: ErrMANotSet,
-		},
-		"MA2 is nil": {
-			MA1:   EMA{Length: 1},
-			Error: ErrMANotSet,
 		},
 		"Successful validation": {
-			MA1: EMA{Length: 1},
-			MA2: EMA{Length: 1},
+			Src1: Source{Indicator: EMA{Length: 1}},
+			Src2: Source{Indicator: EMA{Length: 1}},
 		},
 	}
 
@@ -535,7 +524,7 @@ func TestMACDValidation(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			m := MACD{MA1: c.MA1, MA2: c.MA2}
+			m := MACD{Src1: c.Src1, Src2: c.Src2}
 			err := m.Validate()
 			if c.Error != nil {
 				if c.Error == assert.AnError {
@@ -552,31 +541,31 @@ func TestMACDValidation(t *testing.T) {
 
 func TestMACDCalc(t *testing.T) {
 	cc := map[string]struct {
-		MA1    MA
-		MA2    MA
+		Src1   Source
+		Src2   Source
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
-		"MA1 insufficient amount of data points": {
-			MA1: EMA{Length: 4},
-			MA2: EMA{Length: 1},
+		"Src1 insufficient amount of data points": {
+			Src1: Source{Indicator: EMA{Length: 4}},
+			Src2: Source{Indicator: EMA{Length: 1}},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataPointCount,
 		},
-		"MA2 insufficient amount of data points": {
-			MA1: EMA{Length: 1},
-			MA2: EMA{Length: 4},
+		"Src2 insufficient amount of data points": {
+			Src1: Source{Indicator: EMA{Length: 1}},
+			Src2: Source{Indicator: EMA{Length: 4}},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataPointCount,
 		},
 		"Successful calculation": {
-			MA1: SMA{Length: 2},
-			MA2: SMA{Length: 3},
+			Src1: Source{Indicator: SMA{Length: 2}},
+			Src2: Source{Indicator: SMA{Length: 3}},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -594,7 +583,7 @@ func TestMACDCalc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			m := MACD{MA1: c.MA1, MA2: c.MA2}
+			m := MACD{Src1: c.Src1, Src2: c.Src2}
 			res, err := m.Calc(c.Data)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
@@ -611,11 +600,11 @@ func TestMACDCalc(t *testing.T) {
 }
 
 func TestMACDCount(t *testing.T) {
-	m := MACD{MA1: EMA{Length: 10}, MA2: EMA{Length: 1}}
-	assert.Equal(t, m.Count(), 19)
+	m := MACD{Src1: Source{Indicator: EMA{Length: 10}}, Src2: Source{Indicator: EMA{Length: 1}}}
+	assert.Equal(t, m.Count(), m.Src1.Indicator.Count())
 
-	m = MACD{MA1: EMA{Length: 2}, MA2: EMA{Length: 9}}
-	assert.Equal(t, m.Count(), 17)
+	m = MACD{Src1: Source{Indicator: EMA{Length: 2}}, Src2: Source{Indicator: EMA{Length: 9}}}
+	assert.Equal(t, m.Count(), m.Src2.Indicator.Count())
 }
 
 func TestROCValidation(t *testing.T) {
@@ -1060,4 +1049,41 @@ func TestWMACalc(t *testing.T) {
 func TestWMACount(t *testing.T) {
 	w := WMA{Length: 15}
 	assert.Equal(t, 15, w.Count())
+}
+
+func TestSrcValidation(t *testing.T) {
+	cc := map[string]struct {
+		Indicator Indicator
+		Name      string
+		Error     error
+	}{
+		"Indicator returns an error": {
+			Name:      "EMA",
+			Indicator: EMA{Length: -1},
+			Error:     assert.AnError,
+		},
+		"Successful validation": {
+			Name:      "EMA",
+			Indicator: EMA{Length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			s := Source{Indicator: c.Indicator}
+			err := s.Validate()
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
 }
