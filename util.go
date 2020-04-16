@@ -32,30 +32,30 @@ var (
 
 // resize cuts given array based on length to use for
 // calculations.
-func resize(dd []decimal.Decimal, l int) ([]decimal.Decimal, error) {
-	if l < 1 {
+func resize(dd []decimal.Decimal, lh int) ([]decimal.Decimal, error) {
+	if lh < 1 {
 		return nil, ErrInvalidLength
 	}
 
-	if l > len(dd) {
+	if lh > len(dd) {
 		return nil, ErrInvalidDataPointCount
 	}
 
-	return dd[len(dd)-l:], nil
+	return dd[len(dd)-lh:], nil
 }
 
 // resizeCandles cuts given array based on length to use for
 // calculations.
-func resizeCandles(cc []chartype.Candle, l int) ([]chartype.Candle, error) {
-	if l < 1 {
+func resizeCandles(cc []chartype.Candle, lh int) ([]chartype.Candle, error) {
+	if lh < 1 {
 		return nil, ErrInvalidLength
 	}
 
-	if l > len(cc) || l < 1 {
+	if lh > len(cc) || lh < 1 {
 		return nil, ErrInvalidDataPointCount
 	}
 
-	return cc[len(cc)-l:], nil
+	return cc[len(cc)-lh:], nil
 }
 
 // typicalPrice recalculates array of candles into an array of typical prices
