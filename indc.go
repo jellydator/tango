@@ -698,6 +698,16 @@ type Source struct {
 	Indicator
 }
 
+// InitSource verifies provided indicator and
+// initializes source.
+func InitSource(i Indicator) (Source, error) {
+	if err := i.Validate(); err != nil {
+		return Source{}, err
+	}
+
+	return Source{i}, nil
+}
+
 // Validate checks all Source values stored in func receiver to make sure
 // that they're matching provided requirements.
 func (s Source) Validate() error {
