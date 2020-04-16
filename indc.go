@@ -708,16 +708,6 @@ func InitSource(i Indicator) (Source, error) {
 	return Source{i}, nil
 }
 
-// Validate checks all Source values stored in func receiver to make sure
-// that they're matching provided requirements.
-func (s Source) Validate() error {
-	if err := s.Validate(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // UnmarshalJSON parse JSON into an indicator source.
 func (s *Source) UnmarshalJSON(d []byte) error {
 	var id struct {
