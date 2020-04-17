@@ -1,6 +1,7 @@
 package indc
 
 import (
+	"encoding/json"
 	"errors"
 
 	"github.com/shopspring/decimal"
@@ -15,12 +16,12 @@ var (
 	// ErrInvalidLength is returned when provided length is less than 1.
 	ErrInvalidLength = errors.New("length cannot be less than 1")
 
-	// ErrSrcNotSet is returned when src indicator field is nil.
-	ErrSrcNotSet = errors.New("source indicator is not set")
+	// ErrSourceNotSet is returned when source indicator field is nil.
+	ErrSourceNotSet = errors.New("source indicator is not set")
 
-	// ErrInvalidSrcName is returned when provided indicator name
+	// ErrInvalidSourceName is returned when provided indicator name
 	// isn't recognized.
-	ErrInvalidSrcName = errors.New("unrecognized source indicator name")
+	ErrInvalidSourceName = errors.New("unrecognized source indicator name")
 
 	// ErrMANotSet is returned when indicator field is nil.
 	ErrMANotSet = errors.New("ma value not set")
@@ -87,62 +88,128 @@ func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	return rez.Div(decimal.NewFromInt(int64(len(dd)))).Round(8)
 }
 
-// newIndicator finds and returns an empty indicator of the specified name.
-func newIndicator(n string) (Indicator, error) {
+// newIndicatorFromJSON finds and returns an empty indicator of the specified name.
+func newIndicatorFromJSON(n string, d []byte) (Indicator, error) {
 	switch n {
 	case "aroon":
-		return Aroon{}, nil
+		a := Aroon{}
+		err := json.Unmarshal(d, &a)
+		return a, err
 	case "cci":
-		return CCI{}, nil
+		c := CCI{}
+		err := json.Unmarshal(d, &c)
+		return c, err
 	case "dema":
-		return DEMA{}, nil
+		dm := DEMA{}
+		err := json.Unmarshal(d, &dm)
+		return dm, err
 	case "ema":
-		return EMA{}, nil
+		e := EMA{}
+		err := json.Unmarshal(d, &e)
+		return e, err
 	case "hma":
-		return HMA{}, nil
+		h := HMA{}
+		err := json.Unmarshal(d, &h)
+		return h, err
 	case "macd":
-		return MACD{}, nil
+		m := MACD{}
+		err := json.Unmarshal(d, &m)
+		return m, err
 	case "roc":
-		return ROC{}, nil
+		r := ROC{}
+		err := json.Unmarshal(d, &r)
+		return r, err
 	case "rsi":
-		return RSI{}, nil
+		r := RSI{}
+		err := json.Unmarshal(d, &r)
+		return r, err
 	case "sma":
-		return SMA{}, nil
+		s := SMA{}
+		err := json.Unmarshal(d, &s)
+		return s, err
 	case "stoch":
-		return Stoch{}, nil
+		s := Stoch{}
+		err := json.Unmarshal(d, &s)
+		return s, err
 	case "wma":
-		return WMA{}, nil
+		w := WMA{}
+		err := json.Unmarshal(d, &w)
+		return w, err
 	}
 
-	return nil, ErrInvalidType
+	return nil, ErrInvalidSourceName
 }
 
 // extractIndicatorName determines the name of the specified indicator.
-func extractIndicatorName(ind Indicator) (string, error) {
+func extractIndicatorName(ind Indicator) ([]byte, error) {
 	switch ind.(type) {
 	case Aroon:
-		return "aroon", nil
+		d, err := json.Marshal(struct {
+			Aroon
+			Name string `json:"name"`
+		}{Aroon: ind.(Aroon), Name: "aroon"})
+		return d, err
 	case CCI:
-		return "cci", nil
+		d, err := json.Marshal(struct {
+			CCI
+			Name string `json:"name"`
+		}{CCI: ind.(CCI), Name: "cci"})
+		return d, err
 	case DEMA:
-		return "dema", nil
+		d, err := json.Marshal(struct {
+			DEMA
+			Name string `json:"name"`
+		}{DEMA: ind.(DEMA), Name: "dema"})
+		return d, err
 	case EMA:
-		return "ema", nil
+		d, err := json.Marshal(struct {
+			EMA
+			Name string `json:"name"`
+		}{EMA: ind.(EMA), Name: "ema"})
+		return d, err
 	case HMA:
-		return "hma", nil
+		d, err := json.Marshal(struct {
+			HMA
+			Name string `json:"name"`
+		}{HMA: ind.(HMA), Name: "hma"})
+		return d, err
 	case MACD:
-		return "macd", nil
+		d, err := json.Marshal(struct {
+			MACD
+			Name string `json:"name"`
+		}{MACD: ind.(MACD), Name: "macd"})
+		return d, err
 	case ROC:
-		return "roc", nil
+		d, err := json.Marshal(struct {
+			ROC
+			Name string `json:"name"`
+		}{ROC: ind.(ROC), Name: "roc"})
+		return d, err
 	case RSI:
-		return "rsi", nil
+		d, err := json.Marshal(struct {
+			RSI
+			Name string `json:"name"`
+		}{RSI: ind.(RSI), Name: "rsi"})
+		return d, err
 	case SMA:
-		return "sma", nil
+		d, err := json.Marshal(struct {
+			SMA
+			Name string `json:"name"`
+		}{SMA: ind.(SMA), Name: "sma"})
+		return d, err
 	case Stoch:
-		return "stoch", nil
+		d, err := json.Marshal(struct {
+			Stoch
+			Name string `json:"name"`
+		}{Stoch: ind.(Stoch), Name: "stoch"})
+		return d, err
 	case WMA:
-		return "wma", nil
+		d, err := json.Marshal(struct {
+			WMA
+			Name string `json:"name"`
+		}{WMA: ind.(WMA), Name: "wma"})
+		return d, err
 	}
 
-	return "", ErrInvalidType
+	return nil, ErrInvalidType
 }
