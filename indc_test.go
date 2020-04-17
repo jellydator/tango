@@ -1604,7 +1604,7 @@ func TestSourceMarshal(t *testing.T) {
 	}{
 		"Successful Source marshal": {
 			Source: Source{EMA{Length: 1}},
-			Result: []byte(`{"length":1,"name":"ema"}`),
+			Result: []byte(`{"name":"ema","length":1}`),
 		},
 	}
 
