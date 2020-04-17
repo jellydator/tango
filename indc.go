@@ -80,7 +80,7 @@ func (a Aroon) Count() int {
 // channel index.
 type CCI struct {
 	// Source configures what calculations to use when computing CCI value.
-	Source Source `json:"Source"`
+	Source Source `json:"source"`
 }
 
 // NewCCI verifies provided values and
@@ -325,11 +325,11 @@ func (h HMA) Count() int {
 type MACD struct {
 	// Source1 configures what calculations to use when computing first
 	// macd value.
-	Source1 Source `json:"Source1"`
+	Source1 Source `json:"source1"`
 
 	// Source2 configures what calculations to use when computing second
 	// macd value.
-	Source2 Source `json:"Source2"`
+	Source2 Source `json:"source2"`
 }
 
 // NewMACD verifies provided values and

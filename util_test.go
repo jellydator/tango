@@ -200,6 +200,60 @@ func TestNewIndicatorFromJSON(t *testing.T) {
 			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1}`),
 			Result:    Aroon{Trend: "up", Length: 1},
 		},
+		"Successful creation of a cci indicator": {
+			Name: "cci",
+			ByteArray: []byte(`{"name":"cci",
+			"source":{"name":"aroon","trend":"up","length":1}}`),
+			Result: CCI{Source{Aroon{Trend: "up", Length: 1}}},
+		},
+		"Successful creation of a dema indicator": {
+			Name:      "dema",
+			ByteArray: []byte(`{"name":"dema","length":1}`),
+			Result:    DEMA{Length: 1},
+		},
+		"Successful creation of an ema indicator": {
+			Name:      "ema",
+			ByteArray: []byte(`{"name":"ema","length":1}`),
+			Result:    EMA{Length: 1},
+		},
+		"Successful creation of a hma indicator": {
+			Name:      "hma",
+			ByteArray: []byte(`{"name":"hma", "wma":{"length":1}}`),
+			Result:    HMA{WMA: WMA{Length: 1}},
+		},
+		"Successful creation of a macd indicator": {
+			Name: "macd",
+			ByteArray: []byte(`{"name":"macd",
+			"source1":{"name":"aroon","trend":"down","length":2},
+			"source2":{"name":"cci","source":{"name":"ema", "length":2}}}`),
+			Result: MACD{Source{Aroon{Trend: "down", Length: 2}},
+				Source{CCI{Source{EMA{Length: 2}}}}},
+		},
+		"Successful creation of a roc indicator": {
+			Name:      "roc",
+			ByteArray: []byte(`{"name":"roc","length":1}`),
+			Result:    ROC{Length: 1},
+		},
+		"Successful creation of a rsi indicator": {
+			Name:      "rsi",
+			ByteArray: []byte(`{"name":"rsi","length":1}`),
+			Result:    RSI{Length: 1},
+		},
+		"Successful creation of a sma indicator": {
+			Name:      "sma",
+			ByteArray: []byte(`{"name":"sma","length":1}`),
+			Result:    SMA{Length: 1},
+		},
+		"Successful creation of a stoch indicator": {
+			Name:      "stoch",
+			ByteArray: []byte(`{"name":"stoch","length":1}`),
+			Result:    Stoch{Length: 1},
+		},
+		"Successful creation of an wma indicator": {
+			Name:      "wma",
+			ByteArray: []byte(`{"name":"wma","length":1}`),
+			Result:    WMA{Length: 1},
+		},
 		"Invalid indicator name": {
 			Name:  "tema",
 			Error: ErrInvalidSourceName,
