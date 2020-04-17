@@ -188,19 +188,21 @@ func TestMeanDeviation(t *testing.T) {
 	}
 }
 
-func TestNewIndicator(t *testing.T) {
+func TestNewIndicatorFromJSON(t *testing.T) {
 	cc := map[string]struct {
-		Name   string
-		Result Indicator
-		Error  error
+		Name      string
+		ByteArray []byte
+		Result    Indicator
+		Error     error
 	}{
-		"Successful creation of empty indicator": {
-			Name:   "ema",
-			Result: EMA{},
+		"Successful creation of an aroon indicator": {
+			Name:      "aroon",
+			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1}`),
+			Result:    Aroon{Trend: "up", Length: 1},
 		},
 		"Invalid indicator name": {
 			Name:  "tema",
-			Error: ErrInvalidType,
+			Error: ErrInvalidSourceName,
 		},
 	}
 
@@ -209,7 +211,7 @@ func TestNewIndicator(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res, err := newIndicator(c.Name)
+			res, err := newIndicatorFromJSON(c.Name, c.ByteArray)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -224,34 +226,34 @@ func TestNewIndicator(t *testing.T) {
 	}
 }
 
-func TestExtractIndicatorName(t *testing.T) {
-	cc := map[string]struct {
-		Indicator Indicator
-		Result    string
-		Error     error
-	}{
-		"Successful reading of indicator name": {
-			Indicator: EMA{Length: 1},
-			Result:    "ema",
-		},
-	}
+// func TestExtractIndicatorName(t *testing.T) {
+// 	cc := map[string]struct {
+// 		Indicator Indicator
+// 		Result    string
+// 		Error     error
+// 	}{
+// 		"Successful reading of indicator name": {
+// 			Indicator: EMA{Length: 1},
+// 			Result:    "ema",
+// 		},
+// 	}
 
-	for cn, c := range cc {
-		c := c
-		t.Run(cn, func(t *testing.T) {
-			t.Parallel()
+// 	for cn, c := range cc {
+// 		c := c
+// 		t.Run(cn, func(t *testing.T) {
+// 			t.Parallel()
 
-			res, err := extractIndicatorName(c.Indicator)
-			if c.Error != nil {
-				if c.Error == assert.AnError {
-					assert.NotNil(t, err)
-				} else {
-					assert.Equal(t, c.Error, err)
-				}
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result, res)
-			}
-		})
-	}
-}
+// 			res, err := extractIndicatorName(c.Indicator)
+// 			if c.Error != nil {
+// 				if c.Error == assert.AnError {
+// 					assert.NotNil(t, err)
+// 				} else {
+// 					assert.Equal(t, c.Error, err)
+// 				}
+// 			} else {
+// 				assert.Nil(t, err)
+// 				assert.Equal(t, c.Result, res)
+// 			}
+// 		})
+// 	}
+// }
