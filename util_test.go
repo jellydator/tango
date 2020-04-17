@@ -188,7 +188,7 @@ func TestMeanDeviation(t *testing.T) {
 	}
 }
 
-func TestNewIndicatorFromJSON(t *testing.T) {
+func TestFromJSON(t *testing.T) {
 	cc := map[string]struct {
 		Name      string
 		ByteArray []byte
@@ -265,7 +265,7 @@ func TestNewIndicatorFromJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res, err := newIndicatorFromJSON(c.Name, c.ByteArray)
+			res, err := fromJSON(c.Name, c.ByteArray)
 			if c.Error != nil {
 				if c.Error == assert.AnError {
 					assert.NotNil(t, err)
@@ -280,34 +280,79 @@ func TestNewIndicatorFromJSON(t *testing.T) {
 	}
 }
 
-// func TestExtractIndicatorName(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Indicator Indicator
-// 		Result    string
-// 		Error     error
-// 	}{
-// 		"Successful reading of indicator name": {
-// 			Indicator: EMA{Length: 1},
-// 			Result:    "ema",
-// 		},
-// 	}
+func TestToJSON(t *testing.T) {
+	cc := map[string]struct {
+		Indicator Indicator
+		Result    []byte
+		Error     error
+	}{
+		"Successful marshal of an aroon indicator": {
+			Indicator: Aroon{Trend: "up", Length: 1},
+			Result:    []byte(`{"name":"aroon","trend":"up","length":1}`),
+		},
+		"Successful marshal of a cci indicator": {
+			Indicator: CCI{Source{Aroon{Trend: "up", Length: 1}}},
+			Result:    []byte(`{"name":"cci","source":{"name":"aroon","trend":"up","length":1}}`),
+		},
+		"Successful marshal of a dema indicator": {
+			Indicator: DEMA{Length: 1},
+			Result:    []byte(`{"name":"dema","length":1}`),
+		},
+		"Successful marshal of an ema indicator": {
+			Indicator: EMA{Length: 1},
+			Result:    []byte(`{"name":"ema","length":1}`),
+		},
+		"Successful marshal of a hma indicator": {
+			Indicator: HMA{WMA: WMA{Length: 1}},
+			Result:    []byte(`{"name":"hma","wma":{"length":1}}`),
+		},
+		"Successful marshal of a macd indicator": {
+			Indicator: MACD{Source{Aroon{Trend: "down", Length: 2}},
+				Source{CCI{Source{EMA{Length: 2}}}}},
+			Result: []byte(`{"name":"macd","source1":{"name":"aroon","trend":"down","length":2},"source2":{"name":"cci","source":{"name":"ema","length":2}}}`),
+		},
+		"Successful marshal of a roc indicator": {
+			Indicator: ROC{Length: 1},
+			Result:    []byte(`{"name":"roc","length":1}`),
+		},
+		"Successful marshal of a rsi indicator": {
+			Indicator: RSI{Length: 1},
+			Result:    []byte(`{"name":"rsi","length":1}`),
+		},
+		"Successful marshal of a sma indicator": {
+			Indicator: SMA{Length: 1},
+			Result:    []byte(`{"name":"sma","length":1}`),
+		},
+		"Successful marshal of a stoch indicator": {
+			Indicator: Stoch{Length: 1},
+			Result:    []byte(`{"name":"stoch","length":1}`),
+		},
+		"Successful marshal of a wma indicator": {
+			Indicator: WMA{Length: 1},
+			Result:    []byte(`{"name":"wma","length":1}`),
+		},
+		"Invalid indicator": {
+			Indicator: IndicatorMock{},
+			Error:     ErrInvalidType,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			res, err := extractIndicatorName(c.Indicator)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, res)
-// 			}
-// 		})
-// 	}
-// }
+			res, err := toJSON(c.Indicator)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, res)
+			}
+		})
+	}
+}

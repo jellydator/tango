@@ -88,8 +88,9 @@ func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	return rez.Div(decimal.NewFromInt(int64(len(dd)))).Round(8)
 }
 
-// newIndicatorFromJSON finds and returns an empty indicator of the specified name.
-func newIndicatorFromJSON(n string, d []byte) (Indicator, error) {
+// fromJSON finds an indicator based on its name and returns it as Interface
+// with its values.
+func fromJSON(n string, d []byte) (Indicator, error) {
 	switch n {
 	case "aroon":
 		a := Aroon{}
@@ -140,74 +141,75 @@ func newIndicatorFromJSON(n string, d []byte) (Indicator, error) {
 	return nil, ErrInvalidSourceName
 }
 
-// extractIndicatorName determines the name of the specified indicator.
-func extractIndicatorName(ind Indicator) ([]byte, error) {
+// toJSON determines the name of the specified indicator and creates a byte
+// slice array with its information.
+func toJSON(ind Indicator) ([]byte, error) {
 	switch ind.(type) {
 	case Aroon:
 		d, err := json.Marshal(struct {
-			Aroon
 			Name string `json:"name"`
-		}{Aroon: ind.(Aroon), Name: "aroon"})
+			Aroon
+		}{Name: "aroon", Aroon: ind.(Aroon)})
 		return d, err
 	case CCI:
 		d, err := json.Marshal(struct {
-			CCI
 			Name string `json:"name"`
-		}{CCI: ind.(CCI), Name: "cci"})
+			CCI
+		}{Name: "cci", CCI: ind.(CCI)})
 		return d, err
 	case DEMA:
 		d, err := json.Marshal(struct {
-			DEMA
 			Name string `json:"name"`
-		}{DEMA: ind.(DEMA), Name: "dema"})
+			DEMA
+		}{Name: "dema", DEMA: ind.(DEMA)})
 		return d, err
 	case EMA:
 		d, err := json.Marshal(struct {
-			EMA
 			Name string `json:"name"`
-		}{EMA: ind.(EMA), Name: "ema"})
+			EMA
+		}{Name: "ema", EMA: ind.(EMA)})
 		return d, err
 	case HMA:
 		d, err := json.Marshal(struct {
-			HMA
 			Name string `json:"name"`
-		}{HMA: ind.(HMA), Name: "hma"})
+			HMA
+		}{Name: "hma", HMA: ind.(HMA)})
 		return d, err
 	case MACD:
 		d, err := json.Marshal(struct {
-			MACD
 			Name string `json:"name"`
-		}{MACD: ind.(MACD), Name: "macd"})
+			MACD
+		}{Name: "macd", MACD: ind.(MACD)})
 		return d, err
 	case ROC:
 		d, err := json.Marshal(struct {
-			ROC
 			Name string `json:"name"`
-		}{ROC: ind.(ROC), Name: "roc"})
+			ROC
+		}{Name: "roc", ROC: ind.(ROC)})
 		return d, err
 	case RSI:
 		d, err := json.Marshal(struct {
-			RSI
 			Name string `json:"name"`
-		}{RSI: ind.(RSI), Name: "rsi"})
+			RSI
+		}{Name: "rsi", RSI: ind.(RSI)})
 		return d, err
 	case SMA:
 		d, err := json.Marshal(struct {
-			SMA
 			Name string `json:"name"`
-		}{SMA: ind.(SMA), Name: "sma"})
+			SMA
+		}{Name: "sma", SMA: ind.(SMA)})
 		return d, err
 	case Stoch:
 		d, err := json.Marshal(struct {
-			Stoch
 			Name string `json:"name"`
-		}{Stoch: ind.(Stoch), Name: "stoch"})
+			Stoch
+		}{Name: "stoch", Stoch: ind.(Stoch)})
 		return d, err
 	case WMA:
 		d, err := json.Marshal(struct {
-			WMA
 			Name string `json:"name"`
-		}{WMA: ind.(WMA), Name: "wma"})
+			WMA
+		}{Name: "wma", WMA: ind.(WMA)})
 		return d, err
 	}
 

@@ -686,7 +686,7 @@ type Source struct {
 // NewSource verifies provided indicator and
 // Newializes source.
 func NewSource(i Indicator) (Source, error) {
-	if _, err := extractIndicatorName(i); err != nil {
+	if _, err := toJSON(i); err != nil {
 		return Source{}, ErrInvalidSourceName
 	}
 
@@ -700,7 +700,7 @@ func NewSource(i Indicator) (Source, error) {
 // Validate checks all Source values stored in func receiver to make sure
 // that they're matching provided requirements.
 func (s Source) Validate() error {
-	if _, err := extractIndicatorName(s.Indicator); err != nil {
+	if _, err := toJSON(s.Indicator); err != nil {
 		return err
 	}
 
@@ -721,7 +721,7 @@ func (s *Source) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	ind, err := newIndicatorFromJSON(id.Name, d)
+	ind, err := fromJSON(id.Name, d)
 	if err != nil {
 		return err
 	}
@@ -733,7 +733,7 @@ func (s *Source) UnmarshalJSON(d []byte) error {
 
 // MarshalJSON converts source data into JSON.
 func (s Source) MarshalJSON() ([]byte, error) {
-	d, err := extractIndicatorName(s.Indicator)
+	d, err := toJSON(s.Indicator)
 	if err != nil {
 		return nil, err
 	}
