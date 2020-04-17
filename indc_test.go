@@ -1602,6 +1602,10 @@ func TestSourceMarshal(t *testing.T) {
 		Result []byte
 		Error  error
 	}{
+		"toJSON throws an error": {
+			Source: Source{IndicatorMock{}},
+			Error:  assert.AnError,
+		},
 		"Successful Source marshal": {
 			Source: Source{EMA{Length: 1}},
 			Result: []byte(`{"name":"ema","length":1}`),
