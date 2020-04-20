@@ -1060,135 +1060,171 @@ func TestAroonMarshal(t *testing.T) {
 // 	assert.Equal(t, 15, r.Count())
 // }
 
-// func TestRSINew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Result RSI
-// 		Error  error
-// 	}{
-// 		"RSI throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful RSI creation": {
-// 			Length: 1,
-// 			Result: RSI{Length: 1},
-// 		},
-// 	}
+func TestRSINew(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result RSI
+		Error  error
+	}{
+		"RSI throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful RSI creation": {
+			Length: 1,
+			Result: RSI{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			r, err := NewRSI(c.Length)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Result, r)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			r, err := NewRSI(c.Length)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, r)
+			}
+		})
+	}
+}
 
-// func TestRSIValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Error  error
-// 	}{
-// 		"Length cannot be less than 1": {
-// 			Length: 0,
-// 			Error:  ErrInvalidLength,
-// 		},
-// 		"Successful validation": {
-// 			Length: 1,
-// 		},
-// 	}
+func TestRSIValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Error  error
+	}{
+		"Length cannot be less than 1": {
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful validation": {
+			Length: 1,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			r := RSI{Length: c.Length}
-// 			err := r.Validate()
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			r := RSI{length: c.Length}
+			err := r.validate()
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestRSICalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Insufficient amount of data points": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation": {
-// 			Length: 14,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromFloat32(44.34),
-// 				decimal.NewFromFloat32(44.09),
-// 				decimal.NewFromFloat32(44.15),
-// 				decimal.NewFromFloat32(43.61),
-// 				decimal.NewFromFloat32(44.33),
-// 				decimal.NewFromFloat32(44.83),
-// 				decimal.NewFromFloat32(45.10),
-// 				decimal.NewFromFloat32(45.42),
-// 				decimal.NewFromFloat32(45.84),
-// 				decimal.NewFromFloat32(46.08),
-// 				decimal.NewFromFloat32(45.89),
-// 				decimal.NewFromFloat32(46.03),
-// 				decimal.NewFromFloat32(45.61),
-// 				decimal.NewFromFloat32(46.28),
-// 			},
-// 			Result: decimal.NewFromFloat(70.46413502109705),
-// 		},
-// 	}
+func TestRSICalc(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Insufficient amount of data points": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful calculation": {
+			Length: 14,
+			Data: []decimal.Decimal{
+				decimal.NewFromFloat32(44.34),
+				decimal.NewFromFloat32(44.09),
+				decimal.NewFromFloat32(44.15),
+				decimal.NewFromFloat32(43.61),
+				decimal.NewFromFloat32(44.33),
+				decimal.NewFromFloat32(44.83),
+				decimal.NewFromFloat32(45.10),
+				decimal.NewFromFloat32(45.42),
+				decimal.NewFromFloat32(45.84),
+				decimal.NewFromFloat32(46.08),
+				decimal.NewFromFloat32(45.89),
+				decimal.NewFromFloat32(46.03),
+				decimal.NewFromFloat32(45.61),
+				decimal.NewFromFloat32(46.28),
+			},
+			Result: decimal.NewFromFloat(70.46413502109705),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			r := RSI{Length: c.Length}
-// 			res, err := r.Calc(c.Data)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.Round(14).String())
-// 			}
-// 		})
-// 	}
-// }
+			r := RSI{length: c.Length}
+			res, err := r.Calc(c.Data)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
+			}
+		})
+	}
+}
 
-// func TestRSICount(t *testing.T) {
-// 	r := RSI{Length: 15}
-// 	assert.Equal(t, 15, r.Count())
-// }
+func TestRSICount(t *testing.T) {
+	r := RSI{length: 15}
+	assert.Equal(t, 15, r.Count())
+}
+
+func TestRSIUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    RSI
+		Error     error
+	}{
+		"Unmarshal throws an error": {
+			ByteArray: []byte(`{"length": "down"}`),
+			Error:     assert.AnError,
+		},
+		"Successful RSI unmarshal": {
+			ByteArray: []byte(`{"name":"rsi","length":1}`),
+			Result:    RSI{length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			r := RSI{}
+			err := json.Unmarshal(c.ByteArray, &r)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, r)
+			}
+		})
+	}
+}
+
+func TestRSIMarshal(t *testing.T) {
+	c := struct {
+		RSI    RSI
+		Result []byte
+	}{
+		RSI:    RSI{length: 1},
+		Result: []byte(`{"name":"rsi","length":1}`),
+	}
+
+	d, _ := json.Marshal(c.RSI)
+
+	assert.Equal(t, c.Result, d)
+}
 
 func TestSMANew(t *testing.T) {
 	cc := map[string]struct {
