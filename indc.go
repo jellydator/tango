@@ -2,6 +2,7 @@ package indc
 
 import (
 	"encoding/json"
+	"math"
 
 	"github.com/shopspring/decimal"
 )
@@ -401,72 +402,109 @@ func (e EMA) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// // HMA holds all the neccesary information needed to calculate
-// // hull moving average.
-// type HMA struct {
-// 	// WMA configures base moving average.
-// 	WMA WMA `json:"wma"`
-// }
+// HMA holds all the neccesary information needed to calculate
+// hull moving average.
+type HMA struct {
+	// wma configures base moving average.
+	wma WMA
+}
 
-// // NewHMA verifies provided values and
-// // Newializes hull moving average indicator.
-// func NewHMA(w WMA) (HMA, error) {
-// 	h := HMA{WMA: w}
+// NewHMA verifies provided values and
+// creates hull moving average indicator.
+func NewHMA(w WMA) (HMA, error) {
+	h := HMA{wma: w}
 
-// 	if err := h.Validate(); err != nil {
-// 		return HMA{}, err
-// 	}
+	if err := h.validate(); err != nil {
+		return HMA{}, err
+	}
 
-// 	return h, nil
-// }
+	return h, nil
+}
 
-// // Validate checks all HMA settings stored in func receiver to make sure that
-// // they're matching their requirements.
-// func (h HMA) Validate() error {
-// 	if h.WMA == (WMA{}) {
-// 		return ErrMANotSet
-// 	}
+// validate checks all HMA settings stored in func receiver to make sure that
+// they're matching their requirements.
+func (h HMA) validate() error {
+	if h.wma == (WMA{}) {
+		return ErrMANotSet
+	}
 
-// 	if h.WMA.Length < 1 {
-// 		return ErrInvalidLength
-// 	}
+	if h.wma.length < 1 {
+		return ErrInvalidLength
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
-// // Calc calculates HMA value by using settings stored in the func receiver.
-// func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-// 	dd, err := resize(dd, h.Count())
-// 	if err != nil {
-// 		return decimal.Zero, err
-// 	}
+// Calc calculates HMA value by using settings stored in the func receiver.
+func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, h.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-// 	l := int(math.Sqrt(float64(h.WMA.Count())))
+	l := int(math.Sqrt(float64(h.wma.Count())))
 
-// 	w1 := WMA{Length: h.WMA.Count() / 2}
-// 	w2 := h.WMA
-// 	w3 := WMA{Length: l}
+	w1 := WMA{length: h.wma.Count() / 2}
+	w2 := h.wma
+	w3 := WMA{length: l}
 
-// 	v := make([]decimal.Decimal, l)
+	v := make([]decimal.Decimal, l)
 
-// 	for i := 0; i < l; i++ {
-// 		r1, _ := w1.Calc(dd[:len(dd)-l+i+1])
+	for i := 0; i < l; i++ {
+		r1, _ := w1.Calc(dd[:len(dd)-l+i+1])
 
-// 		r2, _ := w2.Calc(dd[:len(dd)-l+i+1])
+		r2, _ := w2.Calc(dd[:len(dd)-l+i+1])
 
-// 		v[i] = r1.Mul(decimal.NewFromInt(2)).Sub(r2)
-// 	}
+		v[i] = r1.Mul(decimal.NewFromInt(2)).Sub(r2)
+	}
 
-// 	r, _ := w3.Calc(v)
+	r, _ := w3.Calc(v)
 
-// 	return r, nil
-// }
+	return r, nil
+}
 
-// // Count determines the total amount of data points needed for HMA
-// // calculation by using settings stored in the receiver.
-// func (h HMA) Count() int {
-// 	return h.WMA.Count()*2 - 1
-// }
+// Count determines the total amount of data points needed for HMA
+// calculation by using settings stored in the receiver.
+func (h HMA) Count() int {
+	return h.wma.Count()*2 - 1
+}
+
+// UnmarshalJSON parse JSON into an indicator source.
+func (h *HMA) UnmarshalJSON(d []byte) error {
+	var i struct {
+		N   string `json:"name"`
+		WMA struct {
+			L int `json:"length"`
+		}
+	}
+
+	if err := json.Unmarshal(d, &i); err != nil {
+		return err
+	}
+
+	w, err := NewWMA(i.WMA.L)
+	if err != nil {
+		return err
+	}
+
+	h.wma = w
+
+	if err := h.validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// MarshalJSON converts source data into JSON.
+func (h HMA) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		N string `json:"name"`
+		W WMA    `json:"wma"`
+	}{
+		N: "hma", W: h.wma,
+	})
+}
 
 // // MACD holds all the neccesary information needed to calculate
 // // difference between two source indicators.
