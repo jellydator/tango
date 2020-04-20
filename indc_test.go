@@ -939,126 +939,162 @@ func TestAroonMarshal(t *testing.T) {
 // 	assert.Equal(t, m.Count(), m.Source2.Count())
 // }
 
-// func TestROCNew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Result ROC
-// 		Error  error
-// 	}{
-// 		"ROC throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful ROC creation": {
-// 			Length: 1,
-// 			Result: ROC{Length: 1},
-// 		},
-// 	}
+func TestROCNew(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result ROC
+		Error  error
+	}{
+		"ROC throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful ROC creation": {
+			Length: 1,
+			Result: ROC{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			r, err := NewROC(c.Length)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Result, r)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			r, err := NewROC(c.Length)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, r)
+			}
+		})
+	}
+}
 
-// func TestROCValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Error  error
-// 	}{
-// 		"Length cannot be less than 1": {
-// 			Length: 0,
-// 			Error:  ErrInvalidLength,
-// 		},
-// 		"Successful validation": {
-// 			Length: 1,
-// 		},
-// 	}
+func TestROCValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Error  error
+	}{
+		"Length cannot be less than 1": {
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful validation": {
+			Length: 1,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			r := ROC{Length: c.Length}
-// 			err := r.Validate()
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			r := ROC{length: c.Length}
+			err := r.validate()
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestROCCalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Insufficient amount of data points": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation": {
-// 			Length: 5,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(7),
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(10),
-// 			},
-// 			Result: decimal.NewFromFloat(42.85714285714286),
-// 		},
-// 	}
+func TestROCCalc(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Insufficient amount of data points": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful calculation": {
+			Length: 5,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(7),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(10),
+			},
+			Result: decimal.NewFromFloat(42.85714285714286),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			r := ROC{Length: c.Length}
-// 			res, err := r.Calc(c.Data)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.String())
-// 			}
-// 		})
-// 	}
-// }
+			r := ROC{length: c.Length}
+			res, err := r.Calc(c.Data)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
 
-// func TestROCCount(t *testing.T) {
-// 	r := ROC{Length: 15}
-// 	assert.Equal(t, 15, r.Count())
-// }
+func TestROCCount(t *testing.T) {
+	r := ROC{length: 15}
+	assert.Equal(t, 15, r.Count())
+}
+
+func TestROCUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    ROC
+		Error     error
+	}{
+		"Unmarshal throws an error": {
+			ByteArray: []byte(`{"length": "down"}`),
+			Error:     assert.AnError,
+		},
+		"Successful ROC unmarshal": {
+			ByteArray: []byte(`{"name":"roc","length":1}`),
+			Result:    ROC{length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			r := ROC{}
+			err := json.Unmarshal(c.ByteArray, &r)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, r)
+			}
+		})
+	}
+}
+
+func TestROCMarshal(t *testing.T) {
+	c := struct {
+		ROC    ROC
+		Result []byte
+	}{
+		ROC:    ROC{length: 1},
+		Result: []byte(`{"name":"roc","length":1}`),
+	}
+
+	d, _ := json.Marshal(c.ROC)
+
+	assert.Equal(t, c.Result, d)
+}
 
 func TestRSINew(t *testing.T) {
 	cc := map[string]struct {
