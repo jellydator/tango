@@ -714,130 +714,170 @@ func TestEMAMarshal(t *testing.T) {
 	assert.Equal(t, c.Result, d)
 }
 
-// func TestHMANew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		WMA    WMA
-// 		Result HMA
-// 		Error  error
-// 	}{
-// 		"HMA throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful HMA creation": {
-// 			WMA:    WMA{Length: 1},
-// 			Result: HMA{WMA: WMA{Length: 1}},
-// 		},
-// 	}
+func TestHMANew(t *testing.T) {
+	cc := map[string]struct {
+		WMA    WMA
+		Result HMA
+		Error  error
+	}{
+		"HMA throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful HMA creation": {
+			WMA:    WMA{length: 1},
+			Result: HMA{wma: WMA{length: 1}},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			h, err := NewHMA(c.WMA)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Result, h)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			h, err := NewHMA(c.WMA)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, h)
+			}
+		})
+	}
+}
 
-// func TestHMAValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		WMA   WMA
-// 		Error error
-// 	}{
-// 		"WMA returns an error": {
-// 			WMA:   WMA{Length: -1},
-// 			Error: assert.AnError,
-// 		},
-// 		"WMA not set": {
-// 			Error: ErrMANotSet,
-// 		},
-// 		"Successful validation": {
-// 			WMA: WMA{Length: 1},
-// 		},
-// 	}
+func TestHMAValidation(t *testing.T) {
+	cc := map[string]struct {
+		WMA   WMA
+		Error error
+	}{
+		"WMA returns an error": {
+			WMA:   WMA{length: -1},
+			Error: assert.AnError,
+		},
+		"WMA not set": {
+			Error: ErrMANotSet,
+		},
+		"Successful validation": {
+			WMA: WMA{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			h := HMA{WMA: c.WMA}
-// 			err := h.Validate()
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			h := HMA{wma: c.WMA}
+			err := h.validate()
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestHMACalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		WMA    WMA
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Insufficient amount of data points": {
-// 			WMA: WMA{Length: 5},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation": {
-// 			WMA: WMA{Length: 3},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 			},
-// 			Result: decimal.NewFromFloat(31.5),
-// 		},
-// 	}
+func TestHMACalc(t *testing.T) {
+	cc := map[string]struct {
+		WMA    WMA
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Insufficient amount of data points": {
+			WMA: WMA{length: 5},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful calculation": {
+			WMA: WMA{length: 3},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+			},
+			Result: decimal.NewFromFloat(31.5),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			h := HMA{WMA: c.WMA}
-// 			res, err := h.Calc(c.Data)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.String())
-// 			}
-// 		})
-// 	}
-// }
+			h := HMA{wma: c.WMA}
+			res, err := h.Calc(c.Data)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
 
-// func TestHMACount(t *testing.T) {
-// 	h := HMA{WMA: WMA{Length: 15}}
-// 	assert.Equal(t, 29, h.Count())
-// }
+func TestHMACount(t *testing.T) {
+	h := HMA{wma: WMA{length: 15}}
+	assert.Equal(t, 29, h.Count())
+}
+
+func TestHMAUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    HMA
+		Error     error
+	}{
+		"Unmarshal throws an error": {
+			ByteArray: []byte(`{"length": "down"}`),
+			Error:     assert.AnError,
+		},
+		"Successful HMA unmarshal": {
+			ByteArray: []byte(`{"name":"hma","wma":{"name":"wma","length":1}}`),
+			Result:    HMA{wma: WMA{length: 1}},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			h := HMA{}
+			err := json.Unmarshal(c.ByteArray, &h)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, h)
+			}
+		})
+	}
+}
+
+func TestHMAMarshal(t *testing.T) {
+	c := struct {
+		HMA    HMA
+		Result []byte
+	}{
+		HMA:    HMA{wma: WMA{length: 1}},
+		Result: []byte(`{"name":"hma","wma":{"name":"wma","length":1}}`),
+	}
+
+	d, _ := json.Marshal(c.HMA)
+
+	assert.Equal(t, c.Result, d)
+}
 
 // func TestMACDNew(t *testing.T) {
 // 	cc := map[string]struct {
