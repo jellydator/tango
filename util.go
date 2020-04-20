@@ -90,132 +90,61 @@ func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 
 // fromJSON finds an indicator based on its name and returns it as Interface
 // with its values.
-func fromJSON(n string, d []byte) (Indicator, error) {
-	switch n {
+func fromJSON(d []byte) (Indicator, error) {
+	var i struct {
+		N string `json:"name"`
+	}
+
+	if err := json.Unmarshal(d, &i); err != nil {
+		return nil, err
+	}
+
+	switch i.N {
 	case "aroon":
 		a := Aroon{}
 		err := json.Unmarshal(d, &a)
 		return a, err
-		// case "cci":
-		// 	c := CCI{}
-		// 	err := json.Unmarshal(d, &c)
-		// 	return c, err
-		// }
-		// case "dema":
-		// 	dm := DEMA{}
-		// 	err := json.Unmarshal(d, &dm)
-		// 	return dm, err
-		// case "ema":
-		// 	e := EMA{}
-		// 	err := json.Unmarshal(d, &e)
-		// 	return e, err
-		// case "hma":
-		// 	h := HMA{}
-		// 	err := json.Unmarshal(d, &h)
-		// 	return h, err
-		// case "macd":
-		// 	m := MACD{}
-		// 	err := json.Unmarshal(d, &m)
-		// 	return m, err
-		// case "roc":
-		// 	r := ROC{}
-		// 	err := json.Unmarshal(d, &r)
-		// 	return r, err
-		// case "rsi":
-		// 	r := RSI{}
-		// 	err := json.Unmarshal(d, &r)
-		// 	return r, err
-		// case "sma":
-		// 	s := SMA{}
-		// 	err := json.Unmarshal(d, &s)
-		// 	return s, err
-		// case "stoch":
-		// 	s := Stoch{}
-		// 	err := json.Unmarshal(d, &s)
-		// 	return s, err
-		// case "wma":
-		// 	w := WMA{}
-		// 	err := json.Unmarshal(d, &w)
-		// 	return w, err
+	case "cci":
+		c := CCI{}
+		err := json.Unmarshal(d, &c)
+		return c, err
+	case "dema":
+		dm := DEMA{}
+		err := json.Unmarshal(d, &dm)
+		return dm, err
+	case "ema":
+		e := EMA{}
+		err := json.Unmarshal(d, &e)
+		return e, err
+	case "hma":
+		h := HMA{}
+		err := json.Unmarshal(d, &h)
+		return h, err
+	// case "macd":
+	// 	m := MACD{}
+	// 	err := json.Unmarshal(d, &m)
+	// 	return m, err
+	case "roc":
+		r := ROC{}
+		err := json.Unmarshal(d, &r)
+		return r, err
+	case "rsi":
+		r := RSI{}
+		err := json.Unmarshal(d, &r)
+		return r, err
+	case "sma":
+		s := SMA{}
+		err := json.Unmarshal(d, &s)
+		return s, err
+	case "stoch":
+		s := Stoch{}
+		err := json.Unmarshal(d, &s)
+		return s, err
+	case "wma":
+		w := WMA{}
+		err := json.Unmarshal(d, &w)
+		return w, err
 	}
 
 	return nil, ErrInvalidSourceName
 }
-
-// toJSON determines the name of the specified indicator and creates a byte
-// slice array with its information.
-func toJSON(ind Indicator) ([]byte, error) {
-	switch i := ind.(type) {
-	case Aroon:
-		return json.Marshal(struct {
-			Aroon
-			Name string `json:"name"`
-		}{Aroon: i, Name: "aroon"})
-		// case CCI:
-		// 	return json.Marshal(struct {
-		// 		CCI
-		// 		Name string `json:"name"`
-		// 	}{CCI: i, Name: "cci"})
-	}
-
-	return nil, ErrInvalidType
-}
-
-// 	case DEMA:
-// 		d, err := json.Marshal(struct {
-// 			Name string `json:"name"`
-// 			DEMA
-// 		}{Name: "dema", DEMA: ind.(DEMA)})
-// 		return d, err
-// 	case EMA:
-// 		d, err := json.Marshal(struct {
-// 			Name string `json:"name"`
-// 			EMA
-// 		}{Name: "ema", EMA: ind.(EMA)})
-// 		return d, err
-// 	case HMA:
-// 		d, err := json.Marshal(struct {
-// 			Name string `json:"name"`
-// 			HMA
-// 		}{Name: "hma", HMA: ind.(HMA)})
-// 		return d, err
-// 	case MACD:
-// 		d, err := json.Marshal(struct {
-// 			Name string `json:"name"`
-// 			MACD
-// 		}{Name: "macd", MACD: ind.(MACD)})
-// 		return d, err
-// 	case ROC:
-// 		d, err := json.Marshal(struct {
-// 			Name string `json:"name"`
-// 			ROC
-// 		}{Name: "roc", ROC: ind.(ROC)})
-// 		return d, err
-// 	case RSI:
-// 		d, err := json.Marshal(struct {
-// 			Name string `json:"name"`
-// 			RSI
-// 		}{Name: "rsi", RSI: ind.(RSI)})
-// 		return d, err
-// 	case SMA:
-// 		d, err := json.Marshal(struct {
-// 			Name string `json:"name"`
-// 			SMA
-// 		}{Name: "sma", SMA: ind.(SMA)})
-// 		return d, err
-// 	case Stoch:
-// 		d, err := json.Marshal(struct {
-// 			Name string `json:"name"`
-// 			Stoch
-// 		}{Name: "stoch", Stoch: ind.(Stoch)})
-// 		return d, err
-// 	case WMA:
-// 		d, err := json.Marshal(struct {
-// 			Name string `json:"name"`
-// 			WMA
-// 		}{Name: "wma", WMA: ind.(WMA)})
-// 		return d, err
-// 	}
-
-// 	return nil, ErrInvalidType
-// }

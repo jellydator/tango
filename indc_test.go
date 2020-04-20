@@ -206,192 +206,192 @@ func TestAroonMarshal(t *testing.T) {
 	assert.Equal(t, c.Result, d)
 }
 
-// func TestCCINew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Source Indicator
-// 		Result CCI
-// 		Error  error
-// 	}{
-// 		"CCI throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful CCI creation": {
-// 			Source: Aroon{trend: "down", length: 1},
-// 			Result: CCI{source: Aroon{trend: "down", length: 1}},
-// 		},
-// 	}
+func TestCCINew(t *testing.T) {
+	cc := map[string]struct {
+		Source Indicator
+		Result CCI
+		Error  error
+	}{
+		"CCI throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful CCI creation": {
+			Source: Aroon{trend: "down", length: 1},
+			Result: CCI{source: Aroon{trend: "down", length: 1}},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			cci, err := NewCCI(c.Source)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, cci)
-// 			}
-// 		})
-// 	}
-// }
+			cci, err := NewCCI(c.Source)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, cci)
+			}
+		})
+	}
+}
 
-// func TestCCIValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Source Indicator
-// 		Error  error
-// 	}{
-// 		"Source returns an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful validation": {
-// 			Source: Aroon{trend: "down", length: 1},
-// 		},
-// 	}
+func TestCCIValidation(t *testing.T) {
+	cc := map[string]struct {
+		Source Indicator
+		Error  error
+	}{
+		"Source returns an error": {
+			Error: assert.AnError,
+		},
+		"Successful validation": {
+			Source: Aroon{trend: "down", length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			cci := CCI{source: c.Source}
-// 			err := cci.validate()
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			cci := CCI{source: c.Source}
+			err := cci.validate()
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestCCICalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Source Source
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Insufficient amount of data points": {
-// 			Source: Source{EMA{Length: 10}},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Source returns an error": {
-// 			Source: Source{IndicatorMock{}},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful calculation": {
-// 			Source: Source{SMA{Length: 20}},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromFloat(23.98),
-// 				decimal.NewFromFloat(23.92),
-// 				decimal.NewFromFloat(23.79),
-// 				decimal.NewFromFloat(23.67),
-// 				decimal.NewFromFloat(23.54),
-// 				decimal.NewFromFloat(23.36),
-// 				decimal.NewFromFloat(23.65),
-// 				decimal.NewFromFloat(23.72),
-// 				decimal.NewFromFloat(24.16),
-// 				decimal.NewFromFloat(23.91),
-// 				decimal.NewFromFloat(23.81),
-// 				decimal.NewFromFloat(23.92),
-// 				decimal.NewFromFloat(23.74),
-// 				decimal.NewFromFloat(24.68),
-// 				decimal.NewFromFloat(24.94),
-// 				decimal.NewFromFloat(24.93),
-// 				decimal.NewFromFloat(25.10),
-// 				decimal.NewFromFloat(25.12),
-// 				decimal.NewFromFloat(25.20),
-// 				decimal.NewFromFloat(25.06),
-// 			},
-// 			Result: decimal.NewFromFloat(101.91846522781775),
-// 		},
-// 	}
+func TestCCICalc(t *testing.T) {
+	cc := map[string]struct {
+		Source Indicator
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Insufficient amount of data points": {
+			Source: EMA{length: 10},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Source returns an error": {
+			Source: IndicatorMock{},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: assert.AnError,
+		},
+		"Successful calculation": {
+			Source: SMA{length: 20},
+			Data: []decimal.Decimal{
+				decimal.NewFromFloat(23.98),
+				decimal.NewFromFloat(23.92),
+				decimal.NewFromFloat(23.79),
+				decimal.NewFromFloat(23.67),
+				decimal.NewFromFloat(23.54),
+				decimal.NewFromFloat(23.36),
+				decimal.NewFromFloat(23.65),
+				decimal.NewFromFloat(23.72),
+				decimal.NewFromFloat(24.16),
+				decimal.NewFromFloat(23.91),
+				decimal.NewFromFloat(23.81),
+				decimal.NewFromFloat(23.92),
+				decimal.NewFromFloat(23.74),
+				decimal.NewFromFloat(24.68),
+				decimal.NewFromFloat(24.94),
+				decimal.NewFromFloat(24.93),
+				decimal.NewFromFloat(25.10),
+				decimal.NewFromFloat(25.12),
+				decimal.NewFromFloat(25.20),
+				decimal.NewFromFloat(25.06),
+			},
+			Result: decimal.NewFromFloat(101.91846522781775),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			cci := CCI{source: c.Source}
-// 			res, err := cci.Calc(c.Data)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.Round(14).String())
-// 			}
-// 		})
-// 	}
-// }
+			cci := CCI{source: c.Source}
+			res, err := cci.Calc(c.Data)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
+			}
+		})
+	}
+}
 
-// func TestCCICount(t *testing.T) {
-// 	c := CCI{source: Aroon{trend: "down", length: 10}}
-// 	assert.Equal(t, c.source.Count(), c.Count())
-// }
+func TestCCICount(t *testing.T) {
+	c := CCI{source: Aroon{trend: "down", length: 10}}
+	assert.Equal(t, c.source.Count(), c.Count())
+}
 
-// func TestCCIUnmarshal(t *testing.T) {
-// 	cc := map[string]struct {
-// 		ByteArray []byte
-// 		Result    CCI
-// 		Error     error
-// 	}{
-// 		"Unmarshal throws an error": {
-// 			ByteArray: []byte(`{}`),
-// 			Error:     assert.AnError,
-// 		},
-// 		"Successful CCI unmarshal": {
-// 			ByteArray: []byte(`{"name":"cci",
-// 			"source":{"name":"aroon","trend":"up","length":1}}`),
-// 			Result: CCI{Aroon{trend: "up", length: 1}},
-// 		},
-// 	}
+func TestCCIUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    CCI
+		Error     error
+	}{
+		"Unmarshal throws an error": {
+			ByteArray: []byte(`{}`),
+			Error:     assert.AnError,
+		},
+		"Successful CCI unmarshal": {
+			ByteArray: []byte(`{"name":"cci",
+			"source":{"name":"aroon","trend":"up","length":1}}`),
+			Result: CCI{Aroon{trend: "up", length: 1}},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			cci := CCI{}
-// 			err := json.Unmarshal(c.ByteArray, &cci)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, cci)
-// 			}
-// 		})
-// 	}
-// }
+			cci := CCI{}
+			err := json.Unmarshal(c.ByteArray, &cci)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, cci)
+			}
+		})
+	}
+}
 
-// func TestCCIMarshal(t *testing.T) {
-// 	c := struct {
-// 		CCI    CCI
-// 		Result []byte
-// 	}{
-// 		CCI:    CCI{source: Aroon{trend: "down", length: 1}},
-// 		Result: []byte(`{"name":"aroon","trend":"down","length":1}`),
-// 	}
+func TestCCIMarshal(t *testing.T) {
+	c := struct {
+		CCI    CCI
+		Result []byte
+	}{
+		CCI:    CCI{source: Aroon{trend: "down", length: 1}},
+		Result: []byte(`{"name":"cci","source":{"name":"aroon","trend":"down","length":1}}`),
+	}
 
-// 	d, _ := json.Marshal(c.CCI)
+	d, _ := json.Marshal(c.CCI)
 
-// 	assert.Equal(t, c.Result, d)
-// }
+	assert.Equal(t, c.Result, d)
+}
 
 func TestDEMANew(t *testing.T) {
 	cc := map[string]struct {
