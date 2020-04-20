@@ -898,58 +898,93 @@ func (s Stoch) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// // WMA holds all the neccesary information needed to calculate weighted
-// // moving average.
-// type WMA struct {
-// 	// Length specifies how many data points should be used
-// 	// in calculations.
-// 	Length int `json:"length"`
-// }
+// WMA holds all the neccesary information needed to calculate weighted
+// moving average.
+type WMA struct {
+	// length specifies how many data points should be used
+	// in calculations.
+	length int
+}
 
-// // NewWMA verifies provided values and
-// // Newializes weighted moving average indicator.
-// func NewWMA(length int) (WMA, error) {
-// 	w := WMA{Length: length}
+// NewWMA verifies provided values and
+// creates weighted moving average indicator.
+func NewWMA(length int) (WMA, error) {
+	w := WMA{length: length}
 
-// 	if err := w.Validate(); err != nil {
-// 		return WMA{}, err
-// 	}
+	if err := w.validate(); err != nil {
+		return WMA{}, err
+	}
 
-// 	return w, nil
-// }
+	return w, nil
+}
 
-// // Validate checks all WMA settings stored in func receiver to make sure that
-// // they're matching their requirements.
-// func (w WMA) Validate() error {
-// 	if w.Length < 1 {
-// 		return ErrInvalidLength
-// 	}
-// 	return nil
-// }
+// Validate checks all WMA settings stored in func receiver to make sure that
+// they're matching their requirements.
+func (w WMA) validate() error {
+	if w.length < 1 {
+		return ErrInvalidLength
+	}
+	return nil
+}
 
-// // Calc calculates WMA value by using settings stored in the func receiver.
-// func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-// 	dd, err := resize(dd, w.Count())
-// 	if err != nil {
-// 		return decimal.Zero, err
-// 	}
+// Calc calculates WMA value by using settings stored in the func receiver.
+func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, w.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-// 	r := decimal.Zero
+	r := decimal.Zero
 
-// 	wi := decimal.NewFromFloat(float64(w.Length*(w.Length+1)) / 2.0)
+	wi := decimal.NewFromFloat(float64(w.length*(w.length+1)) / 2.0)
 
-// 	for i := 0; i < len(dd); i++ {
-// 		r = r.Add(dd[i].Mul(decimal.NewFromInt(int64(i + 1)).Div(wi)))
-// 	}
+	for i := 0; i < len(dd); i++ {
+		r = r.Add(dd[i].Mul(decimal.NewFromInt(int64(i + 1)).Div(wi)))
+	}
 
-// 	return r, nil
-// }
+	return r, nil
+}
 
-// // Count determines the total amount of data points needed for WMA
-// // calculation by using settings stored in the receiver.
-// func (w WMA) Count() int {
-// 	return w.Length
-// }
+// Count determines the total amount of data points needed for WMA
+// calculation by using settings stored in the receiver.
+func (w WMA) Count() int {
+	return w.length
+}
+
+// UnmarshalJSON parse JSON into an indicator source.
+func (w *WMA) UnmarshalJSON(d []byte) error {
+	var i struct {
+		N string `json:"name"`
+		L int    `json:"length"`
+	}
+
+	if err := json.Unmarshal(d, &i); err != nil {
+		return err
+
+	}
+
+	if i.N != "wma" {
+		return ErrInvalidType
+	}
+
+	w.length = i.L
+
+	if err := w.validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// MarshalJSON converts source data into JSON.
+func (w WMA) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		N string `json:"name"`
+		L int    `json:"length"`
+	}{
+		N: "wma", L: w.length,
+	})
+}
 
 // Indicator is an interface that every indicator should implement.
 type Indicator interface {
