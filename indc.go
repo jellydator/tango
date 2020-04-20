@@ -521,65 +521,100 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 // 	return r.Length
 // }
 
-// // RSI holds all the neccesary information needed to calculate relative
-// // strength index.
-// type RSI struct {
-// 	// Length specifies how many data points should be used
-// 	// in calculations.
-// 	Length int `json:"length"`
-// }
+// RSI holds all the neccesary information needed to calculate relative
+// strength index.
+type RSI struct {
+	// Length specifies how many data points should be used
+	// in calculations.
+	length int
+}
 
-// // NewRSI verifies provided values and
-// // Newializes relative strength index indicator.
-// func NewRSI(length int) (RSI, error) {
-// 	r := RSI{Length: length}
+// NewRSI verifies provided values and
+// creates relative strength index indicator.
+func NewRSI(length int) (RSI, error) {
+	r := RSI{length: length}
 
-// 	if err := r.Validate(); err != nil {
-// 		return RSI{}, err
-// 	}
+	if err := r.validate(); err != nil {
+		return RSI{}, err
+	}
 
-// 	return r, nil
-// }
+	return r, nil
+}
 
-// // Validate checks all RSI settings stored in func receiver to make sure that
-// // they're matching their requirements.
-// func (r RSI) Validate() error {
-// 	if r.Length < 1 {
-// 		return ErrInvalidLength
-// 	}
-// 	return nil
-// }
+// Validate checks all RSI settings stored in func receiver to make sure that
+// they're matching their requirements.
+func (r RSI) validate() error {
+	if r.length < 1 {
+		return ErrInvalidLength
+	}
+	return nil
+}
 
-// // Calc calculates RSI value by using settings stored in the func receiver.
-// func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-// 	dd, err := resize(dd, r.Count())
-// 	if err != nil {
-// 		return decimal.Zero, err
-// 	}
+// Calc calculates RSI value by using settings stored in the func receiver.
+func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, r.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-// 	ag := decimal.Zero
-// 	al := decimal.Zero
+	ag := decimal.Zero
+	al := decimal.Zero
 
-// 	for i := 1; i < len(dd); i++ {
-// 		if dd[i].Sub(dd[i-1]).LessThan(decimal.Zero) {
-// 			al = al.Add(dd[i].Sub(dd[i-1]).Abs())
-// 		} else {
-// 			ag = ag.Add(dd[i].Sub(dd[i-1]))
-// 		}
-// 	}
+	for i := 1; i < len(dd); i++ {
+		if dd[i].Sub(dd[i-1]).LessThan(decimal.Zero) {
+			al = al.Add(dd[i].Sub(dd[i-1]).Abs())
+		} else {
+			ag = ag.Add(dd[i].Sub(dd[i-1]))
+		}
+	}
 
-// 	ag = ag.Div(decimal.NewFromInt(int64(r.Length)))
-// 	al = al.Div(decimal.NewFromInt(int64(r.Length)))
+	ag = ag.Div(decimal.NewFromInt(int64(r.length)))
+	al = al.Div(decimal.NewFromInt(int64(r.length)))
 
-// 	return decimal.NewFromInt(100).Sub(decimal.NewFromInt(100).
-// 		Div(decimal.NewFromInt(1).Add(ag.Div(al)))), nil
-// }
+	return decimal.NewFromInt(100).Sub(decimal.NewFromInt(100).
+		Div(decimal.NewFromInt(1).Add(ag.Div(al)))), nil
+}
 
-// // Count determines the total amount of data points needed for RSI
-// // calculation by using settings stored in the receiver.
-// func (r RSI) Count() int {
-// 	return r.Length
-// }
+// Count determines the total amount of data points needed for RSI
+// calculation by using settings stored in the receiver.
+func (r RSI) Count() int {
+	return r.length
+}
+
+// UnmarshalJSON parse JSON into an indicator source.
+func (r *RSI) UnmarshalJSON(d []byte) error {
+	var i struct {
+		N string `json:"name"`
+		L int    `json:"length"`
+	}
+
+	if err := json.Unmarshal(d, &i); err != nil {
+		return err
+
+	}
+
+	if i.N != "rsi" {
+		return ErrInvalidType
+	}
+
+	r.length = i.L
+
+	if err := r.validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// MarshalJSON converts source data into JSON.
+func (r RSI) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		N string `json:"name"`
+		L int    `json:"length"`
+	}{
+		N: "rsi", L: r.length,
+	})
+}
 
 // SMA holds all the neccesary information needed to calculate simple
 // moving average.
