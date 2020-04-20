@@ -667,63 +667,98 @@ func (s SMA) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// // Stoch holds all the neccesary information needed to calculate stochastic
-// // oscillator.
-// type Stoch struct {
-// 	// Length specifies how many data points should be used
-// 	// in calculations.
-// 	Length int `json:"length"`
-// }
+// Stoch holds all the neccesary information needed to calculate stochastic
+// oscillator.
+type Stoch struct {
+	// Length specifies how many data points should be used
+	// in calculations.
+	length int
+}
 
-// // NewStoch verifies provided values and
-// // Newializes stochastic indicator.
-// func NewStoch(length int) (Stoch, error) {
-// 	s := Stoch{Length: length}
+// NewStoch verifies provided values and
+// creates stochastic indicator.
+func NewStoch(length int) (Stoch, error) {
+	s := Stoch{length: length}
 
-// 	if err := s.Validate(); err != nil {
-// 		return Stoch{}, err
-// 	}
+	if err := s.validate(); err != nil {
+		return Stoch{}, err
+	}
 
-// 	return s, nil
-// }
+	return s, nil
+}
 
-// // Validate checks all stochastic settings stored in func receiver to make
-// // sure that they're matching their requirements.
-// func (s Stoch) Validate() error {
-// 	if s.Length < 1 {
-// 		return ErrInvalidLength
-// 	}
-// 	return nil
-// }
+// Validate checks all stochastic settings stored in func receiver to make
+// sure that they're matching their requirements.
+func (s Stoch) validate() error {
+	if s.length < 1 {
+		return ErrInvalidLength
+	}
+	return nil
+}
 
-// // Calc calculates stochastic value by using settings stored in
-// // the func receiver.
-// func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-// 	dd, err := resize(dd, s.Count())
-// 	if err != nil {
-// 		return decimal.Zero, err
-// 	}
+// Calc calculates stochastic value by using settings stored in
+// the func receiver.
+func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, s.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-// 	l := dd[0]
-// 	h := dd[0]
+	l := dd[0]
+	h := dd[0]
 
-// 	for i := 0; i < len(dd); i++ {
-// 		if dd[i].LessThan(l) {
-// 			l = dd[i]
-// 		}
-// 		if dd[i].GreaterThan(h) {
-// 			h = dd[i]
-// 		}
-// 	}
+	for i := 0; i < len(dd); i++ {
+		if dd[i].LessThan(l) {
+			l = dd[i]
+		}
+		if dd[i].GreaterThan(h) {
+			h = dd[i]
+		}
+	}
 
-// 	return dd[len(dd)-1].Sub(l).Div(h.Sub(l)).Mul(decimal.NewFromInt(100)), nil
-// }
+	return dd[len(dd)-1].Sub(l).Div(h.Sub(l)).Mul(decimal.NewFromInt(100)), nil
+}
 
-// // Count determines the total amount of data points needed for stochastic
-// // calculation by using settings stored in the receiver.
-// func (s Stoch) Count() int {
-// 	return s.Length
-// }
+// Count determines the total amount of data points needed for stochastic
+// calculation by using settings stored in the receiver.
+func (s Stoch) Count() int {
+	return s.length
+}
+
+// UnmarshalJSON parse JSON into an indicator source.
+func (s *Stoch) UnmarshalJSON(d []byte) error {
+	var i struct {
+		N string `json:"name"`
+		L int    `json:"length"`
+	}
+
+	if err := json.Unmarshal(d, &i); err != nil {
+		return err
+
+	}
+
+	if i.N != "stoch" {
+		return ErrInvalidType
+	}
+
+	s.length = i.L
+
+	if err := s.validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// MarshalJSON converts source data into JSON.
+func (s Stoch) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		N string `json:"name"`
+		L int    `json:"length"`
+	}{
+		N: "stoch", L: s.length,
+	})
+}
 
 // // WMA holds all the neccesary information needed to calculate weighted
 // // moving average.

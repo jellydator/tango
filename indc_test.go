@@ -1345,136 +1345,172 @@ func TestSMAMarshal(t *testing.T) {
 	assert.Equal(t, c.Result, d)
 }
 
-// func TestStochNew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Result Stoch
-// 		Error  error
-// 	}{
-// 		"Stoch throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful Stoch creation": {
-// 			Length: 1,
-// 			Result: Stoch{Length: 1},
-// 		},
-// 	}
+func TestStochNew(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result Stoch
+		Error  error
+	}{
+		"Stoch throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful Stoch creation": {
+			Length: 1,
+			Result: Stoch{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			s, err := NewStoch(c.Length)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Result, s)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			s, err := NewStoch(c.Length)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, s)
+			}
+		})
+	}
+}
 
-// func TestStochValidation(t *testing.T) {
+func TestStochValidation(t *testing.T) {
 
-// 	cc := map[string]struct {
-// 		Length int
-// 		Error  error
-// 	}{
-// 		"Length cannot be less than 1": {
-// 			Length: 0,
-// 			Error:  ErrInvalidLength,
-// 		},
-// 		"Successful validation": {
-// 			Length: 1,
-// 		},
-// 	}
+	cc := map[string]struct {
+		Length int
+		Error  error
+	}{
+		"Length cannot be less than 1": {
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful validation": {
+			Length: 1,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			s := Stoch{Length: c.Length}
-// 			err := s.Validate()
+			s := Stoch{length: c.Length}
+			err := s.validate()
 
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestStochCalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Insufficient amount of data points": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation v1": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(150),
-// 				decimal.NewFromInt(125),
-// 				decimal.NewFromInt(145),
-// 			},
-// 			Result: decimal.NewFromInt(80),
-// 		},
-// 		"Successful calculation v2": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(120),
-// 				decimal.NewFromInt(145),
-// 				decimal.NewFromInt(135),
-// 			},
-// 			Result: decimal.NewFromInt(60),
-// 		},
-// 	}
+func TestStochCalc(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Insufficient amount of data points": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful calculation v1": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(150),
+				decimal.NewFromInt(125),
+				decimal.NewFromInt(145),
+			},
+			Result: decimal.NewFromInt(80),
+		},
+		"Successful calculation v2": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(120),
+				decimal.NewFromInt(145),
+				decimal.NewFromInt(135),
+			},
+			Result: decimal.NewFromInt(60),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			s := Stoch{Length: c.Length}
-// 			res, err := s.Calc(c.Data)
+			s := Stoch{length: c.Length}
+			res, err := s.Calc(c.Data)
 
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.String())
-// 			}
-// 		})
-// 	}
-// }
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
 
-// func TestStochCount(t *testing.T) {
-// 	s := Stoch{Length: 15}
-// 	assert.Equal(t, 15, s.Count())
-// }
+func TestStochCount(t *testing.T) {
+	s := Stoch{length: 15}
+	assert.Equal(t, 15, s.Count())
+}
+
+func TestStochUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    Stoch
+		Error     error
+	}{
+		"Unmarshal throws an error": {
+			ByteArray: []byte(`{"length": "down"}`),
+			Error:     assert.AnError,
+		},
+		"Successful Stoch unmarshal": {
+			ByteArray: []byte(`{"name":"stoch","length":1}`),
+			Result:    Stoch{length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			s := Stoch{}
+			err := json.Unmarshal(c.ByteArray, &s)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, s)
+			}
+		})
+	}
+}
+
+func TestStochMarshal(t *testing.T) {
+	c := struct {
+		Stoch  Stoch
+		Result []byte
+	}{
+		Stoch:  Stoch{length: 1},
+		Result: []byte(`{"name":"stoch","length":1}`),
+	}
+
+	d, _ := json.Marshal(c.Stoch)
+
+	assert.Equal(t, c.Result, d)
+}
 
 // func TestWMANew(t *testing.T) {
 // 	cc := map[string]struct {
