@@ -506,78 +506,130 @@ func (h HMA) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// // MACD holds all the neccesary information needed to calculate
-// // difference between two source indicators.
-// type MACD struct {
-// 	// Source1 configures what calculations to use when computing first
-// 	// macd value.
-// 	Source1 Source `json:"source1"`
+// MACD holds all the neccesary information needed to calculate
+// difference between two source indicators.
+type MACD struct {
+	// source1 configures what calculations to use when computing first
+	// macd value.
+	source1 Indicator
 
-// 	// Source2 configures what calculations to use when computing second
-// 	// macd value.
-// 	Source2 Source `json:"source2"`
-// }
+	// source2 configures what calculations to use when computing second
+	// macd value.
+	source2 Indicator
+}
 
-// // NewMACD verifies provided values and
-// // Newializes MACD indicator.
-// func NewMACD(o1, o2 Source) (MACD, error) {
-// 	m := MACD{Source1: o1, Source2: o2}
+// NewMACD verifies provided values and
+// creates MACD indicator.
+func NewMACD(source1, source2 Indicator) (MACD, error) {
+	m := MACD{source1: source1, source2: source2}
 
-// 	if err := m.Validate(); err != nil {
-// 		return MACD{}, err
-// 	}
+	if err := m.validate(); err != nil {
+		return MACD{}, err
+	}
 
-// 	return m, nil
-// }
+	return m, nil
+}
 
-// // Validate checks all MACD settings stored in func receiver
-// // to make sure that they're matching their requirements.
-// func (m MACD) Validate() error {
-// 	if err := m.Source1.Validate(); err != nil {
-// 		return err
-// 	}
+// validate checks all MACD settings stored in func receiver
+// to make sure that they're matching their requirements.
+func (m MACD) validate() error {
+	if m.source1 == nil || m.source2 == nil {
+		return ErrSourceNotSet
+	}
 
-// 	if err := m.Source2.Validate(); err != nil {
-// 		return err
-// 	}
+	if err := m.source1.validate(); err != nil {
+		return err
+	}
 
-// 	return nil
-// }
+	if err := m.source2.validate(); err != nil {
+		return err
+	}
 
-// // Calc calculates MACD value by using settings stored in the func receiver.
-// func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-// 	dd, err := resize(dd, m.Count())
-// 	if err != nil {
-// 		return decimal.Zero, err
-// 	}
+	return nil
+}
 
-// 	r1, err := m.Source1.Calc(dd)
-// 	if err != nil {
-// 		return decimal.Zero, err
-// 	}
+// Calc calculates MACD value by using settings stored in the func receiver.
+func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, m.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-// 	r2, err := m.Source2.Calc(dd)
-// 	if err != nil {
-// 		return decimal.Zero, err
-// 	}
+	r1, err := m.source1.Calc(dd)
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-// 	r := r1.Sub(r2)
+	r2, err := m.source2.Calc(dd)
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-// 	return r, nil
-// }
+	r := r1.Sub(r2)
 
-// // Count determines the total amount of data points needed for MACD
-// // calculation by using settings stored in the receiver.
-// func (m MACD) Count() int {
-// 	c1 := m.Source1.Count()
-// 	c2 := m.Source2.Count()
+	return r, nil
+}
 
-// 	if c1 > c2 {
-// 		return c1
-// 	}
+// Count determines the total amount of data points needed for MACD
+// calculation by using settings stored in the receiver.
+func (m MACD) Count() int {
+	c1 := m.source1.Count()
+	c2 := m.source2.Count()
 
-// 	return c2
-// }
+	if c1 > c2 {
+		return c1
+	}
+
+	return c2
+}
+
+// UnmarshalJSON parse JSON into an indicator source.
+func (m *MACD) UnmarshalJSON(d []byte) error {
+	var i struct {
+		N       string `json:"name"`
+		Source1 json.RawMessage
+		Source2 json.RawMessage
+	}
+
+	if err := json.Unmarshal(d, &i); err != nil {
+		return err
+	}
+
+	if i.N != "macd" {
+		return ErrInvalidType
+	}
+
+	ind1, err := fromJSON(i.Source1)
+	if err != nil {
+		return err
+	}
+
+	m.source1 = ind1
+
+	ind2, err := fromJSON(i.Source2)
+	if err != nil {
+		return err
+	}
+
+	m.source2 = ind2
+
+	if err := m.validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// MarshalJSON converts source data into JSON.
+func (m MACD) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		N  string    `json:"name"`
+		S1 Indicator `json:"source1"`
+		S2 Indicator `json:"source2"`
+	}{
+		N: "macd", S1: m.source1, S2: m.source2,
+	})
+}
 
 // ROC holds all the neccesary information needed to calculate rate
 // of change.

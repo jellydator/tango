@@ -120,10 +120,10 @@ func fromJSON(d []byte) (Indicator, error) {
 		h := HMA{}
 		err := json.Unmarshal(d, &h)
 		return h, err
-	// case "macd":
-	// 	m := MACD{}
-	// 	err := json.Unmarshal(d, &m)
-	// 	return m, err
+	case "macd":
+		m := MACD{}
+		err := json.Unmarshal(d, &m)
+		return m, err
 	case "roc":
 		r := ROC{}
 		err := json.Unmarshal(d, &r)
