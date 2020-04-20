@@ -473,58 +473,93 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 // 	return c2
 // }
 
-// // ROC holds all the neccesary information needed to calculate rate
-// // of change.
-// type ROC struct {
-// 	// Length specifies how many data points should be used
-// 	// in calculations.
-// 	Length int `json:"length"`
-// }
+// ROC holds all the neccesary information needed to calculate rate
+// of change.
+type ROC struct {
+	// length specifies how many data points should be used
+	// in calculations.
+	length int `json:"length"`
+}
 
-// // NewROC verifies provided values and
-// // Newializes rate of change indicator.
-// func NewROC(length int) (ROC, error) {
-// 	r := ROC{Length: length}
+// NewROC verifies provided values and
+// creates rate of change indicator.
+func NewROC(length int) (ROC, error) {
+	r := ROC{length: length}
 
-// 	if err := r.Validate(); err != nil {
-// 		return ROC{}, err
-// 	}
+	if err := r.validate(); err != nil {
+		return ROC{}, err
+	}
 
-// 	return r, nil
-// }
+	return r, nil
+}
 
-// // Validate checks all ROC settings stored in func receiver to make sure that
-// // they're matching their requirements.
-// func (r ROC) Validate() error {
-// 	if r.Length < 1 {
-// 		return ErrInvalidLength
-// 	}
-// 	return nil
-// }
+// Validate checks all ROC settings stored in func receiver to make sure that
+// they're matching their requirements.
+func (r ROC) validate() error {
+	if r.length < 1 {
+		return ErrInvalidLength
+	}
+	return nil
+}
 
-// // Calc calculates ROC value by using settings stored in the func receiver.
-// func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-// 	dd, err := resize(dd, r.Count())
-// 	if err != nil {
-// 		return decimal.Zero, err
-// 	}
+// Calc calculates ROC value by using settings stored in the func receiver.
+func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, r.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-// 	n := dd[len(dd)-1]
-// 	l := dd[0]
+	n := dd[len(dd)-1]
+	l := dd[0]
 
-// 	return n.Sub(l).Div(l).Mul(decimal.NewFromInt(100)), nil
-// }
+	return n.Sub(l).Div(l).Mul(decimal.NewFromInt(100)), nil
+}
 
-// // Count determines the total amount of data points needed for ROC
-// // calculation by using settings stored in the receiver.
-// func (r ROC) Count() int {
-// 	return r.Length
-// }
+// Count determines the total amount of data points needed for ROC
+// calculation by using settings stored in the receiver.
+func (r ROC) Count() int {
+	return r.length
+}
+
+// UnmarshalJSON parse JSON into an indicator source.
+func (r *ROC) UnmarshalJSON(d []byte) error {
+	var i struct {
+		N string `json:"name"`
+		L int    `json:"length"`
+	}
+
+	if err := json.Unmarshal(d, &i); err != nil {
+		return err
+
+	}
+
+	if i.N != "roc" {
+		return ErrInvalidType
+	}
+
+	r.length = i.L
+
+	if err := r.validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// MarshalJSON converts source data into JSON.
+func (r ROC) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		N string `json:"name"`
+		L int    `json:"length"`
+	}{
+		N: "roc", L: r.length,
+	})
+}
 
 // RSI holds all the neccesary information needed to calculate relative
 // strength index.
 type RSI struct {
-	// Length specifies how many data points should be used
+	// length specifies how many data points should be used
 	// in calculations.
 	length int
 }
@@ -619,7 +654,7 @@ func (r RSI) MarshalJSON() ([]byte, error) {
 // SMA holds all the neccesary information needed to calculate simple
 // moving average.
 type SMA struct {
-	// Length specifies how many data points should be used
+	// length specifies how many data points should be used
 	// in calculations.
 	length int
 }
@@ -705,7 +740,7 @@ func (s SMA) MarshalJSON() ([]byte, error) {
 // Stoch holds all the neccesary information needed to calculate stochastic
 // oscillator.
 type Stoch struct {
-	// Length specifies how many data points should be used
+	// length specifies how many data points should be used
 	// in calculations.
 	length int
 }
