@@ -210,17 +210,17 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 // // DEMA holds all the neccesary information needed to calculate
 // // double exponential moving average.
 // type DEMA struct {
-// 	// Length specifies how many data points should be used
+// 	// length specifies how many data points should be used
 // 	// in calculations.
-// 	Length int `json:"length"`
+// 	length int `json:"length"`
 // }
 
 // // NewDEMA verifies provided values and
-// // Newializes double exponential moving average indicator.
+// // creates double exponential moving average indicator.
 // func NewDEMA(length int) (DEMA, error) {
-// 	d := DEMA{Length: length}
+// 	d := DEMA{length: length}
 
-// 	if err := d.Validate(); err != nil {
+// 	if err := d.validate(); err != nil {
 // 		return DEMA{}, err
 // 	}
 
@@ -229,8 +229,8 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 
 // // Validate checks all DEMA settings stored in func receiver to
 // // make sure that they're matching their requirements.
-// func (dm DEMA) Validate() error {
-// 	if dm.Length < 1 {
+// func (dm DEMA) validate() error {
+// 	if dm.length < 1 {
 // 		return ErrInvalidLength
 // 	}
 // 	return nil
@@ -243,15 +243,15 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 // 		return decimal.Zero, err
 // 	}
 
-// 	v := make([]decimal.Decimal, dm.Length)
+// 	v := make([]decimal.Decimal, dm.length)
 
-// 	s := SMA{Length: dm.Length}
-// 	v[0], _ = s.Calc(dd[:dm.Length])
+// 	s := SMA{length: dm.length}
+// 	v[0], _ = s.Calc(dd[:dm.length])
 
-// 	e := EMA{Length: dm.Length}
+// 	e := EMA{Length: dm.length}
 
-// 	for i := dm.Length; i < len(dd); i++ {
-// 		v[i-dm.Length+1] = e.CalcNext(v[i-dm.Length], dd[i])
+// 	for i := dm.length; i < len(dd); i++ {
+// 		v[i-dm.length+1] = e.CalcNext(v[i-dm.length], dd[i])
 // 	}
 
 // 	r := v[0]
@@ -266,72 +266,106 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 // // Count determines the total amount of data points needed for DEMA
 // // calculation by using settings stored in the receiver.
 // func (dm DEMA) Count() int {
-// 	return dm.Length*2 - 1
+// 	return dm.length*2 - 1
 // }
 
-// // EMA holds all the neccesary information needed to calculate exponential
-// // moving average.
-// type EMA struct {
-// 	// Length specifies how many data points should be used
-// 	// in calculations.
-// 	Length int `json:"length"`
-// }
+// EMA holds all the neccesary information needed to calculate exponential
+// moving average.
+type EMA struct {
+	// length specifies how many data points should be used
+	// in calculations.
+	length int
+}
 
-// // NewEMA verifies provided values and
-// // Newializes exponential moving average indicator.
-// func NewEMA(length int) (EMA, error) {
-// 	e := EMA{Length: length}
+// NewEMA verifies provided values and
+// creates exponential moving average indicator.
+func NewEMA(length int) (EMA, error) {
+	e := EMA{length: length}
 
-// 	if err := e.Validate(); err != nil {
-// 		return EMA{}, err
-// 	}
+	if err := e.validate(); err != nil {
+		return EMA{}, err
+	}
 
-// 	return e, nil
-// }
+	return e, nil
+}
 
-// // Validate checks all EMA settings stored in func receiver to make sure that
-// // they're matching their requirements.
-// func (e EMA) Validate() error {
-// 	if e.Length < 1 {
-// 		return ErrInvalidLength
-// 	}
-// 	return nil
-// }
+// Validate checks all EMA settings stored in func receiver to make sure that
+// they're matching their requirements.
+func (e EMA) validate() error {
+	if e.length < 1 {
+		return ErrInvalidLength
+	}
+	return nil
+}
 
-// // Calc calculates EMA value by using settings stored in the func receiver.
-// func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-// 	dd, err := resize(dd, e.Count())
-// 	if err != nil {
-// 		return decimal.Zero, err
-// 	}
+// Calc calculates EMA value by using settings stored in the func receiver.
+func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, e.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-// 	s := SMA{Length: e.Length}
-// 	r, _ := s.Calc(dd[:e.Length])
+	s := SMA{length: e.length}
+	r, _ := s.Calc(dd[:e.length])
 
-// 	for i := e.Length; i < len(dd); i++ {
-// 		r = e.CalcNext(r, dd[i])
-// 	}
+	for i := e.length; i < len(dd); i++ {
+		r = e.CalcNext(r, dd[i])
+	}
 
-// 	return r, nil
-// }
+	return r, nil
+}
 
-// // CalcNext calculates sequential EMA value by using previous ema.
-// func (e EMA) CalcNext(l, n decimal.Decimal) decimal.Decimal {
-// 	m := e.multiplier()
-// 	return n.Mul(m).Add(l.Mul(decimal.NewFromInt(1).Sub(m)))
-// }
+// CalcNext calculates sequential EMA value by using previous ema.
+func (e EMA) CalcNext(l, n decimal.Decimal) decimal.Decimal {
+	m := e.multiplier()
+	return n.Mul(m).Add(l.Mul(decimal.NewFromInt(1).Sub(m)))
+}
 
-// // multiplier calculates EMA multiplier value by using settings stored
-// // in the func receiver.
-// func (e EMA) multiplier() decimal.Decimal {
-// 	return decimal.NewFromFloat(2.0 / float64(e.Length+1))
-// }
+// multiplier calculates EMA multiplier value by using settings stored
+// in the func receiver.
+func (e EMA) multiplier() decimal.Decimal {
+	return decimal.NewFromFloat(2.0 / float64(e.length+1))
+}
 
-// // Count determines the total amount of data points needed for EMA
-// // calculation by using settings stored in the receiver.
-// func (e EMA) Count() int {
-// 	return e.Length*2 - 1
-// }
+// Count determines the total amount of data points needed for EMA
+// calculation by using settings stored in the receiver.
+func (e EMA) Count() int {
+	return e.length*2 - 1
+}
+
+// UnmarshalJSON parse JSON into an indicator source.
+func (e *EMA) UnmarshalJSON(d []byte) error {
+	var i struct {
+		N string `json:"name"`
+		L int    `json:"length"`
+	}
+
+	if err := json.Unmarshal(d, &i); err != nil {
+		return err
+	}
+
+	if i.N != "ema" {
+		return ErrInvalidType
+	}
+
+	e.length = i.L
+
+	if err := e.validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// MarshalJSON converts source data into JSON.
+func (e EMA) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		N string `json:"name"`
+		L int    `json:"length"`
+	}{
+		N: "ema", L: e.length,
+	})
+}
 
 // // HMA holds all the neccesary information needed to calculate
 // // hull moving average.
@@ -478,7 +512,7 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 type ROC struct {
 	// length specifies how many data points should be used
 	// in calculations.
-	length int `json:"length"`
+	length int
 }
 
 // NewROC verifies provided values and

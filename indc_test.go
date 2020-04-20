@@ -515,132 +515,168 @@ func TestAroonMarshal(t *testing.T) {
 // 	assert.Equal(t, 29, d.Count())
 // }
 
-// func TestEMANew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Result EMA
-// 		Error  error
-// 	}{
-// 		"EMA throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful EMA creation": {
-// 			Length: 1,
-// 			Result: EMA{Length: 1},
-// 		},
-// 	}
+func TestEMANew(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result EMA
+		Error  error
+	}{
+		"EMA throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful EMA creation": {
+			Length: 1,
+			Result: EMA{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			e, err := NewEMA(c.Length)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Result, e)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			e, err := NewEMA(c.Length)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, e)
+			}
+		})
+	}
+}
 
-// func TestEMAValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Error  error
-// 	}{
-// 		"Length cannot be less than 1": {
-// 			Length: 0,
-// 			Error:  ErrInvalidLength,
-// 		},
-// 		"Successful validation": {
-// 			Length: 1,
-// 		},
-// 	}
+func TestEMAValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Error  error
+	}{
+		"Length cannot be less than 1": {
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful validation": {
+			Length: 1,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			e := EMA{Length: c.Length}
-// 			err := e.Validate()
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			e := EMA{length: c.Length}
+			err := e.validate()
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestEMACalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Insufficient amount of data points": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation": {
-// 			Length: 2,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(31),
-// 			},
-// 			Result: decimal.NewFromFloat(30.83333333333333),
-// 		},
-// 	}
+func TestEMACalc(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Insufficient amount of data points": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful calculation": {
+			Length: 2,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(31),
+			},
+			Result: decimal.NewFromFloat(30.83333333333333),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			e := EMA{Length: c.Length}
-// 			res, err := e.Calc(c.Data)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.Round(14).String())
-// 			}
-// 		})
-// 	}
-// }
+			e := EMA{length: c.Length}
+			res, err := e.Calc(c.Data)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
+			}
+		})
+	}
+}
 
-// func TestEMACount(t *testing.T) {
-// 	e := EMA{Length: 15}
-// 	assert.Equal(t, 29, e.Count())
-// }
+func TestEMACount(t *testing.T) {
+	e := EMA{length: 15}
+	assert.Equal(t, 29, e.Count())
+}
 
-// func TestEMAMultiplier(t *testing.T) {
-// 	e := EMA{Length: 3}
-// 	assert.Equal(t, decimal.NewFromFloat(0.5), e.multiplier())
-// }
+func TestEMAMultiplier(t *testing.T) {
+	e := EMA{length: 3}
+	assert.Equal(t, decimal.NewFromFloat(0.5), e.multiplier())
+}
+
+func TestEMAUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    EMA
+		Error     error
+	}{
+		"Unmarshal throws an error": {
+			ByteArray: []byte(`{"length": "down"}`),
+			Error:     assert.AnError,
+		},
+		"Successful EMA unmarshal": {
+			ByteArray: []byte(`{"name":"ema","length":1}`),
+			Result:    EMA{length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			e := EMA{}
+			err := json.Unmarshal(c.ByteArray, &e)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, e)
+			}
+		})
+	}
+}
+
+func TestEMAMarshal(t *testing.T) {
+	c := struct {
+		EMA    EMA
+		Result []byte
+	}{
+		EMA:    EMA{length: 1},
+		Result: []byte(`{"name":"ema","length":1}`),
+	}
+
+	d, _ := json.Marshal(c.EMA)
+
+	assert.Equal(t, c.Result, d)
+}
 
 // func TestHMANew(t *testing.T) {
 // 	cc := map[string]struct {
