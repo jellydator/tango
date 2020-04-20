@@ -879,177 +879,221 @@ func TestHMAMarshal(t *testing.T) {
 	assert.Equal(t, c.Result, d)
 }
 
-// func TestMACDNew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Source1 Source
-// 		Source2 Source
-// 		Result  MACD
-// 		Error   error
-// 	}{
-// 		"MACD throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful MACD creation": {
-// 			Source1: Source{WMA{Length: 1}},
-// 			Source2: Source{WMA{Length: 1}},
-// 			Result:  MACD{Source1: Source{WMA{Length: 1}}, Source2: Source{WMA{Length: 1}}},
-// 		},
-// 	}
+func TestMACDNew(t *testing.T) {
+	cc := map[string]struct {
+		Source1 Indicator
+		Source2 Indicator
+		Result  MACD
+		Error   error
+	}{
+		"MACD throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful MACD creation": {
+			Source1: WMA{length: 1},
+			Source2: WMA{length: 1},
+			Result:  MACD{source1: WMA{length: 1}, source2: WMA{length: 1}},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			m, err := NewMACD(c.Source1, c.Source2)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Result, m)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			m, err := NewMACD(c.Source1, c.Source2)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, m)
+			}
+		})
+	}
+}
 
-// func TestMACDValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Source1 Source
-// 		Source2 Source
-// 		Error   error
-// 	}{
-// 		"Source1 returns an error": {
-// 			Source1: Source{EMA{Length: -1}},
-// 			Source2: Source{EMA{Length: 1}},
-// 			Error:   assert.AnError,
-// 		},
-// 		"Source2 returns an error": {
-// 			Source1: Source{EMA{Length: 1}},
-// 			Source2: Source{EMA{Length: -1}},
-// 			Error:   assert.AnError,
-// 		},
-// 		"Successful validation": {
-// 			Source1: Source{EMA{Length: 1}},
-// 			Source2: Source{EMA{Length: 1}},
-// 		},
-// 	}
+func TestMACDValidation(t *testing.T) {
+	cc := map[string]struct {
+		Source1 Indicator
+		Source2 Indicator
+		Error   error
+	}{
+		"Source1 returns an error": {
+			Source1: EMA{length: -1},
+			Source2: EMA{length: 1},
+			Error:   assert.AnError,
+		},
+		"Source2 returns an error": {
+			Source1: EMA{length: 1},
+			Source2: EMA{length: -1},
+			Error:   assert.AnError,
+		},
+		"Successful validation": {
+			Source1: EMA{length: 1},
+			Source2: EMA{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			m := MACD{Source1: c.Source1, Source2: c.Source2}
-// 			err := m.Validate()
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			m := MACD{source1: c.Source1, source2: c.Source2}
+			err := m.validate()
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestMACDCalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Source1 Source
-// 		Source2 Source
-// 		Data    []decimal.Decimal
-// 		Result  decimal.Decimal
-// 		Error   error
-// 	}{
-// 		"Source1 insufficient amount of data points": {
-// 			Source1: Source{EMA{Length: 4}},
-// 			Source2: Source{EMA{Length: 1}},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Source2 insufficient amount of data points": {
-// 			Source1: Source{EMA{Length: 1}},
-// 			Source2: Source{EMA{Length: 4}},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Source1 returns an error": {
-// 			Source1: Source{IndicatorMock{}},
-// 			Source2: Source{SMA{Length: 3}},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 			},
-// 			Error: assert.AnError,
-// 		},
-// 		"Source2 returns an error": {
-// 			Source1: Source{SMA{Length: 3}},
-// 			Source2: Source{IndicatorMock{}},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 			},
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful calculation": {
-// 			Source1: Source{SMA{Length: 2}},
-// 			Source2: Source{SMA{Length: 3}},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 			},
-// 			Result: decimal.NewFromFloat(0.5),
-// 		},
-// 	}
+func TestMACDCalc(t *testing.T) {
+	cc := map[string]struct {
+		Source1 Indicator
+		Source2 Indicator
+		Data    []decimal.Decimal
+		Result  decimal.Decimal
+		Error   error
+	}{
+		"Source1 insufficient amount of data points": {
+			Source1: EMA{length: 4},
+			Source2: EMA{length: 1},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Source2 insufficient amount of data points": {
+			Source1: EMA{length: 1},
+			Source2: EMA{length: 4},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Source1 returns an error": {
+			Source1: IndicatorMock{},
+			Source2: SMA{length: 3},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+			},
+			Error: assert.AnError,
+		},
+		"Source2 returns an error": {
+			Source1: SMA{length: 3},
+			Source2: IndicatorMock{},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+			},
+			Error: assert.AnError,
+		},
+		"Successful calculation": {
+			Source1: SMA{length: 2},
+			Source2: SMA{length: 3},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.NewFromFloat(0.5),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			m := MACD{Source1: c.Source1, Source2: c.Source2}
-// 			res, err := m.Calc(c.Data)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.String())
-// 			}
-// 		})
-// 	}
-// }
+			m := MACD{source1: c.Source1, source2: c.Source2}
+			res, err := m.Calc(c.Data)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
 
-// func TestMACDCount(t *testing.T) {
-// 	m := MACD{Source1: Source{EMA{Length: 10}}, Source2: Source{EMA{Length: 1}}}
-// 	assert.Equal(t, m.Count(), m.Source1.Count())
+func TestMACDCount(t *testing.T) {
+	m := MACD{source1: EMA{length: 10}, source2: EMA{length: 1}}
+	assert.Equal(t, m.Count(), m.source1.Count())
 
-// 	m = MACD{Source1: Source{EMA{Length: 2}}, Source2: Source{EMA{Length: 9}}}
-// 	assert.Equal(t, m.Count(), m.Source2.Count())
-// }
+	m = MACD{source1: EMA{length: 2}, source2: EMA{length: 9}}
+	assert.Equal(t, m.Count(), m.source2.Count())
+}
+
+func TestMACDUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    MACD
+		Error     error
+	}{
+		"Unmarshal throws an error": {
+			ByteArray: []byte(`{}`),
+			Error:     assert.AnError,
+		},
+		"Successful MACD unmarshal": {
+			ByteArray: []byte(`{"name":"macd",
+			"source1":{"name":"aroon","trend":"down","length":2},
+			"source2":{"name":"cci","source":{"name":"ema", "length":2}}}`),
+			Result: MACD{source1: Aroon{trend: "down", length: 2},
+				source2: CCI{source: EMA{length: 2}}},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			m := MACD{}
+			err := json.Unmarshal(c.ByteArray, &m)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, m)
+			}
+		})
+	}
+}
+
+func TestMACDMarshal(t *testing.T) {
+	c := struct {
+		MACD   MACD
+		Result []byte
+	}{
+		MACD: MACD{source1: Aroon{trend: "down", length: 2},
+			source2: CCI{source: EMA{length: 2}}},
+		Result: []byte(`{"name":"macd","source1":{"name":"aroon","trend":"down","length":2},"source2":{"name":"cci","source":{"name":"ema","length":2}}}`),
+	}
+
+	d, _ := json.Marshal(c.MACD)
+
+	assert.Equal(t, c.Result, d)
+}
 
 func TestROCNew(t *testing.T) {
 	cc := map[string]struct {
