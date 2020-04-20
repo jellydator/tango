@@ -96,48 +96,48 @@ func fromJSON(n string, d []byte) (Indicator, error) {
 		a := Aroon{}
 		err := json.Unmarshal(d, &a)
 		return a, err
-	case "cci":
-		c := CCI{}
-		err := json.Unmarshal(d, &c)
-		return c, err
+		// case "cci":
+		// 	c := CCI{}
+		// 	err := json.Unmarshal(d, &c)
+		// 	return c, err
+		// }
+		// case "dema":
+		// 	dm := DEMA{}
+		// 	err := json.Unmarshal(d, &dm)
+		// 	return dm, err
+		// case "ema":
+		// 	e := EMA{}
+		// 	err := json.Unmarshal(d, &e)
+		// 	return e, err
+		// case "hma":
+		// 	h := HMA{}
+		// 	err := json.Unmarshal(d, &h)
+		// 	return h, err
+		// case "macd":
+		// 	m := MACD{}
+		// 	err := json.Unmarshal(d, &m)
+		// 	return m, err
+		// case "roc":
+		// 	r := ROC{}
+		// 	err := json.Unmarshal(d, &r)
+		// 	return r, err
+		// case "rsi":
+		// 	r := RSI{}
+		// 	err := json.Unmarshal(d, &r)
+		// 	return r, err
+		// case "sma":
+		// 	s := SMA{}
+		// 	err := json.Unmarshal(d, &s)
+		// 	return s, err
+		// case "stoch":
+		// 	s := Stoch{}
+		// 	err := json.Unmarshal(d, &s)
+		// 	return s, err
+		// case "wma":
+		// 	w := WMA{}
+		// 	err := json.Unmarshal(d, &w)
+		// 	return w, err
 	}
-	// case "dema":
-	// 	dm := DEMA{}
-	// 	err := json.Unmarshal(d, &dm)
-	// 	return dm, err
-	// case "ema":
-	// 	e := EMA{}
-	// 	err := json.Unmarshal(d, &e)
-	// 	return e, err
-	// case "hma":
-	// 	h := HMA{}
-	// 	err := json.Unmarshal(d, &h)
-	// 	return h, err
-	// case "macd":
-	// 	m := MACD{}
-	// 	err := json.Unmarshal(d, &m)
-	// 	return m, err
-	// case "roc":
-	// 	r := ROC{}
-	// 	err := json.Unmarshal(d, &r)
-	// 	return r, err
-	// case "rsi":
-	// 	r := RSI{}
-	// 	err := json.Unmarshal(d, &r)
-	// 	return r, err
-	// case "sma":
-	// 	s := SMA{}
-	// 	err := json.Unmarshal(d, &s)
-	// 	return s, err
-	// case "stoch":
-	// 	s := Stoch{}
-	// 	err := json.Unmarshal(d, &s)
-	// 	return s, err
-	// case "wma":
-	// 	w := WMA{}
-	// 	err := json.Unmarshal(d, &w)
-	// 	return w, err
-	// }
 
 	return nil, ErrInvalidSourceName
 }
@@ -151,11 +151,11 @@ func toJSON(ind Indicator) ([]byte, error) {
 			Aroon
 			Name string `json:"name"`
 		}{Aroon: i, Name: "aroon"})
-	case CCI:
-		return json.Marshal(struct {
-			CCI
-			Name string `json:"name"`
-		}{CCI: i, Name: "cci"})
+		// case CCI:
+		// 	return json.Marshal(struct {
+		// 		CCI
+		// 		Name string `json:"name"`
+		// 	}{CCI: i, Name: "cci"})
 	}
 
 	return nil, ErrInvalidType

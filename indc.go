@@ -115,89 +115,97 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 
 // CCI holds all the neccesary information needed to calculate commodity
 // channel index.
-type CCI struct {
-	// source configures what calculations to use when computing CCI value.
-	source Source
-}
+// type CCI struct {
+// 	// source configures what calculations to use when computing CCI value.
+// 	source Indicator
+// }
 
 // NewCCI verifies provided values and
 // creates commodity channel index indicator.
-func NewCCI(source Source) (CCI, error) {
-	c := CCI{source: source}
+// func NewCCI(source Indicator) (CCI, error) {
+// 	c := CCI{source: source}
 
-	if err := c.validate(); err != nil {
-		return CCI{}, err
-	}
+// 	if err := c.validate(); err != nil {
+// 		return CCI{}, err
+// 	}
 
-	return c, nil
-}
+// 	return c, nil
+// }
 
 // validate checks all CCI settings stored in func receiver to make sure that
 // they're matching their requirements.
-func (c CCI) validate() error {
-	if err := c.source.validate(); err != nil {
-		return err
-	}
+// func (c CCI) validate() error {
+// 	if c.source == nil {
+// 		return ErrSourceNotSet
+// 	}
 
-	return nil
-}
+// 	if err := c.source.validate(); err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+// }
 
 // Calc calculates CCI value by using settings stored in the func receiver.
-func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-	dd, err := resize(dd, c.Count())
-	if err != nil {
-		return decimal.Zero, err
-	}
+// func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+// 	dd, err := resize(dd, c.Count())
+// 	if err != nil {
+// 		return decimal.Zero, err
+// 	}
 
-	m, err := c.source.Calc(dd)
-	if err != nil {
-		return decimal.Zero, err
-	}
+// 	m, err := c.source.Calc(dd)
+// 	if err != nil {
+// 		return decimal.Zero, err
+// 	}
 
-	return dd[len(dd)-1].Sub(m).Div(decimal.NewFromFloat(0.015).
-		Mul(meanDeviation(dd))), nil
-}
+// 	return dd[len(dd)-1].Sub(m).Div(decimal.NewFromFloat(0.015).
+// 		Mul(meanDeviation(dd))), nil
+// }
 
 // Count determines the total amount of data points needed for CCI
 // calculation by using settings stored in the receiver.
-func (c CCI) Count() int {
-	return c.source.Count()
-}
+// func (c CCI) Count() int {
+// return c.source.Count()
+// }
 
 // UnmarshalJSON parse JSON into an indicator source.
-func (c *CCI) UnmarshalJSON(d []byte) error {
-	var i struct {
-		N string `json:"name"`
-		S Source
-	}
+// func (c *CCI) UnmarshalJSON(d []byte) error {
+// 	var i struct {
+// 		N string `json:"name"`
+// 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
-		return err
+// 	if err := json.Unmarshal(d, &i); err != nil {
+// 		return err
+// 	}
 
-	}
+// 	if i.N != "cci" {
+// 		return ErrInvalidType
+// 	}
 
-	if i.N != "cci" {
-		return ErrInvalidType
-	}
+// 	ind, err := fromJSON("aroon", d)
+// 	if err != nil {
+// 		println("aya")
+// 		return err
+// 	}
 
-	c.source = i.S
+// 	c.source = ind
 
-	if err := c.validate(); err != nil {
-		return err
-	}
+// 	if err := c.validate(); err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // MarshalJSON converts source data into JSON.
-func (c CCI) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		N string `json:"name"`
-		S Source
-	}{
-		N: "cci", S: c.source,
-	})
-}
+// func (c CCI) MarshalJSON() ([]byte, error) {
+// 	return json.Marshal(struct {
+// 		N string `json:"name"`
+// 		S Indicator
+// 	}{
+// 		N: "cci", S: c.source,
+// 	})
+// }
 
 // // DEMA holds all the neccesary information needed to calculate
 // // double exponential moving average.
@@ -636,7 +644,7 @@ func (s *SMA) UnmarshalJSON(d []byte) error {
 
 	}
 
-	if i.N != "aroon" {
+	if i.N != "sma" {
 		return ErrInvalidType
 	}
 
@@ -655,7 +663,7 @@ func (s SMA) MarshalJSON() ([]byte, error) {
 		N string `json:"name"`
 		L int    `json:"length"`
 	}{
-		N: "aroon", L: s.length,
+		N: "sma", L: s.length,
 	})
 }
 
@@ -782,66 +790,4 @@ type Indicator interface {
 	// Count shoul determines the total amount of data points needed
 	// for indicator's calculation.
 	Count() int
-
-	// // UnmarshalJSON overrides existing JSON Unmarshal so it reads and
-	// // validates indicator values.
-	// UnmarshalJSON(d []byte) error
-
-	// // MarshalJSON overrides existing JSON Marshal so indicators write their
-	// // unexported settings to json as well.
-	// MarshalJSON() ([]byte, error)
 }
-
-// Source is a wrapper type allowing a more convenient work with the
-// indicator interface.
-type Source struct {
-	Indicator
-}
-
-// NewSource verifies provided indicator and
-// Newializes source.
-// func NewSource(i Indicator) (Source, error) {
-// 	if _, err := toJSON(i); err != nil {
-// 		return Source{}, ErrInvalidSourceName
-// 	}
-
-// 	if err := i.validate(); err != nil {
-// 		return Source{}, err
-// 	}
-
-// 	return Source{i}, nil
-// }
-
-// Validate checks all Source values stored in func receiver to make sure
-// that they're matching provided requirements.
-func (s Source) validate() error {
-	if _, err := toJSON(s.Indicator); err != nil {
-		return err
-	}
-
-	if err := s.Indicator.validate(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// UnmarshalJSON parse JSON into an indicator source.
-// func (s *Source) UnmarshalJSON(d []byte) error {
-// 	var id struct {
-// 		Name string `json:"name"`
-// 	}
-
-// 	if err := json.Unmarshal(d, &id); err != nil {
-// 		return err
-// 	}
-
-// 	ind, err := fromJSON(id.Name, d)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	s.Indicator = ind
-
-// 	return nil
-// }

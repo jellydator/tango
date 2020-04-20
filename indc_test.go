@@ -206,69 +206,69 @@ func TestAroonMarshal(t *testing.T) {
 	assert.Equal(t, c.Result, d)
 }
 
-func TestCCINew(t *testing.T) {
-	cc := map[string]struct {
-		Source Source
-		Result CCI
-		Error  error
-	}{
-		"CCI throws an error": {
-			Error: assert.AnError,
-		},
-		"Successful CCI creation": {
-			Source: Source{Aroon{trend: "down", length: 1}},
-			Result: CCI{source: Source{Aroon{trend: "down", length: 1}}},
-		},
-	}
+// func TestCCINew(t *testing.T) {
+// 	cc := map[string]struct {
+// 		Source Indicator
+// 		Result CCI
+// 		Error  error
+// 	}{
+// 		"CCI throws an error": {
+// 			Error: assert.AnError,
+// 		},
+// 		"Successful CCI creation": {
+// 			Source: Aroon{trend: "down", length: 1},
+// 			Result: CCI{source: Aroon{trend: "down", length: 1}},
+// 		},
+// 	}
 
-	for cn, c := range cc {
-		c := c
-		t.Run(cn, func(t *testing.T) {
-			t.Parallel()
+// 	for cn, c := range cc {
+// 		c := c
+// 		t.Run(cn, func(t *testing.T) {
+// 			t.Parallel()
 
-			cci, err := NewCCI(c.Source)
-			if c.Error != nil {
-				assert.NotNil(t, err)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result, cci)
-			}
-		})
-	}
-}
+// 			cci, err := NewCCI(c.Source)
+// 			if c.Error != nil {
+// 				assert.NotNil(t, err)
+// 			} else {
+// 				assert.Nil(t, err)
+// 				assert.Equal(t, c.Result, cci)
+// 			}
+// 		})
+// 	}
+// }
 
-func TestCCIValidation(t *testing.T) {
-	cc := map[string]struct {
-		Source Source
-		Error  error
-	}{
-		"Source returns an error": {
-			Error: assert.AnError,
-		},
-		"Successful validation": {
-			Source: Source{Aroon{trend: "down", length: 1}},
-		},
-	}
+// func TestCCIValidation(t *testing.T) {
+// 	cc := map[string]struct {
+// 		Source Indicator
+// 		Error  error
+// 	}{
+// 		"Source returns an error": {
+// 			Error: assert.AnError,
+// 		},
+// 		"Successful validation": {
+// 			Source: Aroon{trend: "down", length: 1},
+// 		},
+// 	}
 
-	for cn, c := range cc {
-		c := c
-		t.Run(cn, func(t *testing.T) {
-			t.Parallel()
+// 	for cn, c := range cc {
+// 		c := c
+// 		t.Run(cn, func(t *testing.T) {
+// 			t.Parallel()
 
-			cci := CCI{source: c.Source}
-			err := cci.validate()
-			if c.Error != nil {
-				if c.Error == assert.AnError {
-					assert.NotNil(t, err)
-				} else {
-					assert.Equal(t, c.Error, err)
-				}
-			} else {
-				assert.Nil(t, err)
-			}
-		})
-	}
-}
+// 			cci := CCI{source: c.Source}
+// 			err := cci.validate()
+// 			if c.Error != nil {
+// 				if c.Error == assert.AnError {
+// 					assert.NotNil(t, err)
+// 				} else {
+// 					assert.Equal(t, c.Error, err)
+// 				}
+// 			} else {
+// 				assert.Nil(t, err)
+// 			}
+// 		})
+// 	}
+// }
 
 // func TestCCICalc(t *testing.T) {
 // 	cc := map[string]struct {
@@ -341,8 +341,56 @@ func TestCCIValidation(t *testing.T) {
 // }
 
 // func TestCCICount(t *testing.T) {
-// 	c := CCI{Source: Source{EMA{Length: 10}}}
-// 	assert.Equal(t, c.Source.Count(), c.Count())
+// 	c := CCI{source: Aroon{trend: "down", length: 10}}
+// 	assert.Equal(t, c.source.Count(), c.Count())
+// }
+
+// func TestCCIUnmarshal(t *testing.T) {
+// 	cc := map[string]struct {
+// 		ByteArray []byte
+// 		Result    CCI
+// 		Error     error
+// 	}{
+// 		"Unmarshal throws an error": {
+// 			ByteArray: []byte(`{}`),
+// 			Error:     assert.AnError,
+// 		},
+// 		"Successful CCI unmarshal": {
+// 			ByteArray: []byte(`{"name":"cci",
+// 			"source":{"name":"aroon","trend":"up","length":1}}`),
+// 			Result: CCI{Aroon{trend: "up", length: 1}},
+// 		},
+// 	}
+
+// 	for cn, c := range cc {
+// 		c := c
+// 		t.Run(cn, func(t *testing.T) {
+// 			t.Parallel()
+
+// 			cci := CCI{}
+// 			err := json.Unmarshal(c.ByteArray, &cci)
+// 			if c.Error != nil {
+// 				assert.NotNil(t, err)
+// 			} else {
+// 				assert.Nil(t, err)
+// 				assert.Equal(t, c.Result, cci)
+// 			}
+// 		})
+// 	}
+// }
+
+// func TestCCIMarshal(t *testing.T) {
+// 	c := struct {
+// 		CCI    CCI
+// 		Result []byte
+// 	}{
+// 		CCI:    CCI{source: Aroon{trend: "down", length: 1}},
+// 		Result: []byte(`{"name":"aroon","trend":"down","length":1}`),
+// 	}
+
+// 	d, _ := json.Marshal(c.CCI)
+
+// 	assert.Equal(t, c.Result, d)
 // }
 
 // func TestDEMANew(t *testing.T) {
@@ -1142,124 +1190,160 @@ func TestCCIValidation(t *testing.T) {
 // 	assert.Equal(t, 15, r.Count())
 // }
 
-// func TestSMANew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Result SMA
-// 		Error  error
-// 	}{
-// 		"SMA throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful SMA creation": {
-// 			Length: 1,
-// 			Result: SMA{Length: 1},
-// 		},
-// 	}
+func TestSMANew(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result SMA
+		Error  error
+	}{
+		"SMA throws an error": {
+			Error: assert.AnError,
+		},
+		"Successful SMA creation": {
+			Length: 1,
+			Result: SMA{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			s, err := NewSMA(c.Length)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Result, s)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			s, err := NewSMA(c.Length)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, s)
+			}
+		})
+	}
+}
 
-// func TestSMAValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Error  error
-// 	}{
-// 		"Length cannot be less than 1": {
-// 			Length: 0,
-// 			Error:  ErrInvalidLength,
-// 		},
-// 		"Successful validation": {
-// 			Length: 1,
-// 		},
-// 	}
+func TestSMAValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Error  error
+	}{
+		"Length cannot be less than 1": {
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful validation": {
+			Length: 1,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			s := SMA{Length: c.Length}
-// 			err := s.Validate()
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			s := SMA{length: c.Length}
+			err := s.validate()
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestSMACalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Insufficient amount of data points": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 			},
-// 			Result: decimal.NewFromInt(31),
-// 		},
-// 	}
+func TestSMACalc(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Insufficient amount of data points": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful calculation": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.NewFromInt(31),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			s := SMA{Length: c.Length}
-// 			res, err := s.Calc(c.Data)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.String())
-// 			}
-// 		})
-// 	}
-// }
+			s := SMA{length: c.Length}
+			res, err := s.Calc(c.Data)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
 
-// func TestSMACount(t *testing.T) {
-// 	s := SMA{Length: 15}
-// 	assert.Equal(t, 15, s.Count())
-// }
+func TestSMACount(t *testing.T) {
+	s := SMA{length: 15}
+	assert.Equal(t, 15, s.Count())
+}
+
+func TestSMAUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    SMA
+		Error     error
+	}{
+		"Unmarshal throws an error": {
+			ByteArray: []byte(`{"length": "down"}`),
+			Error:     assert.AnError,
+		},
+		"Successful SMA unmarshal": {
+			ByteArray: []byte(`{"name":"sma","length":1}`),
+			Result:    SMA{length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			s := SMA{}
+			err := json.Unmarshal(c.ByteArray, &s)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, s)
+			}
+		})
+	}
+}
+
+func TestSMAMarshal(t *testing.T) {
+	c := struct {
+		SMA    SMA
+		Result []byte
+	}{
+		SMA:    SMA{length: 1},
+		Result: []byte(`{"name":"sma","length":1}`),
+	}
+
+	d, _ := json.Marshal(c.SMA)
+
+	assert.Equal(t, c.Result, d)
+}
 
 // func TestStochNew(t *testing.T) {
 // 	cc := map[string]struct {
@@ -1512,152 +1596,4 @@ func TestCCIValidation(t *testing.T) {
 // func TestWMACount(t *testing.T) {
 // 	w := WMA{Length: 15}
 // 	assert.Equal(t, 15, w.Count())
-// }
-
-// func TestSourceNew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Indicator Indicator
-// 		Result    Source
-// 		Error     error
-// 	}{
-// 		"Invalid Indicator name": {
-// 			Indicator: IndicatorMock{},
-// 			Error:     ErrInvalidSourceName,
-// 		},
-// 		"Indicator throws an error": {
-// 			Indicator: SMA{Length: -1},
-// 			Error:     assert.AnError,
-// 		},
-// 		"Successful Source creation": {
-// 			Indicator: SMA{Length: 1},
-// 			Result:    Source{SMA{Length: 1}},
-// 		},
-// 	}
-
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
-
-// 			s, err := NewSource(c.Indicator)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Result, s)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
-
-// func TestSourceValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Indicator Indicator
-// 		Name      string
-// 		Error     error
-// 	}{
-// 		"Indicator returns an error": {
-// 			Name:      "EMA",
-// 			Indicator: EMA{Length: -1},
-// 			Error:     assert.AnError,
-// 		},
-// 		"Successful validation": {
-// 			Name:      "EMA",
-// 			Indicator: EMA{Length: 1},
-// 		},
-// 	}
-
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
-
-// 			s := Source{Indicator: c.Indicator}
-// 			err := s.Validate()
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
-
-// func TestSourceUnmarshal(t *testing.T) {
-// 	cc := map[string]struct {
-// 		ByteArray []byte
-// 		Result    Source
-// 		Error     error
-// 	}{
-// 		"Unmarshal throws an error": {
-// 			ByteArray: []byte(`{"name": ema","length":1}`),
-// 			Error:     assert.AnError,
-// 		},
-// 		"newIndicator throws an error": {
-// 			ByteArray: []byte(`{"name": "blema","length":1}`),
-// 			Error:     assert.AnError,
-// 		},
-// 		"Successful Source unmarshal": {
-// 			ByteArray: []byte(`{"name":"ema","length":1}`),
-// 			Result:    Source{EMA{Length: 1}},
-// 		},
-// 	}
-
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
-
-// 			s := Source{}
-// 			err := s.UnmarshalJSON(c.ByteArray)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, s)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, s)
-// 			}
-// 		})
-// 	}
-// }
-
-// func TestSourceMarshal(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Source Source
-// 		Result []byte
-// 		Error  error
-// 	}{
-// 		"toJSON throws an error": {
-// 			Source: Source{IndicatorMock{}},
-// 			Error:  assert.AnError,
-// 		},
-// 		"Successful Source marshal": {
-// 			Source: Source{Aroon{trend: "down", length: 1}},
-// 			Result: []byte(`{"name":"aroon","trend":"down","length":1}`),
-// 		},
-// 	}
-
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
-
-// 			s, err := c.Source.MarshalJSON()
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Equal(t, c.Result, s)
-// 			}
-// 		})
-// 	}
 // }
