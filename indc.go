@@ -207,67 +207,101 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 // 	})
 // }
 
-// // DEMA holds all the neccesary information needed to calculate
-// // double exponential moving average.
-// type DEMA struct {
-// 	// length specifies how many data points should be used
-// 	// in calculations.
-// 	length int `json:"length"`
-// }
+// DEMA holds all the neccesary information needed to calculate
+// double exponential moving average.
+type DEMA struct {
+	// length specifies how many data points should be used
+	// in calculations.
+	length int
+}
 
-// // NewDEMA verifies provided values and
-// // creates double exponential moving average indicator.
-// func NewDEMA(length int) (DEMA, error) {
-// 	d := DEMA{length: length}
+// NewDEMA verifies provided values and
+// creates double exponential moving average indicator.
+func NewDEMA(length int) (DEMA, error) {
+	d := DEMA{length: length}
 
-// 	if err := d.validate(); err != nil {
-// 		return DEMA{}, err
-// 	}
+	if err := d.validate(); err != nil {
+		return DEMA{}, err
+	}
 
-// 	return d, nil
-// }
+	return d, nil
+}
 
-// // Validate checks all DEMA settings stored in func receiver to
-// // make sure that they're matching their requirements.
-// func (dm DEMA) validate() error {
-// 	if dm.length < 1 {
-// 		return ErrInvalidLength
-// 	}
-// 	return nil
-// }
+// Validate checks all DEMA settings stored in func receiver to
+// make sure that they're matching their requirements.
+func (dm DEMA) validate() error {
+	if dm.length < 1 {
+		return ErrInvalidLength
+	}
+	return nil
+}
 
-// // Calc calculates DEMA value by using settings stored in the func receiver.
-// func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-// 	dd, err := resize(dd, dm.Count())
-// 	if err != nil {
-// 		return decimal.Zero, err
-// 	}
+// Calc calculates DEMA value by using settings stored in the func receiver.
+func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, dm.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-// 	v := make([]decimal.Decimal, dm.length)
+	v := make([]decimal.Decimal, dm.length)
 
-// 	s := SMA{length: dm.length}
-// 	v[0], _ = s.Calc(dd[:dm.length])
+	s := SMA{length: dm.length}
+	v[0], _ = s.Calc(dd[:dm.length])
 
-// 	e := EMA{Length: dm.length}
+	e := EMA{length: dm.length}
 
-// 	for i := dm.length; i < len(dd); i++ {
-// 		v[i-dm.length+1] = e.CalcNext(v[i-dm.length], dd[i])
-// 	}
+	for i := dm.length; i < len(dd); i++ {
+		v[i-dm.length+1] = e.CalcNext(v[i-dm.length], dd[i])
+	}
 
-// 	r := v[0]
+	r := v[0]
 
-// 	for i := 0; i < len(v); i++ {
-// 		r = e.CalcNext(r, v[i])
-// 	}
+	for i := 0; i < len(v); i++ {
+		r = e.CalcNext(r, v[i])
+	}
 
-// 	return r, nil
-// }
+	return r, nil
+}
 
-// // Count determines the total amount of data points needed for DEMA
-// // calculation by using settings stored in the receiver.
-// func (dm DEMA) Count() int {
-// 	return dm.length*2 - 1
-// }
+// Count determines the total amount of data points needed for DEMA
+// calculation by using settings stored in the receiver.
+func (dm DEMA) Count() int {
+	return dm.length*2 - 1
+}
+
+// UnmarshalJSON parse JSON into an indicator source.
+func (dm *DEMA) UnmarshalJSON(d []byte) error {
+	var i struct {
+		N string `json:"name"`
+		L int    `json:"length"`
+	}
+
+	if err := json.Unmarshal(d, &i); err != nil {
+		return err
+	}
+
+	if i.N != "dema" {
+		return ErrInvalidType
+	}
+
+	dm.length = i.L
+
+	if err := dm.validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// MarshalJSON converts source data into JSON.
+func (dm DEMA) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		N string `json:"name"`
+		L int    `json:"length"`
+	}{
+		N: "dema", L: dm.length,
+	})
+}
 
 // EMA holds all the neccesary information needed to calculate exponential
 // moving average.
