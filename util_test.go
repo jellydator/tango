@@ -16,18 +16,18 @@ func TestResize(t *testing.T) {
 		Result []decimal.Decimal
 		Error  error
 	}{
-		"Insufficient amount of data points": {
+		"Successfully resize threw an ErrInvalidDataPointCount with insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataPointCount,
 		},
-		"Invalid length": {
+		"Successfully resize threw an ErrInvalidLength when provided length was invalid": {
 			Length: -3,
 			Error:  ErrInvalidLength,
 		},
-		"Successful resize": {
+		"Successful resize computation": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
@@ -74,18 +74,18 @@ func TestResizeCandles(t *testing.T) {
 		Result []chartype.Candle
 		Error  error
 	}{
-		"Insufficient amount of data points": {
+		"Successfully resizeCandles threw an ErrInvalidDataPointCount with insufficient amount of data points": {
 			Length: 3,
 			Data: []chartype.Candle{
 				{Close: decimal.NewFromInt(30)},
 			},
 			Error: ErrInvalidDataPointCount,
 		},
-		"Invalid length": {
+		"Successfully resizeCandles threw an ErrInvalidLength when provided length was invalid": {
 			Length: -3,
 			Error:  ErrInvalidLength,
 		},
-		"Successful resize": {
+		"Successful resizeCandles computation": {
 			Length: 3,
 			Data: []chartype.Candle{
 				{Close: decimal.NewFromInt(30)},
@@ -130,7 +130,7 @@ func TestTypicalPrice(t *testing.T) {
 		Data   []chartype.Candle
 		Result []decimal.Decimal
 	}{
-		"Successful typical price": {
+		"Successful typical price calculation": {
 			Data: []chartype.Candle{
 				{High: decimal.NewFromFloat(24.2), Low: decimal.NewFromFloat(23.85), Close: decimal.NewFromFloat(23.89)},
 				{High: decimal.NewFromFloat(24.07), Low: decimal.NewFromFloat(23.72), Close: decimal.NewFromFloat(23.95)},
@@ -163,7 +163,7 @@ func TestMeanDeviation(t *testing.T) {
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 	}{
-		"Successful mean deviation": {
+		"Successful mean deviation calculation": {
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(2),
 				decimal.NewFromInt(5),
@@ -188,85 +188,169 @@ func TestMeanDeviation(t *testing.T) {
 	}
 }
 
-// func TestFromJSON(t *testing.T) {
-// 	cc := map[string]struct {
-// 		ByteArray []byte
-// 		Result    Indicator
-// 		Error     error
-// 	}{
-// 		"Successful creation of an aroon indicator": {
-// 			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1}`),
-// 			Result:    Aroon{trend: "up", length: 1},
-// 		},
-// 		"Successful creation of a cci indicator": {
-// 			ByteArray: []byte(`{"name":"cci",
-// 			"source":{"name":"aroon","trend":"up","length":1}}`),
-// 			Result: CCI{Aroon{trend: "up", length: 1}},
-// 		},
-// 		"Successful creation of a dema indicator": {
-// 			ByteArray: []byte(`{"name":"dema","length":1}`),
-// 			Result:    DEMA{length: 1},
-// 		},
-// 		"Successful creation of an ema indicator": {
-// 			ByteArray: []byte(`{"name":"ema","length":1}`),
-// 			Result:    EMA{length: 1},
-// 		},
-// 		"Successful creation of a hma indicator": {
-// 			ByteArray: []byte(`{"name":"hma", "wma":{"name":"wma","length":1}}`),
-// 			Result:    HMA{wma: WMA{length: 1}},
-// 		},
-// 		"Successful creation of a macd indicator": {
-// 			ByteArray: []byte(`{"name":"macd",
-// 			"source1":{"name":"aroon","trend":"down","length":2},
-// 			"source2":{"name":"cci","source":{"name":"ema", "length":2}}}`),
-// 			Result: MACD{Aroon{trend: "down", length: 2},
-// 				CCI{EMA{length: 2}}},
-// 		},
-// 		"Successful creation of a roc indicator": {
-// 			ByteArray: []byte(`{"name":"roc","length":1}`),
-// 			Result:    ROC{length: 1},
-// 		},
-// 		"Successful creation of a rsi indicator": {
-// 			ByteArray: []byte(`{"name":"rsi","length":1}`),
-// 			Result:    RSI{length: 1},
-// 		},
-// 		"Successful creation of a sma indicator": {
-// 			ByteArray: []byte(`{"name":"sma","length":1}`),
-// 			Result:    SMA{length: 1},
-// 		},
-// 		"Successful creation of a stoch indicator": {
-// 			ByteArray: []byte(`{"name":"stoch","length":1}`),
-// 			Result:    Stoch{length: 1},
-// 		},
-// 		"Successful creation of an wma indicator": {
-// 			ByteArray: []byte(`{"name":"wma","length":1}`),
-// 			Result:    WMA{length: 1},
-// 		},
-// 		"JSON unmarshal returns an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid source name provided": {
-// 			ByteArray: []byte(`{"name":"aa"}`),
-// 			Error:     ErrInvalidSourceName,
-// 		},
-// 	}
+func TestFromJSON(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    Indicator
+		Error     error
+	}{
+		"Successful creation of an Aroon indicator": {
+			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1}`),
+			Result:    Aroon{trend: "up", length: 1},
+		},
+		"Successful creation of a CCI indicator": {
+			ByteArray: []byte(`{"name":"cci",
+			"source":{"name":"aroon","trend":"up","length":1}}`),
+			Result: CCI{Aroon{trend: "up", length: 1}},
+		},
+		"Successful creation of a DEMA indicator": {
+			ByteArray: []byte(`{"name":"dema","length":1}`),
+			Result:    DEMA{length: 1},
+		},
+		"Successful creation of an EMA indicator": {
+			ByteArray: []byte(`{"name":"ema","length":1}`),
+			Result:    EMA{length: 1},
+		},
+		"Successful creation of a HMA indicator": {
+			ByteArray: []byte(`{"name":"hma", "wma":{"name":"wma","length":1}}`),
+			Result:    HMA{wma: WMA{length: 1}},
+		},
+		"Successful creation of a MACD indicator": {
+			ByteArray: []byte(`{"name":"macd",
+			"source1":{"name":"aroon","trend":"down","length":2},
+			"source2":{"name":"cci","source":{"name":"ema", "length":2}}}`),
+			Result: MACD{Aroon{trend: "down", length: 2},
+				CCI{EMA{length: 2}}},
+		},
+		"Successful creation of a ROC indicator": {
+			ByteArray: []byte(`{"name":"roc","length":1}`),
+			Result:    ROC{length: 1},
+		},
+		"Successful creation of a RSI indicator": {
+			ByteArray: []byte(`{"name":"rsi","length":1}`),
+			Result:    RSI{length: 1},
+		},
+		"Successful creation of a SMA indicator": {
+			ByteArray: []byte(`{"name":"sma","length":1}`),
+			Result:    SMA{length: 1},
+		},
+		"Successful creation of a Stoch indicator": {
+			ByteArray: []byte(`{"name":"stoch","length":1}`),
+			Result:    Stoch{length: 1},
+		},
+		"Successful creation of an WMA indicator": {
+			ByteArray: []byte(`{"name":"wma","length":1}`),
+			Result:    WMA{length: 1},
+		},
+		"Successfully fromJSON JSON unmarshal threw an error": {
+			ByteArray: []byte(`{\"_"/`),
+			Error:     assert.AnError,
+		},
+		"Successfully fromJSON threw an ErrInvalidDataPointCount with invalid source name": {
+			ByteArray: []byte(`{"name":"aa"}`),
+			Error:     ErrInvalidSourceName,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			res, err := fromJSON(c.ByteArray)
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, res)
-// 			}
-// 		})
-// 	}
-// }
+			res, err := fromJSON(c.ByteArray)
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, res)
+			}
+		})
+	}
+}
+
+func TestToJSON(t *testing.T) {
+	cc := map[string]struct {
+		Data   Indicator
+		Result []byte
+		Error  error
+	}{
+		"Successful marshal of an Aroon indicator": {
+			Data:   Aroon{trend: "up", length: 1},
+			Result: []byte(`{"name":"aroon","trend":"up","length":1}`),
+		},
+		"Successful marshal of a CCI indicator": {
+			Data:   CCI{Aroon{trend: "up", length: 1}},
+			Result: []byte(`{"name":"cci","source":{"name":"aroon","trend":"up","length":1}}`),
+		},
+		"Successfully CCI toJSON threw an error when it was provided unrecognized source": {
+			Data:  CCI{IndicatorMock{}},
+			Error: assert.AnError,
+		},
+		"Successful marshal of a DEMA indicator": {
+			Data:   DEMA{length: 1},
+			Result: []byte(`{"name":"dema","length":1}`),
+		},
+		"Successful marshal of an EMA indicator": {
+			Data:   EMA{length: 1},
+			Result: []byte(`{"name":"ema","length":1}`),
+		},
+		"Successful marshal of a HMA indicator": {
+			Data:   HMA{wma: WMA{length: 1}},
+			Result: []byte(`{"name":"hma","wma":{"length":1}}`),
+		},
+		"Successful marshal of a MACD indicator": {
+			Data: MACD{Aroon{trend: "down", length: 2},
+				CCI{EMA{length: 2}}},
+			Result: []byte(`{"name":"macd","source1":{"name":"aroon","trend":"down","length":2},"source2":{"name":"cci","source":{"name":"ema","length":2}}}`),
+		},
+		"Successfully MACD toJSON threw an error when it was provided unrecognized source1": {
+			Data: MACD{IndicatorMock{},
+				CCI{EMA{length: 2}}},
+			Error: assert.AnError,
+		},
+		"Successfully MACD toJSON threw an error when it was provided unrecognized source2": {
+			Data: MACD{Aroon{trend: "down", length: 2},
+				IndicatorMock{}},
+			Error: assert.AnError,
+		},
+		"Successful marshal of a ROC indicator": {
+			Data:   ROC{length: 1},
+			Result: []byte(`{"name":"roc","length":1}`),
+		},
+		"Successful marshal of a RSI indicator": {
+			Data:   RSI{length: 1},
+			Result: []byte(`{"name":"rsi","length":1}`),
+		},
+		"Successful marshal of a SMA indicator": {
+			Data:   SMA{length: 1},
+			Result: []byte(`{"name":"sma","length":1}`),
+		},
+		"Successful marshal of a Stoch indicator": {
+			Data:   Stoch{length: 1},
+			Result: []byte(`{"name":"stoch","length":1}`),
+		},
+		"Successful marshal of an WMA indicator": {
+			Data:   WMA{length: 1},
+			Result: []byte(`{"name":"wma","length":1}`),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := toJSON(c.Data)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, res)
+			}
+		})
+	}
+}

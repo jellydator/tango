@@ -1,7 +1,6 @@
 package indc
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -1939,7 +1938,7 @@ func TestWMAUnmarshal(t *testing.T) {
 			t.Parallel()
 
 			w := WMA{}
-			err := json.Unmarshal(c.ByteArray, &w)
+			err := w.UnmarshalJSON(c.ByteArray)
 			if c.Error != nil {
 				assert.NotNil(t, err)
 			} else {
