@@ -247,10 +247,6 @@ func TestCCIValidation(t *testing.T) {
 		"Successfully CCI threw an error when source wasn't provided": {
 			Error: ErrSourceNotSet,
 		},
-		"Successfully CCI source validation threw an error": {
-			Source: Aroon{length: -1, trend: "s"},
-			Error:  assert.AnError,
-		},
 		"Successful CCI validation": {
 			Source: Aroon{trend: "down", length: 1},
 		},
@@ -949,16 +945,6 @@ func TestMACDValidation(t *testing.T) {
 		"Successfully MACD threw an error when source2 wasn't provided": {
 			Source2: EMA{length: 1},
 			Error:   ErrSourceNotSet,
-		},
-		"Successfully MACD source1 validation threw an error": {
-			Source1: EMA{length: -1},
-			Source2: EMA{length: 1},
-			Error:   assert.AnError,
-		},
-		"Successfully MACD source2 validation threw an error": {
-			Source1: EMA{length: 1},
-			Source2: EMA{length: -1},
-			Error:   assert.AnError,
 		},
 		"Successful MACD validation": {
 			Source1: EMA{length: 1},

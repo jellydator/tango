@@ -133,10 +133,6 @@ func (c CCI) validate() error {
 		return ErrSourceNotSet
 	}
 
-	if err := c.source.validate(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -505,14 +501,6 @@ func NewMACD(source1, source2 Indicator) (MACD, error) {
 func (m MACD) validate() error {
 	if m.source1 == nil || m.source2 == nil {
 		return ErrSourceNotSet
-	}
-
-	if err := m.source1.validate(); err != nil {
-		return err
-	}
-
-	if err := m.source2.validate(); err != nil {
-		return err
 	}
 
 	return nil
@@ -1013,9 +1001,6 @@ func (w WMA) MarshalJSON() ([]byte, error) {
 
 // Indicator is an interface that every indicator should implement.
 type Indicator interface {
-	// validate should check whether the configuration options are
-	// of a valid format.
-	validate() error
 
 	// Calc should calculate and return indicator's value.
 	Calc(dd []decimal.Decimal) (decimal.Decimal, error)
