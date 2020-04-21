@@ -9,6 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestCleanString(t *testing.T) {
+	var e String
+	e = "aroon"
+	r := CleanString(" aRooN ")
+	assert.Equal(t, e, r)
+}
 func TestResize(t *testing.T) {
 	cc := map[string]struct {
 		Length int

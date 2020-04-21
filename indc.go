@@ -11,7 +11,7 @@ import (
 type Aroon struct {
 	// trend configures which aroon trend to measure (it can either
 	// be up or down).
-	trend string
+	trend String
 
 	// length specifies how many data points should be used
 	// in calculations.
@@ -20,7 +20,7 @@ type Aroon struct {
 
 // NewAroon verifies provided values and
 // creates aroon indicator.
-func NewAroon(trend string, length int) (Aroon, error) {
+func NewAroon(trend String, length int) (Aroon, error) {
 	a := Aroon{trend: trend, length: length}
 
 	if err := a.validate(); err != nil {
@@ -79,7 +79,7 @@ func (a Aroon) Count() int {
 // UnmarshalJSON parse JSON into an indicator source.
 func (a *Aroon) UnmarshalJSON(d []byte) error {
 	var i struct {
-		T string `json:"trend"`
+		T String `json:"trend"`
 		L int    `json:"length"`
 	}
 
@@ -100,7 +100,7 @@ func (a *Aroon) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts source data into JSON.
 func (a Aroon) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		T string `json:"trend"`
+		T String `json:"trend"`
 		L int    `json:"length"`
 	}{
 		T: a.trend, L: a.length,
@@ -165,14 +165,14 @@ func (c CCI) Count() int {
 // UnmarshalJSON parse JSON into an indicator source.
 func (c *CCI) UnmarshalJSON(d []byte) error {
 	var i struct {
-		Source json.RawMessage
+		S json.RawMessage `json:"source"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	s, err := fromJSON(i.Source)
+	s, err := fromJSON(i.S)
 	if err != nil {
 		return err
 	}
@@ -556,22 +556,22 @@ func (m MACD) Count() int {
 // UnmarshalJSON parse JSON into an indicator source.
 func (m *MACD) UnmarshalJSON(d []byte) error {
 	var i struct {
-		Source1 json.RawMessage
-		Source2 json.RawMessage
+		S1 json.RawMessage `json:"source1"`
+		S2 json.RawMessage `json:"source2"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	s1, err := fromJSON(i.Source1)
+	s1, err := fromJSON(i.S1)
 	if err != nil {
 		return err
 	}
 
 	m.source1 = s1
 
-	s2, err := fromJSON(i.Source2)
+	s2, err := fromJSON(i.S2)
 	if err != nil {
 		return err
 	}

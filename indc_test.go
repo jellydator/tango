@@ -19,7 +19,7 @@ func (im IndicatorMock) Count() int { return 1 }
 
 func TestAroonNew(t *testing.T) {
 	cc := map[string]struct {
-		Trend  string
+		Trend  String
 		Length int
 		Result Aroon
 		Error  error
@@ -52,7 +52,7 @@ func TestAroonNew(t *testing.T) {
 
 func TestAroonValidation(t *testing.T) {
 	cc := map[string]struct {
-		Trend  string
+		Trend  String
 		Length int
 		Error  error
 	}{
@@ -94,7 +94,7 @@ func TestAroonValidation(t *testing.T) {
 
 func TestAroonCalc(t *testing.T) {
 	cc := map[string]struct {
-		Trend  string
+		Trend  String
 		Length int
 		Data   []decimal.Decimal
 		Result decimal.Decimal
