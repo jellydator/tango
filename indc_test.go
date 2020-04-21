@@ -1316,493 +1316,490 @@ func TestROCMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-// func TestRSINew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Result RSI
-// 		Error  error
-// 	}{
-// 		"RSI throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful RSI creation": {
-// 			Length: 1,
-// 			Result: RSI{length: 1},
-// 		},
-// 	}
+func TestRSINew(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result RSI
+		Error  error
+	}{
+		"Successfully RSI threw an error when no values were provided": {
+			Error: assert.AnError,
+		},
+		"Successful creation of RSI": {
+			Length: 1,
+			Result: RSI{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			r, err := NewRSI(c.Length)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, r)
-// 			}
-// 		})
-// 	}
-// }
+			r, err := NewRSI(c.Length)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, r)
+			}
+		})
+	}
+}
 
-// func TestRSIValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Error  error
-// 	}{
-// 		"Length cannot be less than 1": {
-// 			Length: 0,
-// 			Error:  ErrInvalidLength,
-// 		},
-// 		"Successful validation": {
-// 			Length: 1,
-// 		},
-// 	}
+func TestRSIValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Error  error
+	}{
+		"Successfully RSI threw an ErrInvalidLength with less than 1 length": {
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful RSI validation": {
+			Length: 1,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			r := RSI{length: c.Length}
-// 			err := r.validate()
-// 			if c.Error != nil {
-// 				assert.Equal(t, c.Error, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			r := RSI{length: c.Length}
+			err := r.validate()
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestRSICalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// "Successfully RSI threw an ErrInvalidDataPointCount with insufficient amount of data points": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation": {
-// 			Length: 14,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromFloat32(44.34),
-// 				decimal.NewFromFloat32(44.09),
-// 				decimal.NewFromFloat32(44.15),
-// 				decimal.NewFromFloat32(43.61),
-// 				decimal.NewFromFloat32(44.33),
-// 				decimal.NewFromFloat32(44.83),
-// 				decimal.NewFromFloat32(45.10),
-// 				decimal.NewFromFloat32(45.42),
-// 				decimal.NewFromFloat32(45.84),
-// 				decimal.NewFromFloat32(46.08),
-// 				decimal.NewFromFloat32(45.89),
-// 				decimal.NewFromFloat32(46.03),
-// 				decimal.NewFromFloat32(45.61),
-// 				decimal.NewFromFloat32(46.28),
-// 			},
-// 			Result: decimal.NewFromFloat(70.46413502109705),
-// 		},
-// 	}
+func TestRSICalc(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Successfully RSI threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful RSI calculation": {
+			Length: 14,
+			Data: []decimal.Decimal{
+				decimal.NewFromFloat32(44.34),
+				decimal.NewFromFloat32(44.09),
+				decimal.NewFromFloat32(44.15),
+				decimal.NewFromFloat32(43.61),
+				decimal.NewFromFloat32(44.33),
+				decimal.NewFromFloat32(44.83),
+				decimal.NewFromFloat32(45.10),
+				decimal.NewFromFloat32(45.42),
+				decimal.NewFromFloat32(45.84),
+				decimal.NewFromFloat32(46.08),
+				decimal.NewFromFloat32(45.89),
+				decimal.NewFromFloat32(46.03),
+				decimal.NewFromFloat32(45.61),
+				decimal.NewFromFloat32(46.28),
+			},
+			Result: decimal.NewFromFloat(70.46413502109705),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			r := RSI{length: c.Length}
-// 			res, err := r.Calc(c.Data)
-// 			if c.Error != nil {
-// 				assert.Equal(t, c.Error, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.Round(14).String())
-// 			}
-// 		})
-// 	}
-// }
+			r := RSI{length: c.Length}
+			res, err := r.Calc(c.Data)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
+			}
+		})
+	}
+}
 
-// func TestRSICount(t *testing.T) {
-// 	r := RSI{length: 15}
-// 	assert.Equal(t, 15, r.Count())
-// }
+func TestRSICount(t *testing.T) {
+	r := RSI{length: 15}
+	assert.Equal(t, 15, r.Count())
+}
 
-// func TestRSIUnmarshal(t *testing.T) {
-// 	cc := map[string]struct {
-// 		ByteArray []byte
-// 		Result    RSI
-// 		Error     error
-// 	}{
-// 		"Unmarshal throws an error": {
-// 			ByteArray: []byte(`{"length": "down"}`),
-// 			Error:     assert.AnError,
-// 		},
-// 		"Successful RSI unmarshal": {
-// 			ByteArray: []byte(`{"name":"rsi","length":1}`),
-// 			Result:    RSI{length: 1},
-// 		},
-// 	}
+func TestRSIUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    RSI
+		Error     error
+	}{
+		"Successfully RSI unmarshal threw an error": {
+			ByteArray: []byte(`{\"_"/`),
+			Error:     assert.AnError,
+		},
+		"Successfully RSI validate threw an error": {
+			ByteArray: []byte(`{"length":0}`),
+			Error:     assert.AnError,
+		},
+		"Successful unmarshal of a RSI": {
+			ByteArray: []byte(`{"length":1}`),
+			Result:    RSI{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			r := RSI{}
-// 			err := json.Unmarshal(c.ByteArray, &r)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, r)
-// 			}
-// 		})
-// 	}
-// }
+			r := RSI{}
+			err := r.UnmarshalJSON(c.ByteArray)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, r)
+			}
+		})
+	}
+}
 
-// func TestRSIMarshal(t *testing.T) {
-// 	c := struct {
-// 		RSI    RSI
-// 		Result []byte
-// 	}{
-// 		RSI:    RSI{length: 1},
-// 		Result: []byte(`{"name":"rsi","length":1}`),
-// 	}
+func TestRSIMarshal(t *testing.T) {
 
-// 	d, _ := json.Marshal(c.RSI)
+	rs := RSI{length: 1}
+	r := []byte(`{"length":1}`)
 
-// 	assert.Equal(t, c.Result, d)
-// }
+	d, _ := rs.MarshalJSON()
 
-// func TestSMANew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Result SMA
-// 		Error  error
-// 	}{
-// 		"SMA throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful SMA creation": {
-// 			Length: 1,
-// 			Result: SMA{length: 1},
-// 		},
-// 	}
+	assert.Equal(t, r, d)
+}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+func TestSMANew(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result SMA
+		Error  error
+	}{
+		"Successfully SMA threw an error when no values were provided": {
+			Error: assert.AnError,
+		},
+		"Successful creation of SMA": {
+			Length: 1,
+			Result: SMA{length: 1},
+		},
+	}
 
-// 			s, err := NewSMA(c.Length)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, s)
-// 			}
-// 		})
-// 	}
-// }
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func TestSMAValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Error  error
-// 	}{
-// 		"Length cannot be less than 1": {
-// 			Length: 0,
-// 			Error:  ErrInvalidLength,
-// 		},
-// 		"Successful validation": {
-// 			Length: 1,
-// 		},
-// 	}
+			s, err := NewSMA(c.Length)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, s)
+			}
+		})
+	}
+}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+func TestSMAValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Error  error
+	}{
+		"Successfully SMA threw an ErrInvalidLength with less than 1 length": {
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful SMA validation": {
+			Length: 1,
+		},
+	}
 
-// 			s := SMA{length: c.Length}
-// 			err := s.validate()
-// 			if c.Error != nil {
-// 				assert.Equal(t, c.Error, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func TestSMACalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// "Successfully SMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 			},
-// 			Result: decimal.NewFromInt(31),
-// 		},
-// 	}
+			s := SMA{length: c.Length}
+			err := s.validate()
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+func TestSMACalc(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Successfully SMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful SMA calculation": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.NewFromInt(31),
+		},
+	}
 
-// 			s := SMA{length: c.Length}
-// 			res, err := s.Calc(c.Data)
-// 			if c.Error != nil {
-// 				assert.Equal(t, c.Error, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.String())
-// 			}
-// 		})
-// 	}
-// }
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func TestSMACount(t *testing.T) {
-// 	s := SMA{length: 15}
-// 	assert.Equal(t, 15, s.Count())
-// }
+			s := SMA{length: c.Length}
+			res, err := s.Calc(c.Data)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
 
-// func TestSMAUnmarshal(t *testing.T) {
-// 	cc := map[string]struct {
-// 		ByteArray []byte
-// 		Result    SMA
-// 		Error     error
-// 	}{
-// 		"Unmarshal throws an error": {
-// 			ByteArray: []byte(`{"length": "down"}`),
-// 			Error:     assert.AnError,
-// 		},
-// 		"Successful SMA unmarshal": {
-// 			ByteArray: []byte(`{"name":"sma","length":1}`),
-// 			Result:    SMA{length: 1},
-// 		},
-// 	}
+func TestSMACount(t *testing.T) {
+	s := SMA{length: 15}
+	assert.Equal(t, 15, s.Count())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+func TestSMAUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    SMA
+		Error     error
+	}{
+		"Successfully SMA unmarshal threw an error": {
+			ByteArray: []byte(`{\"_"/`),
+			Error:     assert.AnError,
+		},
+		"Successfully SMA validate threw an error": {
+			ByteArray: []byte(`{"length":0}`),
+			Error:     assert.AnError,
+		},
+		"Successful unmarshal of a SMA": {
+			ByteArray: []byte(`{"length":1}`),
+			Result:    SMA{length: 1},
+		},
+	}
 
-// 			s := SMA{}
-// 			err := json.Unmarshal(c.ByteArray, &s)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, s)
-// 			}
-// 		})
-// 	}
-// }
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func TestSMAMarshal(t *testing.T) {
-// 	c := struct {
-// 		SMA    SMA
-// 		Result []byte
-// 	}{
-// 		SMA:    SMA{length: 1},
-// 		Result: []byte(`{"name":"sma","length":1}`),
-// 	}
+			s := SMA{}
+			err := s.UnmarshalJSON(c.ByteArray)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, s)
+			}
+		})
+	}
+}
 
-// 	d, _ := json.Marshal(c.SMA)
+func TestSMAMarshal(t *testing.T) {
+	s := SMA{length: 1}
+	r := []byte(`{"length":1}`)
 
-// 	assert.Equal(t, c.Result, d)
-// }
+	d, _ := s.MarshalJSON()
 
-// func TestStochNew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Result Stoch
-// 		Error  error
-// 	}{
-// 		"Stoch throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful Stoch creation": {
-// 			Length: 1,
-// 			Result: Stoch{length: 1},
-// 		},
-// 	}
+	assert.Equal(t, r, d)
+}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+func TestStochNew(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result Stoch
+		Error  error
+	}{
+		"Successfully Stoch threw an error when no values were provided": {
+			Error: assert.AnError,
+		},
+		"Successful creation of Stoch": {
+			Length: 1,
+			Result: Stoch{length: 1},
+		},
+	}
 
-// 			s, err := NewStoch(c.Length)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, s)
-// 			}
-// 		})
-// 	}
-// }
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func TestStochValidation(t *testing.T) {
+			s, err := NewStoch(c.Length)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, s)
+			}
+		})
+	}
+}
 
-// 	cc := map[string]struct {
-// 		Length int
-// 		Error  error
-// 	}{
-// 		"Length cannot be less than 1": {
-// 			Length: 0,
-// 			Error:  ErrInvalidLength,
-// 		},
-// 		"Successful validation": {
-// 			Length: 1,
-// 		},
-// 	}
+func TestStochValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Error  error
+	}{
+		"Successfully Stoch threw an ErrInvalidLength with less than 1 length": {
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful Stoch validation": {
+			Length: 1,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			s := Stoch{length: c.Length}
-// 			err := s.validate()
+			s := Stoch{length: c.Length}
+			err := s.validate()
 
-// 			if c.Error != nil {
-// 				assert.Equal(t, c.Error, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestStochCalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// "Successfully Stoch threw an ErrInvalidDataPointCount with insufficient amount of data points": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation v1": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(150),
-// 				decimal.NewFromInt(125),
-// 				decimal.NewFromInt(145),
-// 			},
-// 			Result: decimal.NewFromInt(80),
-// 		},
-// 		"Successful calculation v2": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(120),
-// 				decimal.NewFromInt(145),
-// 				decimal.NewFromInt(135),
-// 			},
-// 			Result: decimal.NewFromInt(60),
-// 		},
-// 	}
+func TestStochCalc(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Successfully Stoch threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful stoch calculation when lower lows are made": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(150),
+				decimal.NewFromInt(125),
+				decimal.NewFromInt(145),
+			},
+			Result: decimal.NewFromInt(80),
+		},
+		"Successful stoch calculation when higher highs are made": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(120),
+				decimal.NewFromInt(145),
+				decimal.NewFromInt(135),
+			},
+			Result: decimal.NewFromInt(60),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			s := Stoch{length: c.Length}
-// 			res, err := s.Calc(c.Data)
+			s := Stoch{length: c.Length}
+			res, err := s.Calc(c.Data)
 
-// 			if c.Error != nil {
-// 				assert.Equal(t, c.Error, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.String())
-// 			}
-// 		})
-// 	}
-// }
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
 
-// func TestStochCount(t *testing.T) {
-// 	s := Stoch{length: 15}
-// 	assert.Equal(t, 15, s.Count())
-// }
+func TestStochCount(t *testing.T) {
+	s := Stoch{length: 15}
+	assert.Equal(t, 15, s.Count())
+}
 
-// func TestStochUnmarshal(t *testing.T) {
-// 	cc := map[string]struct {
-// 		ByteArray []byte
-// 		Result    Stoch
-// 		Error     error
-// 	}{
-// 		"Unmarshal throws an error": {
-// 			ByteArray: []byte(`{"length": "down"}`),
-// 			Error:     assert.AnError,
-// 		},
-// 		"Successful Stoch unmarshal": {
-// 			ByteArray: []byte(`{"name":"stoch","length":1}`),
-// 			Result:    Stoch{length: 1},
-// 		},
-// 	}
+func TestStochUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    Stoch
+		Error     error
+	}{
+		"Successfully Stoch unmarshal threw an error": {
+			ByteArray: []byte(`{"length": "down"}`),
+			Error:     assert.AnError,
+		},
+		"Successfully Stoch validate threw an error": {
+			ByteArray: []byte(`{"length":0}`),
+			Error:     assert.AnError,
+		},
+		"Successful unmarshal of a Stoch": {
+			ByteArray: []byte(`{"length":1}`),
+			Result:    Stoch{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			s := Stoch{}
-// 			err := json.Unmarshal(c.ByteArray, &s)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, s)
-// 			}
-// 		})
-// 	}
-// }
+			s := Stoch{}
+			err := s.UnmarshalJSON(c.ByteArray)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, s)
+			}
+		})
+	}
+}
 
-// func TestStochMarshal(t *testing.T) {
-// 	c := struct {
-// 		Stoch  Stoch
-// 		Result []byte
-// 	}{
-// 		Stoch:  Stoch{length: 1},
-// 		Result: []byte(`{"name":"stoch","length":1}`),
-// 	}
+func TestStochMarshal(t *testing.T) {
+	s := Stoch{length: 1}
+	r := []byte(`{"length":1}`)
 
-// 	d, _ := json.Marshal(c.Stoch)
+	d, _ := s.MarshalJSON()
 
-// 	assert.Equal(t, c.Result, d)
-// }
+	assert.Equal(t, r, d)
+}
 
 // func TestWMANew(t *testing.T) {
 // 	cc := map[string]struct {
