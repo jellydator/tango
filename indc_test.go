@@ -1,6 +1,7 @@
 package indc
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -1801,160 +1802,159 @@ func TestStochMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-// func TestWMANew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Result WMA
-// 		Error  error
-// 	}{
-// 		"WMA throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful WMA creation": {
-// 			Length: 1,
-// 			Result: WMA{length: 1},
-// 		},
-// 	}
+func TestWMANew(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result WMA
+		Error  error
+	}{
+		"Successfully WMA threw an error when no values were provided": {
+			Error: assert.AnError,
+		},
+		"Successful creation of WMA": {
+			Length: 1,
+			Result: WMA{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			w, err := NewWMA(c.Length)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, w)
-// 			}
-// 		})
-// 	}
-// }
+			w, err := NewWMA(c.Length)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, w)
+			}
+		})
+	}
+}
 
-// func TestWMAValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Error  error
-// 	}{
-// 		"Length cannot be less than 1": {
-// 			Length: 0,
-// 			Error:  ErrInvalidLength,
-// 		},
-// 		"Successful validation": {
-// 			Length: 1,
-// 		},
-// 	}
+func TestWMAValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Error  error
+	}{
+		"Successfully WMA threw an ErrInvalidLength with less than 1 length": {
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful WMA validation": {
+			Length: 1,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			w := WMA{length: c.Length}
-// 			err := w.validate()
-// 			if c.Error != nil {
-// 				assert.Equal(t, c.Error, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			w := WMA{length: c.Length}
+			err := w.validate()
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestWMACalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// "Successfully WMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(32),
-// 			},
-// 			Result: decimal.NewFromFloat(31),
-// 		},
-// 	}
+func TestWMACalc(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Successfully WMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful WMA calculation": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.NewFromFloat(31),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			w := WMA{length: c.Length}
-// 			res, err := w.Calc(c.Data)
-// 			if c.Error != nil {
-// 				assert.Equal(t, c.Error, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.String())
-// 			}
-// 		})
-// 	}
-// }
+			w := WMA{length: c.Length}
+			res, err := w.Calc(c.Data)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
 
-// func TestWMACount(t *testing.T) {
-// 	w := WMA{length: 15}
-// 	assert.Equal(t, 15, w.Count())
-// }
+func TestWMACount(t *testing.T) {
+	w := WMA{length: 15}
+	assert.Equal(t, 15, w.Count())
+}
 
-// func TestWMAUnmarshal(t *testing.T) {
-// 	cc := map[string]struct {
-// 		ByteArray []byte
-// 		Result    WMA
-// 		Error     error
-// 	}{
-// 		"Unmarshal throws an error": {
-// 			ByteArray: []byte(`{"length": "down"}`),
-// 			Error:     assert.AnError,
-// 		},
-// 		"Successful WMA unmarshal": {
-// 			ByteArray: []byte(`{"name":"wma","length":1}`),
-// 			Result:    WMA{length: 1},
-// 		},
-// 	}
+func TestWMAUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    WMA
+		Error     error
+	}{
+		"Successfully DEMA unmarshal threw an error": {
+			ByteArray: []byte(`{\"_"/`),
+			Error:     assert.AnError,
+		},
+		"Successfully WMA validate threw an error": {
+			ByteArray: []byte(`{"length":0}`),
+			Error:     assert.AnError,
+		},
+		"Successful unmarshal of a WMA": {
+			ByteArray: []byte(`{"length":1}`),
+			Result:    WMA{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			w := WMA{}
-// 			err := json.Unmarshal(c.ByteArray, &w)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, w)
-// 			}
-// 		})
-// 	}
-// }
+			w := WMA{}
+			err := json.Unmarshal(c.ByteArray, &w)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, w)
+			}
+		})
+	}
+}
 
-// func TestWMAMarshal(t *testing.T) {
-// 	c := struct {
-// 		WMA    WMA
-// 		Result []byte
-// 	}{
-// 		WMA:    WMA{length: 1},
-// 		Result: []byte(`{"name":"wma","length":1}`),
-// 	}
+func TestWMAMarshal(t *testing.T) {
+	w := WMA{length: 1}
+	r := []byte(`{"length":1}`)
 
-// 	d, _ := json.Marshal(c.WMA)
+	d, _ := w.MarshalJSON()
 
-// 	assert.Equal(t, c.Result, d)
-// }
+	assert.Equal(t, r, d)
+}
