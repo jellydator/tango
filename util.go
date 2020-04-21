@@ -3,6 +3,7 @@ package indc
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 
 	"github.com/shopspring/decimal"
 	"github.com/swithek/chartype"
@@ -30,6 +31,26 @@ var (
 	// of the available types.
 	ErrInvalidType = errors.New("invalid indicator type")
 )
+
+// String is a custom string that helps prevent capitalization issues by
+// lowercasing its values.
+type String string
+
+// CleanString returns a properly formatted string.
+func CleanString(s string) String {
+	return String(strings.ToLower(strings.TrimSpace(s)))
+}
+
+// UnmarshalText parses String from a string form input (works with JSON, etc).
+func (s *String) UnmarshalText(d []byte) error {
+	*s = String(CleanString(string(d)))
+	return nil
+}
+
+// MarshalText converts String to a string ouput (works with JSON, etc).
+func (s String) MarshalText() ([]byte, error) {
+	return []byte(s), nil
+}
 
 // resize cuts given array based on length to use for
 // calculations.
@@ -92,7 +113,7 @@ func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 // with its values.
 func fromJSON(d []byte) (Indicator, error) {
 	var i struct {
-		N string `json:"name"`
+		N String `json:"name"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
@@ -153,8 +174,8 @@ func toJSON(ind Indicator) ([]byte, error) {
 	switch indT := ind.(type) {
 	case Aroon:
 		type output struct {
-			N string `json:"name"`
-			T string `json:"trend"`
+			N String `json:"name"`
+			T String `json:"trend"`
 			L int    `json:"length"`
 		}
 
@@ -166,7 +187,7 @@ func toJSON(ind Indicator) ([]byte, error) {
 		return json.Marshal(data)
 	case CCI:
 		type output struct {
-			N string          `json:"name"`
+			N String          `json:"name"`
 			S json.RawMessage `json:"source"`
 		}
 
@@ -183,7 +204,7 @@ func toJSON(ind Indicator) ([]byte, error) {
 
 	case DEMA:
 		type output struct {
-			N string `json:"name"`
+			N String `json:"name"`
 			L int    `json:"length"`
 		}
 
@@ -195,7 +216,7 @@ func toJSON(ind Indicator) ([]byte, error) {
 
 	case EMA:
 		type output struct {
-			N string `json:"name"`
+			N String `json:"name"`
 			L int    `json:"length"`
 		}
 
@@ -206,7 +227,7 @@ func toJSON(ind Indicator) ([]byte, error) {
 
 	case HMA:
 		type output struct {
-			N   string `json:"name"`
+			N   String `json:"name"`
 			WMA WMA    `json:"wma"`
 		}
 
@@ -218,7 +239,7 @@ func toJSON(ind Indicator) ([]byte, error) {
 
 	case MACD:
 		type output struct {
-			N  string          `json:"name"`
+			N  String          `json:"name"`
 			S1 json.RawMessage `json:"source1"`
 			S2 json.RawMessage `json:"source2"`
 		}
@@ -241,7 +262,7 @@ func toJSON(ind Indicator) ([]byte, error) {
 		return json.Marshal(data)
 	case ROC:
 		type output struct {
-			N string `json:"name"`
+			N String `json:"name"`
 			L int    `json:"length"`
 		}
 
@@ -253,7 +274,7 @@ func toJSON(ind Indicator) ([]byte, error) {
 
 	case RSI:
 		type output struct {
-			N string `json:"name"`
+			N String `json:"name"`
 			L int    `json:"length"`
 		}
 
@@ -265,7 +286,7 @@ func toJSON(ind Indicator) ([]byte, error) {
 
 	case SMA:
 		type output struct {
-			N string `json:"name"`
+			N String `json:"name"`
 			L int    `json:"length"`
 		}
 
@@ -277,7 +298,7 @@ func toJSON(ind Indicator) ([]byte, error) {
 
 	case Stoch:
 		type output struct {
-			N string `json:"name"`
+			N String `json:"name"`
 			L int    `json:"length"`
 		}
 
@@ -289,7 +310,7 @@ func toJSON(ind Indicator) ([]byte, error) {
 
 	case WMA:
 		type output struct {
-			N string `json:"name"`
+			N String `json:"name"`
 			L int    `json:"length"`
 		}
 
