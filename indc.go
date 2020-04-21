@@ -464,10 +464,6 @@ func (h *HMA) UnmarshalJSON(d []byte) error {
 
 	h.wma = w
 
-	if err := h.validate(); err != nil {
-		return err
-	}
-
 	return nil
 }
 

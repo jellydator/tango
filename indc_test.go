@@ -1,7 +1,6 @@
 package indc
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -573,338 +572,336 @@ func TestDEMAMarshal(t *testing.T) {
 	dm := DEMA{length: 1}
 	r := []byte(`{"length":1}`)
 
-	d, _ := json.Marshal(dm)
+	d, _ := dm.MarshalJSON()
 
 	assert.Equal(t, r, d)
 }
 
-// func TestEMANew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Result EMA
-// 		Error  error
-// 	}{
-// 		"EMA throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful EMA creation": {
-// 			Length: 1,
-// 			Result: EMA{length: 1},
-// 		},
-// 	}
+func TestEMANew(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result EMA
+		Error  error
+	}{
+		"Successfully EMA creation threw an error when no values were provided": {
+			Error: assert.AnError,
+		},
+		"Successful creation of EMA": {
+			Length: 1,
+			Result: EMA{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			e, err := NewEMA(c.Length)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, e)
-// 			}
-// 		})
-// 	}
-// }
+			e, err := NewEMA(c.Length)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, e)
+			}
+		})
+	}
+}
 
-// func TestEMAValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Error  error
-// 	}{
-// 		"Length cannot be less than 1": {
-// 			Length: 0,
-// 			Error:  ErrInvalidLength,
-// 		},
-// 		"Successful validation": {
-// 			Length: 1,
-// 		},
-// 	}
+func TestEMAValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Error  error
+	}{
+		"Successfully EMA threw an ErrInvalidLength with less than 1 length": {
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful EMA validation": {
+			Length: 1,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			e := EMA{length: c.Length}
-// 			err := e.validate()
-// 			if c.Error != nil {
-// 				assert.Equal(t, c.Error, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			e := EMA{length: c.Length}
+			err := e.validate()
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestEMACalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// "Successfully EMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation": {
-// 			Length: 2,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(31),
-// 			},
-// 			Result: decimal.NewFromFloat(30.83333333333333),
-// 		},
-// 	}
+func TestEMACalc(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Successfully EMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful EMA calculation": {
+			Length: 2,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(31),
+			},
+			Result: decimal.NewFromFloat(30.83333333333333),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			e := EMA{length: c.Length}
-// 			res, err := e.Calc(c.Data)
-// 			if c.Error != nil {
-// 				assert.Equal(t, c.Error, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.Round(14).String())
-// 			}
-// 		})
-// 	}
-// }
+			e := EMA{length: c.Length}
+			res, err := e.Calc(c.Data)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
+			}
+		})
+	}
+}
 
-// func TestEMACount(t *testing.T) {
-// 	e := EMA{length: 15}
-// 	assert.Equal(t, 29, e.Count())
-// }
+func TestEMACount(t *testing.T) {
+	e := EMA{length: 15}
+	assert.Equal(t, 29, e.Count())
+}
 
-// func TestEMAMultiplier(t *testing.T) {
-// 	e := EMA{length: 3}
-// 	assert.Equal(t, decimal.NewFromFloat(0.5), e.multiplier())
-// }
+func TestEMAMultiplier(t *testing.T) {
+	e := EMA{length: 3}
+	assert.Equal(t, decimal.NewFromFloat(0.5), e.multiplier())
+}
 
-// func TestEMAUnmarshal(t *testing.T) {
-// 	cc := map[string]struct {
-// 		ByteArray []byte
-// 		Result    EMA
-// 		Error     error
-// 	}{
-// 		"Unmarshal throws an error": {
-// 			ByteArray: []byte(`{"length": "down"}`),
-// 			Error:     assert.AnError,
-// 		},
-// 		"Successful EMA unmarshal": {
-// 			ByteArray: []byte(`{"name":"ema","length":1}`),
-// 			Result:    EMA{length: 1},
-// 		},
-// 	}
+func TestEMAUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    EMA
+		Error     error
+	}{
+		"Successfully EMA unmarshal threw an error": {
+			ByteArray: []byte(`{\"_"/`),
+			Error:     assert.AnError,
+		},
+		"Successfully EMA validate threw an error": {
+			ByteArray: []byte(`{"length":0}`),
+			Error:     assert.AnError,
+		},
+		"Successful unmarshal of a EMA": {
+			ByteArray: []byte(`{"length":1}`),
+			Result:    EMA{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			e := EMA{}
-// 			err := json.Unmarshal(c.ByteArray, &e)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, e)
-// 			}
-// 		})
-// 	}
-// }
+			e := EMA{}
+			err := e.UnmarshalJSON(c.ByteArray)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, e)
+			}
+		})
+	}
+}
 
-// func TestEMAMarshal(t *testing.T) {
-// 	c := struct {
-// 		EMA    EMA
-// 		Result []byte
-// 	}{
-// 		EMA:    EMA{length: 1},
-// 		Result: []byte(`{"name":"ema","length":1}`),
-// 	}
+func TestEMAMarshal(t *testing.T) {
+	e := EMA{length: 1}
+	r := []byte(`{"length":1}`)
 
-// 	d, _ := json.Marshal(c.EMA)
+	d, _ := e.MarshalJSON()
 
-// 	assert.Equal(t, c.Result, d)
-// }
+	assert.Equal(t, r, d)
+}
 
-// func TestHMANew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		WMA    WMA
-// 		Result HMA
-// 		Error  error
-// 	}{
-// 		"HMA throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful HMA creation": {
-// 			WMA:    WMA{length: 1},
-// 			Result: HMA{wma: WMA{length: 1}},
-// 		},
-// 	}
+func TestHMANew(t *testing.T) {
+	cc := map[string]struct {
+		WMA    WMA
+		Result HMA
+		Error  error
+	}{
+		"Successfully HMA threw an error when no values were provided": {
+			Error: assert.AnError,
+		},
+		"Successful HMA creation": {
+			WMA:    WMA{length: 1},
+			Result: HMA{wma: WMA{length: 1}},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			h, err := NewHMA(c.WMA)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, h)
-// 			}
-// 		})
-// 	}
-// }
+			h, err := NewHMA(c.WMA)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, h)
+			}
+		})
+	}
+}
 
-// func TestHMAValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		WMA   WMA
-// 		Error error
-// 	}{
-// 		"WMA returns an error": {
-// 			WMA:   WMA{length: -1},
-// 			Error: assert.AnError,
-// 		},
-// 		"WMA not set": {
-// 			Error: ErrMANotSet,
-// 		},
-// 		"Successful validation": {
-// 			WMA: WMA{length: 1},
-// 		},
-// 	}
+func TestHMAValidation(t *testing.T) {
+	cc := map[string]struct {
+		WMA   WMA
+		Error error
+	}{
+		"Successfully HMA wma threw an error": {
+			WMA:   WMA{length: -1},
+			Error: assert.AnError,
+		},
+		"Successfully HMA threw an ErrMANotSet when WMA wasn't set": {
+			Error: ErrMANotSet,
+		},
+		"Successful HMA validation": {
+			WMA: WMA{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			h := HMA{wma: c.WMA}
-// 			err := h.validate()
-// 			if c.Error != nil {
-// 				if c.Error == assert.AnError {
-// 					assert.NotNil(t, err)
-// 				} else {
-// 					assert.Equal(t, c.Error, err)
-// 				}
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			h := HMA{wma: c.WMA}
+			err := h.validate()
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestHMACalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		WMA    WMA
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// "Successfully HMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
-// 			WMA: WMA{length: 5},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation": {
-// 			WMA: WMA{length: 3},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 			},
-// 			Result: decimal.NewFromFloat(31.5),
-// 		},
-// 	}
+func TestHMACalc(t *testing.T) {
+	cc := map[string]struct {
+		WMA    WMA
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Successfully HMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+			WMA: WMA{length: 5},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful HMA calculation": {
+			WMA: WMA{length: 3},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+			},
+			Result: decimal.NewFromFloat(31.5),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			h := HMA{wma: c.WMA}
-// 			res, err := h.Calc(c.Data)
-// 			if c.Error != nil {
-// 				assert.Equal(t, c.Error, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.String())
-// 			}
-// 		})
-// 	}
-// }
+			h := HMA{wma: c.WMA}
+			res, err := h.Calc(c.Data)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
 
-// func TestHMACount(t *testing.T) {
-// 	h := HMA{wma: WMA{length: 15}}
-// 	assert.Equal(t, 29, h.Count())
-// }
+func TestHMACount(t *testing.T) {
+	h := HMA{wma: WMA{length: 15}}
+	assert.Equal(t, 29, h.Count())
+}
 
-// func TestHMAUnmarshal(t *testing.T) {
-// 	cc := map[string]struct {
-// 		ByteArray []byte
-// 		Result    HMA
-// 		Error     error
-// 	}{
-// 		"Unmarshal throws an error": {
-// 			ByteArray: []byte(`{"length": "down"}`),
-// 			Error:     assert.AnError,
-// 		},
-// 		"Successful HMA unmarshal": {
-// 			ByteArray: []byte(`{"name":"hma","wma":{"name":"wma","length":1}}`),
-// 			Result:    HMA{wma: WMA{length: 1}},
-// 		},
-// 	}
+func TestHMAUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    HMA
+		Error     error
+	}{
+		"Successfully HMA unmarshal threw an error": {
+			ByteArray: []byte(`{\"_"/`),
+			Error:     assert.AnError,
+		},
+		"Successfully HMA validate threw an error": {
+			ByteArray: []byte(`{"length":0}`),
+			Error:     assert.AnError,
+		},
+		"Successful unmarshal of a HMA": {
+			ByteArray: []byte(`{"wma":{"length":1}}`),
+			Result:    HMA{wma: WMA{length: 1}},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			h := HMA{}
-// 			err := json.Unmarshal(c.ByteArray, &h)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, h)
-// 			}
-// 		})
-// 	}
-// }
+			h := HMA{}
+			err := h.UnmarshalJSON(c.ByteArray)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, h)
+			}
+		})
+	}
+}
 
-// func TestHMAMarshal(t *testing.T) {
-// 	c := struct {
-// 		HMA    HMA
-// 		Result []byte
-// 	}{
-// 		HMA:    HMA{wma: WMA{length: 1}},
-// 		Result: []byte(`{"name":"hma","wma":{"name":"wma","length":1}}`),
-// 	}
+func TestHMAMarshal(t *testing.T) {
+	h := HMA{wma: WMA{length: 1}}
+	r := []byte(`{"wma":{"length":1}}`)
 
-// 	d, _ := json.Marshal(c.HMA)
+	d, _ := h.MarshalJSON()
 
-// 	assert.Equal(t, c.Result, d)
-// }
+	assert.Equal(t, r, d)
+}
 
 // func TestMACDNew(t *testing.T) {
 // 	cc := map[string]struct {
