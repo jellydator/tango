@@ -1,6 +1,7 @@
 package indc
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -56,7 +57,7 @@ func TestAroonValidation(t *testing.T) {
 		Length int
 		Error  error
 	}{
-		"Invalid Aroon trend": {
+		"Successfully Aroon threw an ErrInvalidType with incorrect trend": {
 			Trend:  "downn",
 			Length: 5,
 			Error:  ErrInvalidType,
@@ -169,11 +170,11 @@ func TestAroonUnmarshal(t *testing.T) {
 			Error:     assert.AnError,
 		},
 		"Successfully Aroon validate threw an error": {
-			ByteArray: []byte(`{"name":"aroon","trend":"upp","length":1}`),
+			ByteArray: []byte(`{"trend":"upp","length":1}`),
 			Error:     assert.AnError,
 		},
 		"Successful unmarshal of an Aroon": {
-			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1}`),
+			ByteArray: []byte(`{"trend":"up","length":1}`),
 			Result:    Aroon{trend: "up", length: 1},
 		},
 	}
@@ -217,7 +218,7 @@ func TestCCINew(t *testing.T) {
 		"Successfully CCI creation threw an error when no values were provided": {
 			Error: assert.AnError,
 		},
-		"Successful CCI creation": {
+		"Successful creation of CCI": {
 			Source: Aroon{trend: "down", length: 1},
 			Result: CCI{source: Aroon{trend: "down", length: 1}},
 		},
@@ -420,163 +421,162 @@ func TestCCIMarshal(t *testing.T) {
 	}
 }
 
-// func TestDEMANew(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Result DEMA
-// 		Error  error
-// 	}{
-// 		"DEMA throws an error": {
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful DEMA creation": {
-// 			Length: 1,
-// 			Result: DEMA{length: 1},
-// 		},
-// 	}
+func TestDEMANew(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result DEMA
+		Error  error
+	}{
+		"Successfully DEMA threw an error when no values were provided": {
+			Error: assert.AnError,
+		},
+		"Successful creation of DEMA": {
+			Length: 1,
+			Result: DEMA{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			dm, err := NewDEMA(c.Length)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, dm)
-// 			}
-// 		})
-// 	}
-// }
+			dm, err := NewDEMA(c.Length)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, dm)
+			}
+		})
+	}
+}
 
-// func TestDEMAValidation(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Error  error
-// 	}{
-// 		"Length cannot be less than 1": {
-// 			Length: 0,
-// 			Error:  ErrInvalidLength,
-// 		},
-// 		"Successful validation": {
-// 			Length: 1,
-// 		},
-// 	}
+func TestDEMAValidation(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Error  error
+	}{
+		"Successfully DEMA threw an ErrInvalidLength with less than 1 length": {
+			Length: 0,
+			Error:  ErrInvalidLength,
+		},
+		"Successful DEMA validation": {
+			Length: 1,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			d := DEMA{length: c.Length}
-// 			err := d.validate()
-// 			if c.Error != nil {
-// 				assert.Equal(t, c.Error, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			d := DEMA{length: c.Length}
+			err := d.validate()
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-// func TestDEMACalc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// "Successfully DEMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
-// 			Length: 3,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataPointCount,
-// 		},
-// 		"Successful calculation": {
-// 			Length: 2,
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(31),
-// 			},
-// 			Result: decimal.NewFromFloat(30.72222222222222),
-// 		},
-// 	}
+func TestDEMACalc(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Successfully DEMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+			Length: 3,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataPointCount,
+		},
+		"Successful DEMA calculation": {
+			Length: 2,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(31),
+			},
+			Result: decimal.NewFromFloat(30.72222222222222),
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			d := DEMA{length: c.Length}
-// 			res, err := d.Calc(c.Data)
-// 			if c.Error != nil {
-// 				assert.Equal(t, c.Error, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result.String(), res.Round(14).String())
-// 			}
-// 		})
-// 	}
-// }
+			d := DEMA{length: c.Length}
+			res, err := d.Calc(c.Data)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.Round(14).String())
+			}
+		})
+	}
+}
 
-// func TestDEMACount(t *testing.T) {
-// 	d := DEMA{length: 15}
-// 	assert.Equal(t, 29, d.Count())
-// }
+func TestDEMACount(t *testing.T) {
+	d := DEMA{length: 15}
+	assert.Equal(t, 29, d.Count())
+}
 
-// func TestDEMAUnmarshal(t *testing.T) {
-// 	cc := map[string]struct {
-// 		ByteArray []byte
-// 		Result    DEMA
-// 		Error     error
-// 	}{
-// 		"Unmarshal throws an error": {
-// 			ByteArray: []byte(`{"length": "down"}`),
-// 			Error:     assert.AnError,
-// 		},
-// 		"Successful DEMA unmarshal": {
-// 			ByteArray: []byte(`{"name":"dema","length":1}`),
-// 			Result:    DEMA{length: 1},
-// 		},
-// 	}
+func TestDEMAUnmarshal(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    DEMA
+		Error     error
+	}{
+		"Successfully DEMA unmarshal threw an error": {
+			ByteArray: []byte(`{\"_"/`),
+			Error:     assert.AnError,
+		},
+		"Successfully DEMA validate threw an error": {
+			ByteArray: []byte(`{"length":0}`),
+			Error:     assert.AnError,
+		},
+		"Successful unmarshal of a DEMA": {
+			ByteArray: []byte(`{"length":1}`),
+			Result:    DEMA{length: 1},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			dm := DEMA{}
-// 			err := json.Unmarshal(c.ByteArray, &dm)
-// 			if c.Error != nil {
-// 				assert.NotNil(t, err)
-// 			} else {
-// 				assert.Nil(t, err)
-// 				assert.Equal(t, c.Result, dm)
-// 			}
-// 		})
-// 	}
-// }
+			dm := DEMA{}
+			err := dm.UnmarshalJSON(c.ByteArray)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, dm)
+			}
+		})
+	}
+}
 
-// func TestDEMAMarshal(t *testing.T) {
-// 	c := struct {
-// 		DEMA   DEMA
-// 		Result []byte
-// 	}{
-// 		DEMA:   DEMA{length: 1},
-// 		Result: []byte(`{"name":"dema","length":1}`),
-// 	}
+func TestDEMAMarshal(t *testing.T) {
+	dm := DEMA{length: 1}
+	r := []byte(`{"length":1}`)
 
-// 	d, _ := json.Marshal(c.DEMA)
+	d, _ := json.Marshal(dm)
 
-// 	assert.Equal(t, c.Result, d)
-// }
+	assert.Equal(t, r, d)
+}
 
 // func TestEMANew(t *testing.T) {
 // 	cc := map[string]struct {
