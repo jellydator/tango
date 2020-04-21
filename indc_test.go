@@ -166,7 +166,11 @@ func TestAroonUnmarshal(t *testing.T) {
 		Error     error
 	}{
 		"Unmarshal throws an error": {
-			ByteArray: []byte(`{"trend": "down"}`),
+			ByteArray: []byte(`{\"_"/`),
+			Error:     assert.AnError,
+		},
+		"Aroon validate returns an error": {
+			ByteArray: []byte(`{"name":"aroon","trend":"upp","length":1}`),
 			Error:     assert.AnError,
 		},
 		"Successful Aroon unmarshal": {
@@ -181,9 +185,13 @@ func TestAroonUnmarshal(t *testing.T) {
 			t.Parallel()
 
 			a := Aroon{}
-			err := json.Unmarshal(c.ByteArray, &a)
+			err := a.UnmarshalJSON(c.ByteArray)
 			if c.Error != nil {
-				assert.NotNil(t, err)
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
 			} else {
 				assert.Nil(t, err)
 				assert.Equal(t, c.Result, a)
@@ -198,7 +206,7 @@ func TestAroonMarshal(t *testing.T) {
 		Result []byte
 	}{
 		Aroon:  Aroon{trend: "down", length: 1},
-		Result: []byte(`{"name":"aroon","trend":"down","length":1}`),
+		Result: []byte(`{"trend":"down","length":1}`),
 	}
 
 	d, _ := json.Marshal(c.Aroon)
@@ -385,7 +393,7 @@ func TestCCIMarshal(t *testing.T) {
 		Result []byte
 	}{
 		CCI:    CCI{source: Aroon{trend: "down", length: 1}},
-		Result: []byte(`{"name":"cci","source":{"name":"aroon","trend":"down","length":1}}`),
+		Result: []byte(`{"source":{"name":"aroon","trend":"down","length":1}}`),
 	}
 
 	d, _ := json.Marshal(c.CCI)
@@ -1087,7 +1095,7 @@ func TestMACDMarshal(t *testing.T) {
 	}{
 		MACD: MACD{source1: Aroon{trend: "down", length: 2},
 			source2: CCI{source: EMA{length: 2}}},
-		Result: []byte(`{"name":"macd","source1":{"name":"aroon","trend":"down","length":2},"source2":{"name":"cci","source":{"name":"ema","length":2}}}`),
+		Result: []byte(`{"source1":{"name":"aroon","trend":"down","length":2},"source2":{"name":"cci","source":{"name":"ema","length":2}}}`),
 	}
 
 	d, _ := json.Marshal(c.MACD)

@@ -78,23 +78,17 @@ func (a Aroon) Count() int {
 
 // UnmarshalJSON parse JSON into an indicator source.
 func (a *Aroon) UnmarshalJSON(d []byte) error {
-	var i struct {
-		N string `json:"name"`
+	var data struct {
 		T string `json:"trend"`
 		L int    `json:"length"`
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
+	if err := json.Unmarshal(d, &data); err != nil {
 		return err
-
 	}
 
-	if i.N != "aroon" {
-		return ErrInvalidType
-	}
-
-	a.trend = i.T
-	a.length = i.L
+	a.trend = data.T
+	a.length = data.L
 
 	if err := a.validate(); err != nil {
 		return err
@@ -106,11 +100,10 @@ func (a *Aroon) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts source data into JSON.
 func (a Aroon) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N string `json:"name"`
 		T string `json:"trend"`
 		L int    `json:"length"`
 	}{
-		N: "aroon", T: a.trend, L: a.length,
+		T: a.trend, L: a.length,
 	})
 }
 
@@ -200,11 +193,15 @@ func (c *CCI) UnmarshalJSON(d []byte) error {
 
 // MarshalJSON converts source data into JSON.
 func (c CCI) MarshalJSON() ([]byte, error) {
+	data, err := toJSON(c.source)
+	if err != nil {
+		return nil, err
+	}
+
 	return json.Marshal(struct {
-		N string    `json:"name"`
-		S Indicator `json:"source"`
+		S json.RawMessage `json:"source"`
 	}{
-		N: "cci", S: c.source,
+		S: data,
 	})
 }
 
@@ -622,12 +619,21 @@ func (m *MACD) UnmarshalJSON(d []byte) error {
 
 // MarshalJSON converts source data into JSON.
 func (m MACD) MarshalJSON() ([]byte, error) {
+	data1, err := toJSON(m.source1)
+	if err != nil {
+		return nil, err
+	}
+
+	data2, err := toJSON(m.source2)
+	if err != nil {
+		return nil, err
+	}
+
 	return json.Marshal(struct {
-		N  string    `json:"name"`
-		S1 Indicator `json:"source1"`
-		S2 Indicator `json:"source2"`
+		S1 json.RawMessage `json:"source1"`
+		S2 json.RawMessage `json:"source2"`
 	}{
-		N: "macd", S1: m.source1, S2: m.source2,
+		S1: data1, S2: data2,
 	})
 }
 
