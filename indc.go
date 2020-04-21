@@ -194,7 +194,7 @@ func (c *CCI) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-// MarshalJSON converts cci data into byte array.
+// MarshalJSON converts CCI data into byte array.
 func (c CCI) MarshalJSON() ([]byte, error) {
 	s, err := c.source.NamedMarshalJSON()
 	if err != nil {
