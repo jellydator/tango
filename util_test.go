@@ -278,85 +278,85 @@ func TestFromJSON(t *testing.T) {
 	}
 }
 
-func TestToJSON(t *testing.T) {
-	cc := map[string]struct {
-		Data   Indicator
-		Result []byte
-		Error  error
-	}{
-		"Successful marshal of an Aroon indicator": {
-			Data:   Aroon{trend: "up", length: 1},
-			Result: []byte(`{"name":"aroon","trend":"up","length":1}`),
-		},
-		"Successful marshal of a CCI indicator": {
-			Data:   CCI{Aroon{trend: "up", length: 1}},
-			Result: []byte(`{"name":"cci","source":{"name":"aroon","trend":"up","length":1}}`),
-		},
-		"Successfully CCI toJSON threw an error when it was provided unrecognized source": {
-			Data:  CCI{IndicatorMock{}},
-			Error: assert.AnError,
-		},
-		"Successful marshal of a DEMA indicator": {
-			Data:   DEMA{length: 1},
-			Result: []byte(`{"name":"dema","length":1}`),
-		},
-		"Successful marshal of an EMA indicator": {
-			Data:   EMA{length: 1},
-			Result: []byte(`{"name":"ema","length":1}`),
-		},
-		"Successful marshal of a HMA indicator": {
-			Data:   HMA{wma: WMA{length: 1}},
-			Result: []byte(`{"name":"hma","wma":{"length":1}}`),
-		},
-		"Successful marshal of a MACD indicator": {
-			Data: MACD{Aroon{trend: "down", length: 2},
-				CCI{EMA{length: 2}}},
-			Result: []byte(`{"name":"macd","source1":{"name":"aroon","trend":"down","length":2},"source2":{"name":"cci","source":{"name":"ema","length":2}}}`),
-		},
-		"Successfully MACD toJSON threw an error when it was provided unrecognized source1": {
-			Data: MACD{IndicatorMock{},
-				CCI{EMA{length: 2}}},
-			Error: assert.AnError,
-		},
-		"Successfully MACD toJSON threw an error when it was provided unrecognized source2": {
-			Data: MACD{Aroon{trend: "down", length: 2},
-				IndicatorMock{}},
-			Error: assert.AnError,
-		},
-		"Successful marshal of a ROC indicator": {
-			Data:   ROC{length: 1},
-			Result: []byte(`{"name":"roc","length":1}`),
-		},
-		"Successful marshal of a RSI indicator": {
-			Data:   RSI{length: 1},
-			Result: []byte(`{"name":"rsi","length":1}`),
-		},
-		"Successful marshal of a SMA indicator": {
-			Data:   SMA{length: 1},
-			Result: []byte(`{"name":"sma","length":1}`),
-		},
-		"Successful marshal of a Stoch indicator": {
-			Data:   Stoch{length: 1},
-			Result: []byte(`{"name":"stoch","length":1}`),
-		},
-		"Successful marshal of an WMA indicator": {
-			Data:   WMA{length: 1},
-			Result: []byte(`{"name":"wma","length":1}`),
-		},
-	}
+// func TestToJSON(t *testing.T) {
+// 	cc := map[string]struct {
+// 		Data   Indicator
+// 		Result []byte
+// 		Error  error
+// 	}{
+// 		"Successful marshal of an Aroon indicator": {
+// 			Data:   Aroon{trend: "up", length: 1},
+// 			Result: []byte(`{"name":"aroon","trend":"up","length":1}`),
+// 		},
+// 		"Successful marshal of a CCI indicator": {
+// 			Data:   CCI{Aroon{trend: "up", length: 1}},
+// 			Result: []byte(`{"name":"cci","source":{"name":"aroon","trend":"up","length":1}}`),
+// 		},
+// 		"Successfully CCI toJSON threw an error when it was provided unrecognized source": {
+// 			Data:  CCI{IndicatorMock{}},
+// 			Error: assert.AnError,
+// 		},
+// 		"Successful marshal of a DEMA indicator": {
+// 			Data:   DEMA{length: 1},
+// 			Result: []byte(`{"name":"dema","length":1}`),
+// 		},
+// 		"Successful marshal of an EMA indicator": {
+// 			Data:   EMA{length: 1},
+// 			Result: []byte(`{"name":"ema","length":1}`),
+// 		},
+// 		"Successful marshal of a HMA indicator": {
+// 			Data:   HMA{wma: WMA{length: 1}},
+// 			Result: []byte(`{"name":"hma","wma":{"length":1}}`),
+// 		},
+// 		"Successful marshal of a MACD indicator": {
+// 			Data: MACD{Aroon{trend: "down", length: 2},
+// 				CCI{EMA{length: 2}}},
+// 			Result: []byte(`{"name":"macd","source1":{"name":"aroon","trend":"down","length":2},"source2":{"name":"cci","source":{"name":"ema","length":2}}}`),
+// 		},
+// 		"Successfully MACD toJSON threw an error when it was provided unrecognized source1": {
+// 			Data: MACD{IndicatorMock{},
+// 				CCI{EMA{length: 2}}},
+// 			Error: assert.AnError,
+// 		},
+// 		"Successfully MACD toJSON threw an error when it was provided unrecognized source2": {
+// 			Data: MACD{Aroon{trend: "down", length: 2},
+// 				IndicatorMock{}},
+// 			Error: assert.AnError,
+// 		},
+// 		"Successful marshal of a ROC indicator": {
+// 			Data:   ROC{length: 1},
+// 			Result: []byte(`{"name":"roc","length":1}`),
+// 		},
+// 		"Successful marshal of a RSI indicator": {
+// 			Data:   RSI{length: 1},
+// 			Result: []byte(`{"name":"rsi","length":1}`),
+// 		},
+// 		"Successful marshal of a SMA indicator": {
+// 			Data:   SMA{length: 1},
+// 			Result: []byte(`{"name":"sma","length":1}`),
+// 		},
+// 		"Successful marshal of a Stoch indicator": {
+// 			Data:   Stoch{length: 1},
+// 			Result: []byte(`{"name":"stoch","length":1}`),
+// 		},
+// 		"Successful marshal of an WMA indicator": {
+// 			Data:   WMA{length: 1},
+// 			Result: []byte(`{"name":"wma","length":1}`),
+// 		},
+// 	}
 
-	for cn, c := range cc {
-		c := c
-		t.Run(cn, func(t *testing.T) {
-			t.Parallel()
+// 	for cn, c := range cc {
+// 		c := c
+// 		t.Run(cn, func(t *testing.T) {
+// 			t.Parallel()
 
-			res, err := toJSON(c.Data)
-			if c.Error != nil {
-				assert.NotNil(t, err)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result, res)
-			}
-		})
-	}
-}
+// 			res, err := toJSON(c.Data)
+// 			if c.Error != nil {
+// 				assert.NotNil(t, err)
+// 			} else {
+// 				assert.Nil(t, err)
+// 				assert.Equal(t, c.Result, res)
+// 			}
+// 		})
+// 	}
+// }

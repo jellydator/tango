@@ -17,6 +17,8 @@ func (im IndicatorMock) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 func (im IndicatorMock) Count() int { return 1 }
 
+func (im IndicatorMock) NamedMarshalJSON() ([]byte, error) { return nil, assert.AnError }
+
 func TestAroonNew(t *testing.T) {
 	cc := map[string]struct {
 		Trend  String
@@ -208,6 +210,15 @@ func TestAroonMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
+func TestAroonNamedMarshal(t *testing.T) {
+	a := Aroon{trend: "down", length: 1}
+	r := []byte(`{"name":"aroon","trend":"down","length":1}`)
+
+	d, _ := a.NamedMarshalJSON()
+
+	assert.Equal(t, r, d)
+}
+
 func TestCCINew(t *testing.T) {
 	cc := map[string]struct {
 		Source Indicator
@@ -390,7 +401,7 @@ func TestCCIMarshal(t *testing.T) {
 		Result []byte
 		Error  error
 	}{
-		"Successsfully CCI toJSON threw an error": {
+		"Successfully CCI source marshal threw an error": {
 			CCI:   CCI{source: IndicatorMock{}},
 			Error: assert.AnError,
 		},
@@ -406,6 +417,38 @@ func TestCCIMarshal(t *testing.T) {
 			t.Parallel()
 
 			d, err := c.CCI.MarshalJSON()
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, d)
+			}
+		})
+	}
+}
+
+func TestCCINamedMarshal(t *testing.T) {
+	cc := map[string]struct {
+		CCI    CCI
+		Result []byte
+		Error  error
+	}{
+		"Successfully CCI source marshal threw an error": {
+			CCI:   CCI{source: IndicatorMock{}},
+			Error: assert.AnError,
+		},
+		"Successful CCI unmarshal": {
+			CCI:    CCI{source: Aroon{trend: "down", length: 1}},
+			Result: []byte(`{"name":"cci","source":{"name":"aroon","trend":"down","length":1}}`),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			d, err := c.CCI.NamedMarshalJSON()
 			if c.Error != nil {
 				assert.NotNil(t, err)
 			} else {
@@ -573,6 +616,15 @@ func TestDEMAMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
+func TestDEMANamedMarshal(t *testing.T) {
+	dm := DEMA{length: 1}
+	r := []byte(`{"name":"dema","length":1}`)
+
+	d, _ := dm.NamedMarshalJSON()
+
+	assert.Equal(t, r, d)
+}
+
 func TestEMANew(t *testing.T) {
 	cc := map[string]struct {
 		Length int
@@ -731,6 +783,15 @@ func TestEMAMarshal(t *testing.T) {
 	r := []byte(`{"length":1}`)
 
 	d, _ := e.MarshalJSON()
+
+	assert.Equal(t, r, d)
+}
+
+func TestEMANamedMarshal(t *testing.T) {
+	e := EMA{length: 1}
+	r := []byte(`{"name":"ema","length":1}`)
+
+	d, _ := e.NamedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
@@ -895,6 +956,15 @@ func TestHMAMarshal(t *testing.T) {
 	r := []byte(`{"wma":{"length":1}}`)
 
 	d, _ := h.MarshalJSON()
+
+	assert.Equal(t, r, d)
+}
+
+func TestHMANamedMarshal(t *testing.T) {
+	h := HMA{wma: WMA{length: 1}}
+	r := []byte(`{"name":"hma","wma":{"length":1}}`)
+
+	d, _ := h.NamedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
@@ -1113,12 +1183,12 @@ func TestMACDMarshal(t *testing.T) {
 		Result []byte
 		Error  error
 	}{
-		"Successsfully MACD toJSON threw an error with source1 value": {
+		"Successfully MACD source1 marshal threw an error": {
 			MACD: MACD{source1: IndicatorMock{},
 				source2: CCI{source: EMA{length: 2}}},
 			Error: assert.AnError,
 		},
-		"Successsfully MACD toJSON threw an error with source2 value": {
+		"Successfully MACD source2 marshal threw an error": {
 			MACD: MACD{source1: Aroon{trend: "down", length: 2},
 				source2: IndicatorMock{}},
 			Error: assert.AnError,
@@ -1136,6 +1206,45 @@ func TestMACDMarshal(t *testing.T) {
 			t.Parallel()
 
 			d, err := c.MACD.MarshalJSON()
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, d)
+			}
+		})
+	}
+}
+
+func TestMACDNamedMarshal(t *testing.T) {
+	cc := map[string]struct {
+		MACD   MACD
+		Result []byte
+		Error  error
+	}{
+		"Successfully MACD source1 marshal threw an error": {
+			MACD: MACD{source1: IndicatorMock{},
+				source2: CCI{source: EMA{length: 2}}},
+			Error: assert.AnError,
+		},
+		"Successfully MACD source2 marshal threw an error": {
+			MACD: MACD{source1: Aroon{trend: "down", length: 2},
+				source2: IndicatorMock{}},
+			Error: assert.AnError,
+		},
+		"Successful MACD unmarshal": {
+			MACD: MACD{source1: Aroon{trend: "down", length: 2},
+				source2: CCI{source: EMA{length: 2}}},
+			Result: []byte(`{"name":"macd","source1":{"name":"aroon","trend":"down","length":2},"source2":{"name":"cci","source":{"name":"ema","length":2}}}`),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			d, err := c.MACD.NamedMarshalJSON()
 			if c.Error != nil {
 				assert.NotNil(t, err)
 			} else {
@@ -1298,6 +1407,15 @@ func TestROCMarshal(t *testing.T) {
 	r := []byte(`{"length":1}`)
 
 	d, _ := rc.MarshalJSON()
+
+	assert.Equal(t, r, d)
+}
+
+func TestROCNamedMarshal(t *testing.T) {
+	rc := ROC{length: 1}
+	r := []byte(`{"name":"roc","length":1}`)
+
+	d, _ := rc.NamedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
@@ -1468,6 +1586,16 @@ func TestRSIMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
+func TestRSINamedMarshal(t *testing.T) {
+
+	rs := RSI{length: 1}
+	r := []byte(`{"name":"rsi","length":1}`)
+
+	d, _ := rs.NamedMarshalJSON()
+
+	assert.Equal(t, r, d)
+}
+
 func TestSMANew(t *testing.T) {
 	cc := map[string]struct {
 		Length int
@@ -1618,6 +1746,15 @@ func TestSMAMarshal(t *testing.T) {
 	r := []byte(`{"length":1}`)
 
 	d, _ := s.MarshalJSON()
+
+	assert.Equal(t, r, d)
+}
+
+func TestSMANamedMarshal(t *testing.T) {
+	s := SMA{length: 1}
+	r := []byte(`{"name":"sma","length":1}`)
+
+	d, _ := s.NamedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
@@ -1787,6 +1924,15 @@ func TestStochMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
+func TestStochNamedMarshal(t *testing.T) {
+	s := Stoch{length: 1}
+	r := []byte(`{"name":"stoch","length":1}`)
+
+	d, _ := s.NamedMarshalJSON()
+
+	assert.Equal(t, r, d)
+}
+
 func TestWMANew(t *testing.T) {
 	cc := map[string]struct {
 		Length int
@@ -1940,6 +2086,15 @@ func TestWMAMarshal(t *testing.T) {
 	r := []byte(`{"length":1}`)
 
 	d, _ := w.MarshalJSON()
+
+	assert.Equal(t, r, d)
+}
+
+func TestWMANamedMarshal(t *testing.T) {
+	w := WMA{length: 1}
+	r := []byte(`{"name":"wma","length":1}`)
+
+	d, _ := w.NamedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
