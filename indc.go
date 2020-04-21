@@ -78,17 +78,17 @@ func (a Aroon) Count() int {
 
 // UnmarshalJSON parse JSON into an indicator source.
 func (a *Aroon) UnmarshalJSON(d []byte) error {
-	var data struct {
+	var i struct {
 		T string `json:"trend"`
 		L int    `json:"length"`
 	}
 
-	if err := json.Unmarshal(d, &data); err != nil {
+	if err := json.Unmarshal(d, &d); err != nil {
 		return err
 	}
 
-	a.trend = data.T
-	a.length = data.L
+	a.trend = i.T
+	a.length = i.L
 
 	if err := a.validate(); err != nil {
 		return err
@@ -165,7 +165,6 @@ func (c CCI) Count() int {
 // UnmarshalJSON parse JSON into an indicator source.
 func (c *CCI) UnmarshalJSON(d []byte) error {
 	var i struct {
-		N      string `json:"name"`
 		Source json.RawMessage
 	}
 
@@ -173,16 +172,12 @@ func (c *CCI) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	if i.N != "cci" {
-		return ErrInvalidType
-	}
-
-	ind, err := fromJSON(i.Source)
+	s, err := fromJSON(i.Source)
 	if err != nil {
 		return err
 	}
 
-	c.source = ind
+	c.source = s
 
 	if err := c.validate(); err != nil {
 		return err
@@ -193,7 +188,7 @@ func (c *CCI) UnmarshalJSON(d []byte) error {
 
 // MarshalJSON converts source data into JSON.
 func (c CCI) MarshalJSON() ([]byte, error) {
-	data, err := toJSON(c.source)
+	s, err := toJSON(c.source)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +196,7 @@ func (c CCI) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		S json.RawMessage `json:"source"`
 	}{
-		S: data,
+		S: s,
 	})
 }
 
@@ -270,16 +265,11 @@ func (dm DEMA) Count() int {
 // UnmarshalJSON parse JSON into an indicator source.
 func (dm *DEMA) UnmarshalJSON(d []byte) error {
 	var i struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
-	}
-
-	if i.N != "dema" {
-		return ErrInvalidType
 	}
 
 	dm.length = i.L
@@ -294,10 +284,9 @@ func (dm *DEMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts source data into JSON.
 func (dm DEMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}{
-		N: "dema", L: dm.length,
+		L: dm.length,
 	})
 }
 
@@ -368,16 +357,11 @@ func (e EMA) Count() int {
 // UnmarshalJSON parse JSON into an indicator source.
 func (e *EMA) UnmarshalJSON(d []byte) error {
 	var i struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
-	}
-
-	if i.N != "ema" {
-		return ErrInvalidType
 	}
 
 	e.length = i.L
@@ -392,10 +376,9 @@ func (e *EMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts source data into JSON.
 func (e EMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}{
-		N: "ema", L: e.length,
+		L: e.length,
 	})
 }
 
@@ -469,7 +452,6 @@ func (h HMA) Count() int {
 // UnmarshalJSON parse JSON into an indicator source.
 func (h *HMA) UnmarshalJSON(d []byte) error {
 	var i struct {
-		N   string `json:"name"`
 		WMA struct {
 			L int `json:"length"`
 		}
@@ -496,10 +478,9 @@ func (h *HMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts source data into JSON.
 func (h HMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N string `json:"name"`
-		W WMA    `json:"wma"`
+		W WMA `json:"wma"`
 	}{
-		N: "hma", W: h.wma,
+		W: h.wma,
 	})
 }
 
@@ -583,7 +564,6 @@ func (m MACD) Count() int {
 // UnmarshalJSON parse JSON into an indicator source.
 func (m *MACD) UnmarshalJSON(d []byte) error {
 	var i struct {
-		N       string `json:"name"`
 		Source1 json.RawMessage
 		Source2 json.RawMessage
 	}
@@ -592,23 +572,19 @@ func (m *MACD) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	if i.N != "macd" {
-		return ErrInvalidType
-	}
-
-	ind1, err := fromJSON(i.Source1)
+	s1, err := fromJSON(i.Source1)
 	if err != nil {
 		return err
 	}
 
-	m.source1 = ind1
+	m.source1 = s1
 
-	ind2, err := fromJSON(i.Source2)
+	s2, err := fromJSON(i.Source2)
 	if err != nil {
 		return err
 	}
 
-	m.source2 = ind2
+	m.source2 = s2
 
 	if err := m.validate(); err != nil {
 		return err
@@ -619,12 +595,12 @@ func (m *MACD) UnmarshalJSON(d []byte) error {
 
 // MarshalJSON converts source data into JSON.
 func (m MACD) MarshalJSON() ([]byte, error) {
-	data1, err := toJSON(m.source1)
+	s1, err := toJSON(m.source1)
 	if err != nil {
 		return nil, err
 	}
 
-	data2, err := toJSON(m.source2)
+	s2, err := toJSON(m.source2)
 	if err != nil {
 		return nil, err
 	}
@@ -633,7 +609,7 @@ func (m MACD) MarshalJSON() ([]byte, error) {
 		S1 json.RawMessage `json:"source1"`
 		S2 json.RawMessage `json:"source2"`
 	}{
-		S1: data1, S2: data2,
+		S1: s1, S2: s2,
 	})
 }
 
@@ -688,17 +664,11 @@ func (r ROC) Count() int {
 // UnmarshalJSON parse JSON into an indicator source.
 func (r *ROC) UnmarshalJSON(d []byte) error {
 	var i struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
-
-	}
-
-	if i.N != "roc" {
-		return ErrInvalidType
 	}
 
 	r.length = i.L
@@ -713,10 +683,9 @@ func (r *ROC) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts source data into JSON.
 func (r ROC) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}{
-		N: "roc", L: r.length,
+		L: r.length,
 	})
 }
 
@@ -783,17 +752,11 @@ func (r RSI) Count() int {
 // UnmarshalJSON parse JSON into an indicator source.
 func (r *RSI) UnmarshalJSON(d []byte) error {
 	var i struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
-
-	}
-
-	if i.N != "rsi" {
-		return ErrInvalidType
 	}
 
 	r.length = i.L
@@ -808,10 +771,9 @@ func (r *RSI) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts source data into JSON.
 func (r RSI) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}{
-		N: "rsi", L: r.length,
+		L: r.length,
 	})
 }
 
@@ -869,17 +831,11 @@ func (s SMA) Count() int {
 // UnmarshalJSON parse JSON into an indicator source.
 func (s *SMA) UnmarshalJSON(d []byte) error {
 	var i struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
-
-	}
-
-	if i.N != "sma" {
-		return ErrInvalidType
 	}
 
 	s.length = i.L
@@ -894,10 +850,9 @@ func (s *SMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts source data into JSON.
 func (s SMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}{
-		N: "sma", L: s.length,
+		L: s.length,
 	})
 }
 
@@ -962,17 +917,11 @@ func (s Stoch) Count() int {
 // UnmarshalJSON parse JSON into an indicator source.
 func (s *Stoch) UnmarshalJSON(d []byte) error {
 	var i struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
-
-	}
-
-	if i.N != "stoch" {
-		return ErrInvalidType
 	}
 
 	s.length = i.L
@@ -987,10 +936,9 @@ func (s *Stoch) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts source data into JSON.
 func (s Stoch) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}{
-		N: "stoch", L: s.length,
+		L: s.length,
 	})
 }
 
@@ -1050,17 +998,11 @@ func (w WMA) Count() int {
 // UnmarshalJSON parse JSON into an indicator source.
 func (w *WMA) UnmarshalJSON(d []byte) error {
 	var i struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
-
-	}
-
-	if i.N != "wma" {
-		return ErrInvalidType
 	}
 
 	w.length = i.L
@@ -1075,10 +1017,9 @@ func (w *WMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts source data into JSON.
 func (w WMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N string `json:"name"`
-		L int    `json:"length"`
+		L int `json:"length"`
 	}{
-		N: "wma", L: w.length,
+		L: w.length,
 	})
 }
 
