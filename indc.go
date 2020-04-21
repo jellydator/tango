@@ -578,10 +578,6 @@ func (m *MACD) UnmarshalJSON(d []byte) error {
 
 	m.source2 = s2
 
-	if err := m.validate(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
