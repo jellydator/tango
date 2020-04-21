@@ -97,7 +97,7 @@ func (a *Aroon) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-// MarshalJSON converts source data into JSON.
+// MarshalJSON converts Aroon data into byte array.
 func (a Aroon) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T String `json:"trend"`
@@ -105,6 +105,22 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 	}{
 		T: a.trend, L: a.length,
 	})
+}
+
+// NamedMarshalJSON converts Aroon data with its name into byte array.
+func (a Aroon) NamedMarshalJSON() ([]byte, error) {
+	type o struct {
+		N String `json:"name"`
+		T String `json:"trend"`
+		L int    `json:"length"`
+	}
+
+	var d o
+	d.N = "aroon"
+	d.T = a.trend
+	d.L = a.length
+
+	return json.Marshal(d)
 }
 
 // CCI holds all the neccesary information needed to calculate commodity
@@ -178,9 +194,9 @@ func (c *CCI) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-// MarshalJSON converts source data into JSON.
+// MarshalJSON converts cci data into byte array.
 func (c CCI) MarshalJSON() ([]byte, error) {
-	s, err := toJSON(c.source)
+	s, err := c.source.NamedMarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -190,6 +206,25 @@ func (c CCI) MarshalJSON() ([]byte, error) {
 	}{
 		S: s,
 	})
+}
+
+// NamedMarshalJSON converts CCI data with its name into byte array.
+func (c CCI) NamedMarshalJSON() ([]byte, error) {
+	type o struct {
+		N String          `json:"name"`
+		S json.RawMessage `json:"source"`
+	}
+
+	s, err := c.source.NamedMarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	var d o
+	d.N = "cci"
+	d.S = s
+
+	return json.Marshal(d)
 }
 
 // DEMA holds all the neccesary information needed to calculate
@@ -273,13 +308,27 @@ func (dm *DEMA) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-// MarshalJSON converts source data into JSON.
+// MarshalJSON converts DEMA data into byte array.
 func (dm DEMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		L int `json:"length"`
 	}{
 		L: dm.length,
 	})
+}
+
+// NamedMarshalJSON converts DEMA data with its name into byte array.
+func (dm DEMA) NamedMarshalJSON() ([]byte, error) {
+	type o struct {
+		N String `json:"name"`
+		L int    `json:"length"`
+	}
+
+	var d o
+	d.N = "dema"
+	d.L = dm.length
+
+	return json.Marshal(d)
 }
 
 // EMA holds all the neccesary information needed to calculate exponential
@@ -365,13 +414,27 @@ func (e *EMA) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-// MarshalJSON converts source data into JSON.
+// MarshalJSON converts EMA data into byte array.
 func (e EMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		L int `json:"length"`
 	}{
 		L: e.length,
 	})
+}
+
+// NamedMarshalJSON converts EMA data with its name into byte array.
+func (e EMA) NamedMarshalJSON() ([]byte, error) {
+	type o struct {
+		N String `json:"name"`
+		L int    `json:"length"`
+	}
+
+	var d o
+	d.N = "ema"
+	d.L = e.length
+
+	return json.Marshal(d)
 }
 
 // HMA holds all the neccesary information needed to calculate
@@ -463,13 +526,27 @@ func (h *HMA) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-// MarshalJSON converts source data into JSON.
+// MarshalJSON converts HMA data into byte array.
 func (h HMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		W WMA `json:"wma"`
 	}{
 		W: h.wma,
 	})
+}
+
+// NamedMarshalJSON converts HMA data with its name into byte array.
+func (h HMA) NamedMarshalJSON() ([]byte, error) {
+	type o struct {
+		N   String `json:"name"`
+		WMA WMA    `json:"wma"`
+	}
+
+	var d o
+	d.N = "hma"
+	d.WMA = h.wma
+
+	return json.Marshal(d)
 }
 
 // MACD holds all the neccesary information needed to calculate
@@ -569,14 +646,14 @@ func (m *MACD) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-// MarshalJSON converts source data into JSON.
+// MarshalJSON converts MACD data into byte array.
 func (m MACD) MarshalJSON() ([]byte, error) {
-	s1, err := toJSON(m.source1)
+	s1, err := m.source1.NamedMarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	s2, err := toJSON(m.source2)
+	s2, err := m.source2.NamedMarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -587,6 +664,32 @@ func (m MACD) MarshalJSON() ([]byte, error) {
 	}{
 		S1: s1, S2: s2,
 	})
+}
+
+// NamedMarshalJSON converts MACD data with its name into byte array.
+func (m MACD) NamedMarshalJSON() ([]byte, error) {
+	type o struct {
+		N  String          `json:"name"`
+		S1 json.RawMessage `json:"source1"`
+		S2 json.RawMessage `json:"source2"`
+	}
+
+	s1, err := m.source1.NamedMarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	s2, err := m.source2.NamedMarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	var d o
+	d.N = "macd"
+	d.S1 = s1
+	d.S2 = s2
+
+	return json.Marshal(d)
 }
 
 // ROC holds all the neccesary information needed to calculate rate
@@ -656,13 +759,27 @@ func (r *ROC) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-// MarshalJSON converts source data into JSON.
+// MarshalJSON converts ROC data into byte array.
 func (r ROC) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		L int `json:"length"`
 	}{
 		L: r.length,
 	})
+}
+
+// NamedMarshalJSON converts ROC data with its name into byte array.
+func (r ROC) NamedMarshalJSON() ([]byte, error) {
+	type o struct {
+		N String `json:"name"`
+		L int    `json:"length"`
+	}
+
+	var d o
+	d.N = "roc"
+	d.L = r.length
+
+	return json.Marshal(d)
 }
 
 // RSI holds all the neccesary information needed to calculate relative
@@ -744,13 +861,27 @@ func (r *RSI) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-// MarshalJSON converts source data into JSON.
+// MarshalJSON converts RSI data into byte array.
 func (r RSI) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		L int `json:"length"`
 	}{
 		L: r.length,
 	})
+}
+
+// NamedMarshalJSON converts RSI data with its name into byte array.
+func (r RSI) NamedMarshalJSON() ([]byte, error) {
+	type o struct {
+		N String `json:"name"`
+		L int    `json:"length"`
+	}
+
+	var d o
+	d.N = "rsi"
+	d.L = r.length
+
+	return json.Marshal(d)
 }
 
 // SMA holds all the neccesary information needed to calculate simple
@@ -823,13 +954,27 @@ func (s *SMA) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-// MarshalJSON converts source data into JSON.
+// MarshalJSON converts SMA data into byte array.
 func (s SMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		L int `json:"length"`
 	}{
 		L: s.length,
 	})
+}
+
+// NamedMarshalJSON converts SMA data with its name into byte array.
+func (s SMA) NamedMarshalJSON() ([]byte, error) {
+	type o struct {
+		N String `json:"name"`
+		L int    `json:"length"`
+	}
+
+	var d o
+	d.N = "sma"
+	d.L = s.length
+
+	return json.Marshal(d)
 }
 
 // Stoch holds all the neccesary information needed to calculate stochastic
@@ -909,13 +1054,27 @@ func (s *Stoch) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-// MarshalJSON converts source data into JSON.
+// MarshalJSON converts Stoch data into byte array.
 func (s Stoch) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		L int `json:"length"`
 	}{
 		L: s.length,
 	})
+}
+
+// NamedMarshalJSON converts Stoch data with its name into byte array.
+func (s Stoch) NamedMarshalJSON() ([]byte, error) {
+	type o struct {
+		N String `json:"name"`
+		L int    `json:"length"`
+	}
+
+	var d o
+	d.N = "stoch"
+	d.L = s.length
+
+	return json.Marshal(d)
 }
 
 // WMA holds all the neccesary information needed to calculate weighted
@@ -990,7 +1149,7 @@ func (w *WMA) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-// MarshalJSON converts source data into JSON.
+// MarshalJSON converts WMA data into byte array.
 func (w WMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		L int `json:"length"`
@@ -999,13 +1158,31 @@ func (w WMA) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// NamedMarshalJSON converts WMA data with its name into byte array.
+func (w WMA) NamedMarshalJSON() ([]byte, error) {
+	type o struct {
+		N String `json:"name"`
+		L int    `json:"length"`
+	}
+
+	var d o
+	d.N = "wma"
+	d.L = w.length
+
+	return json.Marshal(d)
+}
+
 // Indicator is an interface that every indicator should implement.
 type Indicator interface {
 
 	// Calc should calculate and return indicator's value.
 	Calc(dd []decimal.Decimal) (decimal.Decimal, error)
 
-	// Count shoul determines the total amount of data points needed
+	// Count determines the total amount of data points needed
 	// for indicator's calculation.
 	Count() int
+
+	// NamedMarshalJSON helps indicators using other indicators to identify
+	// their names.
+	NamedMarshalJSON() ([]byte, error)
 }
