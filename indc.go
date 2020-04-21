@@ -450,7 +450,7 @@ func (h *HMA) UnmarshalJSON(d []byte) error {
 	var i struct {
 		WMA struct {
 			L int `json:"length"`
-		}
+		} `json:"wma"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
