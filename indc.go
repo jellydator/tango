@@ -83,7 +83,7 @@ func (a *Aroon) UnmarshalJSON(d []byte) error {
 		L int    `json:"length"`
 	}
 
-	if err := json.Unmarshal(d, &d); err != nil {
+	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
@@ -178,10 +178,6 @@ func (c *CCI) UnmarshalJSON(d []byte) error {
 	}
 
 	c.source = s
-
-	if err := c.validate(); err != nil {
-		return err
-	}
 
 	return nil
 }

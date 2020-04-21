@@ -188,85 +188,85 @@ func TestMeanDeviation(t *testing.T) {
 	}
 }
 
-func TestFromJSON(t *testing.T) {
-	cc := map[string]struct {
-		ByteArray []byte
-		Result    Indicator
-		Error     error
-	}{
-		"Successful creation of an aroon indicator": {
-			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1}`),
-			Result:    Aroon{trend: "up", length: 1},
-		},
-		"Successful creation of a cci indicator": {
-			ByteArray: []byte(`{"name":"cci",
-			"source":{"name":"aroon","trend":"up","length":1}}`),
-			Result: CCI{Aroon{trend: "up", length: 1}},
-		},
-		"Successful creation of a dema indicator": {
-			ByteArray: []byte(`{"name":"dema","length":1}`),
-			Result:    DEMA{length: 1},
-		},
-		"Successful creation of an ema indicator": {
-			ByteArray: []byte(`{"name":"ema","length":1}`),
-			Result:    EMA{length: 1},
-		},
-		"Successful creation of a hma indicator": {
-			ByteArray: []byte(`{"name":"hma", "wma":{"name":"wma","length":1}}`),
-			Result:    HMA{wma: WMA{length: 1}},
-		},
-		"Successful creation of a macd indicator": {
-			ByteArray: []byte(`{"name":"macd",
-			"source1":{"name":"aroon","trend":"down","length":2},
-			"source2":{"name":"cci","source":{"name":"ema", "length":2}}}`),
-			Result: MACD{Aroon{trend: "down", length: 2},
-				CCI{EMA{length: 2}}},
-		},
-		"Successful creation of a roc indicator": {
-			ByteArray: []byte(`{"name":"roc","length":1}`),
-			Result:    ROC{length: 1},
-		},
-		"Successful creation of a rsi indicator": {
-			ByteArray: []byte(`{"name":"rsi","length":1}`),
-			Result:    RSI{length: 1},
-		},
-		"Successful creation of a sma indicator": {
-			ByteArray: []byte(`{"name":"sma","length":1}`),
-			Result:    SMA{length: 1},
-		},
-		"Successful creation of a stoch indicator": {
-			ByteArray: []byte(`{"name":"stoch","length":1}`),
-			Result:    Stoch{length: 1},
-		},
-		"Successful creation of an wma indicator": {
-			ByteArray: []byte(`{"name":"wma","length":1}`),
-			Result:    WMA{length: 1},
-		},
-		"JSON unmarshal returns an error": {
-			Error: assert.AnError,
-		},
-		"Invalid source name provided": {
-			ByteArray: []byte(`{"name":"aa"}`),
-			Error:     ErrInvalidSourceName,
-		},
-	}
+// func TestFromJSON(t *testing.T) {
+// 	cc := map[string]struct {
+// 		ByteArray []byte
+// 		Result    Indicator
+// 		Error     error
+// 	}{
+// 		"Successful creation of an aroon indicator": {
+// 			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1}`),
+// 			Result:    Aroon{trend: "up", length: 1},
+// 		},
+// 		"Successful creation of a cci indicator": {
+// 			ByteArray: []byte(`{"name":"cci",
+// 			"source":{"name":"aroon","trend":"up","length":1}}`),
+// 			Result: CCI{Aroon{trend: "up", length: 1}},
+// 		},
+// 		"Successful creation of a dema indicator": {
+// 			ByteArray: []byte(`{"name":"dema","length":1}`),
+// 			Result:    DEMA{length: 1},
+// 		},
+// 		"Successful creation of an ema indicator": {
+// 			ByteArray: []byte(`{"name":"ema","length":1}`),
+// 			Result:    EMA{length: 1},
+// 		},
+// 		"Successful creation of a hma indicator": {
+// 			ByteArray: []byte(`{"name":"hma", "wma":{"name":"wma","length":1}}`),
+// 			Result:    HMA{wma: WMA{length: 1}},
+// 		},
+// 		"Successful creation of a macd indicator": {
+// 			ByteArray: []byte(`{"name":"macd",
+// 			"source1":{"name":"aroon","trend":"down","length":2},
+// 			"source2":{"name":"cci","source":{"name":"ema", "length":2}}}`),
+// 			Result: MACD{Aroon{trend: "down", length: 2},
+// 				CCI{EMA{length: 2}}},
+// 		},
+// 		"Successful creation of a roc indicator": {
+// 			ByteArray: []byte(`{"name":"roc","length":1}`),
+// 			Result:    ROC{length: 1},
+// 		},
+// 		"Successful creation of a rsi indicator": {
+// 			ByteArray: []byte(`{"name":"rsi","length":1}`),
+// 			Result:    RSI{length: 1},
+// 		},
+// 		"Successful creation of a sma indicator": {
+// 			ByteArray: []byte(`{"name":"sma","length":1}`),
+// 			Result:    SMA{length: 1},
+// 		},
+// 		"Successful creation of a stoch indicator": {
+// 			ByteArray: []byte(`{"name":"stoch","length":1}`),
+// 			Result:    Stoch{length: 1},
+// 		},
+// 		"Successful creation of an wma indicator": {
+// 			ByteArray: []byte(`{"name":"wma","length":1}`),
+// 			Result:    WMA{length: 1},
+// 		},
+// 		"JSON unmarshal returns an error": {
+// 			Error: assert.AnError,
+// 		},
+// 		"Invalid source name provided": {
+// 			ByteArray: []byte(`{"name":"aa"}`),
+// 			Error:     ErrInvalidSourceName,
+// 		},
+// 	}
 
-	for cn, c := range cc {
-		c := c
-		t.Run(cn, func(t *testing.T) {
-			t.Parallel()
+// 	for cn, c := range cc {
+// 		c := c
+// 		t.Run(cn, func(t *testing.T) {
+// 			t.Parallel()
 
-			res, err := fromJSON(c.ByteArray)
-			if c.Error != nil {
-				if c.Error == assert.AnError {
-					assert.NotNil(t, err)
-				} else {
-					assert.Equal(t, c.Error, err)
-				}
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result, res)
-			}
-		})
-	}
-}
+// 			res, err := fromJSON(c.ByteArray)
+// 			if c.Error != nil {
+// 				if c.Error == assert.AnError {
+// 					assert.NotNil(t, err)
+// 				} else {
+// 					assert.Equal(t, c.Error, err)
+// 				}
+// 			} else {
+// 				assert.Nil(t, err)
+// 				assert.Equal(t, c.Result, res)
+// 			}
+// 		})
+// 	}
+// }
