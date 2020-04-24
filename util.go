@@ -121,47 +121,47 @@ func fromJSON(d []byte) (Indicator, error) {
 	}
 
 	switch i.N {
-	case "aroon":
+	case NameAroon:
 		a := Aroon{}
 		err := json.Unmarshal(d, &a)
 		return a, err
-	case "cci":
+	case NameCCI:
 		c := CCI{}
 		err := json.Unmarshal(d, &c)
 		return c, err
-	case "dema":
+	case NameDEMA:
 		dm := DEMA{}
 		err := json.Unmarshal(d, &dm)
 		return dm, err
-	case "ema":
+	case NameEMA:
 		e := EMA{}
 		err := json.Unmarshal(d, &e)
 		return e, err
-	case "hma":
+	case NameHMA:
 		h := HMA{}
 		err := json.Unmarshal(d, &h)
 		return h, err
-	case "macd":
+	case NameMACD:
 		m := MACD{}
 		err := json.Unmarshal(d, &m)
 		return m, err
-	case "roc":
+	case NameROC:
 		r := ROC{}
 		err := json.Unmarshal(d, &r)
 		return r, err
-	case "rsi":
+	case NameRSI:
 		r := RSI{}
 		err := json.Unmarshal(d, &r)
 		return r, err
-	case "sma":
+	case NameSMA:
 		s := SMA{}
 		err := json.Unmarshal(d, &s)
 		return s, err
-	case "stoch":
+	case NameStoch:
 		s := Stoch{}
 		err := json.Unmarshal(d, &s)
 		return s, err
-	case "wma":
+	case NameWMA:
 		w := WMA{}
 		err := json.Unmarshal(d, &w)
 		return w, err

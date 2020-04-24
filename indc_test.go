@@ -17,7 +17,7 @@ func (im IndicatorMock) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 func (im IndicatorMock) Count() int { return 1 }
 
-func (im IndicatorMock) NamedMarshalJSON() ([]byte, error) { return nil, assert.AnError }
+func (im IndicatorMock) namedMarshalJSON() ([]byte, error) { return nil, assert.AnError }
 
 func TestAroonNew(t *testing.T) {
 	cc := map[string]struct {
@@ -214,7 +214,7 @@ func TestAroonNamedMarshal(t *testing.T) {
 	a := Aroon{trend: "down", length: 1}
 	r := []byte(`{"name":"aroon","trend":"down","length":1}`)
 
-	d, _ := a.NamedMarshalJSON()
+	d, _ := a.namedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
@@ -448,7 +448,7 @@ func TestCCINamedMarshal(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			d, err := c.CCI.NamedMarshalJSON()
+			d, err := c.CCI.namedMarshalJSON()
 			if c.Error != nil {
 				assert.NotNil(t, err)
 			} else {
@@ -620,7 +620,7 @@ func TestDEMANamedMarshal(t *testing.T) {
 	dm := DEMA{length: 1}
 	r := []byte(`{"name":"dema","length":1}`)
 
-	d, _ := dm.NamedMarshalJSON()
+	d, _ := dm.namedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
@@ -791,7 +791,7 @@ func TestEMANamedMarshal(t *testing.T) {
 	e := EMA{length: 1}
 	r := []byte(`{"name":"ema","length":1}`)
 
-	d, _ := e.NamedMarshalJSON()
+	d, _ := e.namedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
@@ -964,7 +964,7 @@ func TestHMANamedMarshal(t *testing.T) {
 	h := HMA{wma: WMA{length: 1}}
 	r := []byte(`{"name":"hma","wma":{"length":1}}`)
 
-	d, _ := h.NamedMarshalJSON()
+	d, _ := h.namedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
@@ -1244,7 +1244,7 @@ func TestMACDNamedMarshal(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			d, err := c.MACD.NamedMarshalJSON()
+			d, err := c.MACD.namedMarshalJSON()
 			if c.Error != nil {
 				assert.NotNil(t, err)
 			} else {
@@ -1415,7 +1415,7 @@ func TestROCNamedMarshal(t *testing.T) {
 	rc := ROC{length: 1}
 	r := []byte(`{"name":"roc","length":1}`)
 
-	d, _ := rc.NamedMarshalJSON()
+	d, _ := rc.namedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
@@ -1591,7 +1591,7 @@ func TestRSINamedMarshal(t *testing.T) {
 	rs := RSI{length: 1}
 	r := []byte(`{"name":"rsi","length":1}`)
 
-	d, _ := rs.NamedMarshalJSON()
+	d, _ := rs.namedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
@@ -1754,7 +1754,7 @@ func TestSMANamedMarshal(t *testing.T) {
 	s := SMA{length: 1}
 	r := []byte(`{"name":"sma","length":1}`)
 
-	d, _ := s.NamedMarshalJSON()
+	d, _ := s.namedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
@@ -1928,7 +1928,7 @@ func TestStochNamedMarshal(t *testing.T) {
 	s := Stoch{length: 1}
 	r := []byte(`{"name":"stoch","length":1}`)
 
-	d, _ := s.NamedMarshalJSON()
+	d, _ := s.namedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
@@ -2094,7 +2094,7 @@ func TestWMANamedMarshal(t *testing.T) {
 	w := WMA{length: 1}
 	r := []byte(`{"name":"wma","length":1}`)
 
-	d, _ := w.NamedMarshalJSON()
+	d, _ := w.namedMarshalJSON()
 
 	assert.Equal(t, r, d)
 }
