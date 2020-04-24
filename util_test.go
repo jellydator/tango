@@ -9,29 +9,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCleanString(t *testing.T) {
+func Test_CleanString(t *testing.T) {
 	var e String
 	e = "aroon"
 	r := CleanString(" aRooN ")
 	assert.Equal(t, e, r)
 }
-func TestResize(t *testing.T) {
+func Test_resize(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Data   []decimal.Decimal
 		Result []decimal.Decimal
 		Error  error
 	}{
-		"Successfully resize threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+		"Successfully resize returned an ErrInvalidDataSize with insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
-		"Successfully resize threw an ErrInvalidLength when provided length was invalid": {
-			Length: -3,
-			Error:  ErrInvalidLength,
+		"Successfully resize returned unchanged list with length less than 1": {
+			Length: 0,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Result: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
 		},
 		"Successful resize computation": {
 			Length: 3,
@@ -73,23 +78,28 @@ func TestResize(t *testing.T) {
 	}
 }
 
-func TestResizeCandles(t *testing.T) {
+func Test_resizeCandles(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Data   []chartype.Candle
 		Result []chartype.Candle
 		Error  error
 	}{
-		"Successfully resizeCandles threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+		"Successfully resizeCandles returned an ErrInvalidDataSize with insufficient amount of data points": {
 			Length: 3,
 			Data: []chartype.Candle{
 				{Close: decimal.NewFromInt(30)},
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
-		"Successfully resizeCandles threw an ErrInvalidLength when provided length was invalid": {
-			Length: -3,
-			Error:  ErrInvalidLength,
+		"Successfully resizeCandles returned unchanged list with length less than 1": {
+			Length: 0,
+			Data: []chartype.Candle{
+				{Close: decimal.NewFromInt(30)},
+			},
+			Result: []chartype.Candle{
+				{Close: decimal.NewFromInt(30)},
+			},
 		},
 		"Successful resizeCandles computation": {
 			Length: 3,
@@ -131,7 +141,7 @@ func TestResizeCandles(t *testing.T) {
 	}
 }
 
-func TestTypicalPrice(t *testing.T) {
+func Test_typicalPrice(t *testing.T) {
 	cc := map[string]struct {
 		Data   []chartype.Candle
 		Result []decimal.Decimal
@@ -164,7 +174,7 @@ func TestTypicalPrice(t *testing.T) {
 	}
 }
 
-func TestMeanDeviation(t *testing.T) {
+func Test_meanDeviation(t *testing.T) {
 	cc := map[string]struct {
 		Data   []decimal.Decimal
 		Result decimal.Decimal
@@ -194,7 +204,7 @@ func TestMeanDeviation(t *testing.T) {
 	}
 }
 
-func TestFromJSON(t *testing.T) {
+func Test_fromJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    Indicator
@@ -248,13 +258,13 @@ func TestFromJSON(t *testing.T) {
 			ByteArray: []byte(`{"name":"wma","length":1}`),
 			Result:    WMA{length: 1},
 		},
-		"Successfully fromJSON JSON unmarshal threw an error": {
+		"Successfully fromJSON JSON unmarshal returned an error": {
 			ByteArray: []byte(`{\"_"/`),
 			Error:     assert.AnError,
 		},
-		"Successfully fromJSON threw an ErrInvalidDataPointCount with invalid source name": {
+		"Successfully fromJSON returned an ErrInvalidDataPointCount with invalid source name": {
 			ByteArray: []byte(`{"name":"aa"}`),
-			Error:     ErrInvalidSourceName,
+			Error:     ErrInvalidSource,
 		},
 	}
 

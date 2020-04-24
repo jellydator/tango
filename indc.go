@@ -2,6 +2,7 @@ package indc
 
 import (
 	"encoding/json"
+	"errors"
 	"math"
 
 	"github.com/shopspring/decimal"
@@ -33,7 +34,7 @@ type Aroon struct {
 	length int
 }
 
-// NewAroon verifies provided values and
+// NewAroon verifies provided parameters and
 // creates aroon indicator.
 func NewAroon(trend String, length int) (Aroon, error) {
 	a := Aroon{trend: trend, length: length}
@@ -45,11 +46,11 @@ func NewAroon(trend String, length int) (Aroon, error) {
 	return a, nil
 }
 
-// validate checks all Aroon settings stored in func receiver to
+// validate checks all Aroon parameters stored in func receiver to
 // make sure that they're matching their requirements.
 func (a Aroon) validate() error {
 	if a.trend != "down" && a.trend != "up" {
-		return ErrInvalidType
+		return errors.New("invalid trend")
 	}
 
 	if a.length < 1 {
@@ -59,7 +60,7 @@ func (a Aroon) validate() error {
 	return nil
 }
 
-// Calc calculates Aroon value by using settings stored in the func receiver.
+// Calc calculates Aroon by using parameters stored in the func receiver.
 func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, a.Count())
 	if err != nil {
@@ -86,7 +87,7 @@ func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 }
 
 // Count determines the total amount of data points needed for Aroon
-// calculation by using settings stored in the receiver.
+// calculation by using parameters stored in the receiver.
 func (a Aroon) Count() int {
 	return a.length
 }
@@ -138,11 +139,11 @@ func (a Aroon) namedMarshalJSON() ([]byte, error) {
 // CCI holds all the neccesary information needed to calculate commodity
 // channel index.
 type CCI struct {
-	// source configures what calculations to use when computing CCI value.
+	// source configures what calculations to use when computing CCI.
 	source Indicator
 }
 
-// NewCCI verifies provided values and
+// NewCCI verifies provided parameters and
 // creates commodity channel index indicator.
 func NewCCI(source Indicator) (CCI, error) {
 	c := CCI{source: source}
@@ -154,17 +155,17 @@ func NewCCI(source Indicator) (CCI, error) {
 	return c, nil
 }
 
-// validate checks all CCI settings stored in func receiver to make sure that
+// validate checks all CCI parameters stored in func receiver to make sure that
 // they're matching their requirements.
 func (c CCI) validate() error {
 	if c.source == nil {
-		return ErrSourceNotSet
+		return ErrInvalidSource
 	}
 
 	return nil
 }
 
-// Calc calculates CCI value by using settings stored in the func receiver.
+// Calc calculates CCI by using parameters stored in the func receiver.
 func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, c.Count())
 	if err != nil {
@@ -181,7 +182,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 }
 
 // Count determines the total amount of data points needed for CCI
-// calculation by using settings stored in the receiver.
+// calculation by using parameters stored in the receiver.
 func (c CCI) Count() int {
 	return c.source.Count()
 }
@@ -244,7 +245,7 @@ type DEMA struct {
 	length int
 }
 
-// NewDEMA verifies provided values and
+// NewDEMA verifies provided parameters and
 // creates double exponential moving average indicator.
 func NewDEMA(length int) (DEMA, error) {
 	d := DEMA{length: length}
@@ -256,7 +257,7 @@ func NewDEMA(length int) (DEMA, error) {
 	return d, nil
 }
 
-// Validate checks all DEMA settings stored in func receiver to
+// Validate checks all DEMA parameters stored in func receiver to
 // make sure that they're matching their requirements.
 func (dm DEMA) validate() error {
 	if dm.length < 1 {
@@ -265,7 +266,7 @@ func (dm DEMA) validate() error {
 	return nil
 }
 
-// Calc calculates DEMA value by using settings stored in the func receiver.
+// Calc calculates DEMA by using parameters stored in the func receiver.
 func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, dm.Count())
 	if err != nil {
@@ -293,7 +294,7 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 }
 
 // Count determines the total amount of data points needed for DEMA
-// calculation by using settings stored in the receiver.
+// calculation by using parameters stored in the receiver.
 func (dm DEMA) Count() int {
 	return dm.length*2 - 1
 }
@@ -345,7 +346,7 @@ type EMA struct {
 	length int
 }
 
-// NewEMA verifies provided values and
+// NewEMA verifies provided parameters and
 // creates exponential moving average indicator.
 func NewEMA(length int) (EMA, error) {
 	e := EMA{length: length}
@@ -357,7 +358,7 @@ func NewEMA(length int) (EMA, error) {
 	return e, nil
 }
 
-// Validate checks all EMA settings stored in func receiver to make sure that
+// Validate checks all EMA parameters stored in func receiver to make sure that
 // they're matching their requirements.
 func (e EMA) validate() error {
 	if e.length < 1 {
@@ -366,7 +367,7 @@ func (e EMA) validate() error {
 	return nil
 }
 
-// Calc calculates EMA value by using settings stored in the func receiver.
+// Calc calculates EMA by using parameters stored in the func receiver.
 func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, e.Count())
 	if err != nil {
@@ -383,20 +384,20 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return r, nil
 }
 
-// CalcNext calculates sequential EMA value by using previous ema.
+// CalcNext calculates sequential EMA by using previous ema.
 func (e EMA) CalcNext(l, n decimal.Decimal) decimal.Decimal {
 	m := e.multiplier()
 	return n.Mul(m).Add(l.Mul(decimal.NewFromInt(1).Sub(m)))
 }
 
-// multiplier calculates EMA multiplier value by using settings stored
+// multiplier calculates EMA multiplier by using parameters stored
 // in the func receiver.
 func (e EMA) multiplier() decimal.Decimal {
 	return decimal.NewFromFloat(2.0 / float64(e.length+1))
 }
 
 // Count determines the total amount of data points needed for EMA
-// calculation by using settings stored in the receiver.
+// calculation by using parameters stored in the receiver.
 func (e EMA) Count() int {
 	return e.length*2 - 1
 }
@@ -447,7 +448,7 @@ type HMA struct {
 	wma WMA
 }
 
-// NewHMA verifies provided values and
+// NewHMA verifies provided parameters and
 // creates hull moving average indicator.
 func NewHMA(w WMA) (HMA, error) {
 	h := HMA{wma: w}
@@ -459,11 +460,11 @@ func NewHMA(w WMA) (HMA, error) {
 	return h, nil
 }
 
-// validate checks all HMA settings stored in func receiver to make sure that
+// validate checks all HMA parameters stored in func receiver to make sure that
 // they're matching their requirements.
 func (h HMA) validate() error {
 	if h.wma == (WMA{}) {
-		return ErrMANotSet
+		return errors.New("invalid wma")
 	}
 
 	if h.wma.length < 1 {
@@ -473,7 +474,7 @@ func (h HMA) validate() error {
 	return nil
 }
 
-// Calc calculates HMA value by using settings stored in the func receiver.
+// Calc calculates HMA by using parameters stored in the func receiver.
 func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, h.Count())
 	if err != nil {
@@ -502,7 +503,7 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 }
 
 // Count determines the total amount of data points needed for HMA
-// calculation by using settings stored in the receiver.
+// calculation by using parameters stored in the receiver.
 func (h HMA) Count() int {
 	return h.wma.Count()*2 - 1
 }
@@ -553,15 +554,15 @@ func (h HMA) namedMarshalJSON() ([]byte, error) {
 // difference between two source indicators.
 type MACD struct {
 	// source1 configures what calculations to use when computing first
-	// macd value.
+	// macd.
 	source1 Indicator
 
 	// source2 configures what calculations to use when computing second
-	// macd value.
+	// macd.
 	source2 Indicator
 }
 
-// NewMACD verifies provided values and
+// NewMACD verifies provided parameters and
 // creates MACD indicator.
 func NewMACD(source1, source2 Indicator) (MACD, error) {
 	m := MACD{source1: source1, source2: source2}
@@ -573,17 +574,17 @@ func NewMACD(source1, source2 Indicator) (MACD, error) {
 	return m, nil
 }
 
-// validate checks all MACD settings stored in func receiver
+// validate checks all MACD parameters stored in func receiver
 // to make sure that they're matching their requirements.
 func (m MACD) validate() error {
 	if m.source1 == nil || m.source2 == nil {
-		return ErrSourceNotSet
+		return ErrInvalidSource
 	}
 
 	return nil
 }
 
-// Calc calculates MACD value by using settings stored in the func receiver.
+// Calc calculates MACD by using parameters stored in the func receiver.
 func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, m.Count())
 	if err != nil {
@@ -606,7 +607,7 @@ func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 }
 
 // Count determines the total amount of data points needed for MACD
-// calculation by using settings stored in the receiver.
+// calculation by using parameters stored in the receiver.
 func (m MACD) Count() int {
 	c1 := m.source1.Count()
 	c2 := m.source2.Count()
@@ -697,7 +698,7 @@ type ROC struct {
 	length int
 }
 
-// NewROC verifies provided values and
+// NewROC verifies provided parameters and
 // creates rate of change indicator.
 func NewROC(length int) (ROC, error) {
 	r := ROC{length: length}
@@ -709,7 +710,7 @@ func NewROC(length int) (ROC, error) {
 	return r, nil
 }
 
-// Validate checks all ROC settings stored in func receiver to make sure that
+// Validate checks all ROC parameters stored in func receiver to make sure that
 // they're matching their requirements.
 func (r ROC) validate() error {
 	if r.length < 1 {
@@ -718,7 +719,7 @@ func (r ROC) validate() error {
 	return nil
 }
 
-// Calc calculates ROC value by using settings stored in the func receiver.
+// Calc calculates ROC by using parameters stored in the func receiver.
 func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, r.Count())
 	if err != nil {
@@ -732,7 +733,7 @@ func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 }
 
 // Count determines the total amount of data points needed for ROC
-// calculation by using settings stored in the receiver.
+// calculation by using parameters stored in the receiver.
 func (r ROC) Count() int {
 	return r.length
 }
@@ -784,7 +785,7 @@ type RSI struct {
 	length int
 }
 
-// NewRSI verifies provided values and
+// NewRSI verifies provided parameters and
 // creates relative strength index indicator.
 func NewRSI(length int) (RSI, error) {
 	r := RSI{length: length}
@@ -796,7 +797,7 @@ func NewRSI(length int) (RSI, error) {
 	return r, nil
 }
 
-// Validate checks all RSI settings stored in func receiver to make sure that
+// Validate checks all RSI parameters stored in func receiver to make sure that
 // they're matching their requirements.
 func (r RSI) validate() error {
 	if r.length < 1 {
@@ -805,7 +806,7 @@ func (r RSI) validate() error {
 	return nil
 }
 
-// Calc calculates RSI value by using settings stored in the func receiver.
+// Calc calculates RSI by using parameters stored in the func receiver.
 func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, r.Count())
 	if err != nil {
@@ -831,7 +832,7 @@ func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 }
 
 // Count determines the total amount of data points needed for RSI
-// calculation by using settings stored in the receiver.
+// calculation by using parameters stored in the receiver.
 func (r RSI) Count() int {
 	return r.length
 }
@@ -883,7 +884,7 @@ type SMA struct {
 	length int
 }
 
-// NewSMA verifies provided values and
+// NewSMA verifies provided parameters and
 // creates simple moving average indicator.
 func NewSMA(length int) (SMA, error) {
 	s := SMA{length: length}
@@ -895,7 +896,7 @@ func NewSMA(length int) (SMA, error) {
 	return s, nil
 }
 
-// validate checks all SMA settings stored in func receiver to make sure that
+// validate checks all SMA parameters stored in func receiver to make sure that
 // they're matching their requirements.
 func (s SMA) validate() error {
 	if s.length < 1 {
@@ -904,7 +905,7 @@ func (s SMA) validate() error {
 	return nil
 }
 
-// Calc calculates SMA value by using settings stored in the func receiver.
+// Calc calculates SMA by using parameters stored in the func receiver.
 func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, s.Count())
 	if err != nil {
@@ -921,7 +922,7 @@ func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 }
 
 // Count determines the total amount of data points needed for SMA
-// calculation by using settings stored in the receiver.
+// calculation by using parameters stored in the receiver.
 func (s SMA) Count() int {
 	return s.length
 }
@@ -973,7 +974,7 @@ type Stoch struct {
 	length int
 }
 
-// NewStoch verifies provided values and
+// NewStoch verifies provided parameters and
 // creates stochastic indicator.
 func NewStoch(length int) (Stoch, error) {
 	s := Stoch{length: length}
@@ -985,7 +986,7 @@ func NewStoch(length int) (Stoch, error) {
 	return s, nil
 }
 
-// Validate checks all stochastic settings stored in func receiver to make
+// Validate checks all stochastic parameters stored in func receiver to make
 // sure that they're matching their requirements.
 func (s Stoch) validate() error {
 	if s.length < 1 {
@@ -994,7 +995,7 @@ func (s Stoch) validate() error {
 	return nil
 }
 
-// Calc calculates stochastic value by using settings stored in
+// Calc calculates stochastic by using parameters stored in
 // the func receiver.
 func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, s.Count())
@@ -1018,7 +1019,7 @@ func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 }
 
 // Count determines the total amount of data points needed for stochastic
-// calculation by using settings stored in the receiver.
+// calculation by using parameters stored in the receiver.
 func (s Stoch) Count() int {
 	return s.length
 }
@@ -1070,7 +1071,7 @@ type WMA struct {
 	length int
 }
 
-// NewWMA verifies provided values and
+// NewWMA verifies provided parameters and
 // creates weighted moving average indicator.
 func NewWMA(length int) (WMA, error) {
 	w := WMA{length: length}
@@ -1082,7 +1083,7 @@ func NewWMA(length int) (WMA, error) {
 	return w, nil
 }
 
-// Validate checks all WMA settings stored in func receiver to make sure that
+// Validate checks all WMA parameters stored in func receiver to make sure that
 // they're matching their requirements.
 func (w WMA) validate() error {
 	if w.length < 1 {
@@ -1091,7 +1092,7 @@ func (w WMA) validate() error {
 	return nil
 }
 
-// Calc calculates WMA value by using settings stored in the func receiver.
+// Calc calculates WMA by using parameters stored in the func receiver.
 func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	dd, err := resize(dd, w.Count())
 	if err != nil {
@@ -1110,7 +1111,7 @@ func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 }
 
 // Count determines the total amount of data points needed for WMA
-// calculation by using settings stored in the receiver.
+// calculation by using parameters stored in the receiver.
 func (w WMA) Count() int {
 	return w.length
 }
@@ -1156,7 +1157,6 @@ func (w WMA) namedMarshalJSON() ([]byte, error) {
 
 // Indicator is an interface that every indicator should implement.
 type Indicator interface {
-
 	// Calc should calculate and return indicator's value.
 	Calc(dd []decimal.Decimal) (decimal.Decimal, error)
 

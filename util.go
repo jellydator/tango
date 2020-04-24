@@ -10,30 +10,19 @@ import (
 )
 
 var (
-	// ErrInvalidDataPointCount is returned when insufficient amount of
-	// data points is provided.
-	ErrInvalidDataPointCount = errors.New("insufficient amount of data points")
+	// ErrInvalidLength is returned when incorrect length is provided.
+	ErrInvalidLength = errors.New("invalid length")
 
-	// ErrInvalidLength is returned when provided length is less than 1.
-	ErrInvalidLength = errors.New("length cannot be less than 1")
+	// ErrInvalidDataSize is returned when incorrect data size is provided.
+	ErrInvalidDataSize = errors.New("invalid data size")
 
-	// ErrSourceNotSet is returned when source indicator field is nil.
-	ErrSourceNotSet = errors.New("source indicator is not set")
-
-	// ErrInvalidSourceName is returned when provided indicator name
-	// isn't recognized.
-	ErrInvalidSourceName = errors.New("unrecognized source indicator name")
-
-	// ErrMANotSet is returned when indicator field is nil.
-	ErrMANotSet = errors.New("ma value not set")
-
-	// ErrInvalidType is returned when indicator type doesn't match any
-	// of the available types.
-	ErrInvalidType = errors.New("invalid indicator type")
+	// ErrInvalidSource is returned when source doesn't match any
+	// of the available sources.
+	ErrInvalidSource = errors.New("invalid source")
 )
 
 // String is a custom string that helps prevent capitalization issues by
-// lowercasing its values.
+// lowercasing provided string.
 type String string
 
 // CleanString returns a properly formatted string.
@@ -56,11 +45,11 @@ func (s String) MarshalText() ([]byte, error) {
 // calculations.
 func resize(dd []decimal.Decimal, lh int) ([]decimal.Decimal, error) {
 	if lh < 1 {
-		return nil, ErrInvalidLength
+		return dd, nil
 	}
 
 	if lh > len(dd) {
-		return nil, ErrInvalidDataPointCount
+		return nil, ErrInvalidDataSize
 	}
 
 	return dd[len(dd)-lh:], nil
@@ -70,11 +59,11 @@ func resize(dd []decimal.Decimal, lh int) ([]decimal.Decimal, error) {
 // calculations.
 func resizeCandles(cc []chartype.Candle, lh int) ([]chartype.Candle, error) {
 	if lh < 1 {
-		return nil, ErrInvalidLength
+		return cc, nil
 	}
 
-	if lh > len(cc) || lh < 1 {
-		return nil, ErrInvalidDataPointCount
+	if lh > len(cc) {
+		return nil, ErrInvalidDataSize
 	}
 
 	return cc[len(cc)-lh:], nil
@@ -109,8 +98,7 @@ func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	return rez.Div(decimal.NewFromInt(int64(len(dd)))).Round(8)
 }
 
-// fromJSON finds an indicator based on its name and returns it as Interface
-// with its values.
+// fromJSON finds a source indicator based on its name and returns it.
 func fromJSON(d []byte) (Indicator, error) {
 	var i struct {
 		N String `json:"name"`
@@ -167,5 +155,5 @@ func fromJSON(d []byte) (Indicator, error) {
 		return w, err
 	}
 
-	return nil, ErrInvalidSourceName
+	return nil, ErrInvalidSource
 }
