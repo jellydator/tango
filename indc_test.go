@@ -19,14 +19,14 @@ func (im IndicatorMock) Count() int { return 1 }
 
 func (im IndicatorMock) namedMarshalJSON() ([]byte, error) { return nil, assert.AnError }
 
-func TestAroonNew(t *testing.T) {
+func Test_NewAroon(t *testing.T) {
 	cc := map[string]struct {
 		Trend  String
 		Length int
 		Result Aroon
 		Error  error
 	}{
-		"Successfully Aroon creation threw an error when no values were provided": {
+		"Successfully Aroon creation returned an error when no parameters were provided": {
 			Error: assert.AnError,
 		},
 		"Successful creation of Aroon": {
@@ -52,27 +52,27 @@ func TestAroonNew(t *testing.T) {
 	}
 }
 
-func TestAroonValidation(t *testing.T) {
+func TestAroon_validate(t *testing.T) {
 	cc := map[string]struct {
 		Trend  String
 		Length int
 		Error  error
 	}{
-		"Successfully Aroon threw an ErrInvalidType with incorrect trend": {
+		"Successfully Aroon returned an ErrInvalidType with incorrect trend": {
 			Trend:  "downn",
 			Length: 5,
-			Error:  ErrInvalidType,
+			Error:  assert.AnError,
 		},
-		"Successfully Aroon threw an ErrInvalidLength with less than 1 length": {
+		"Successfully Aroon returned an ErrInvalidLength with less than 1 length": {
 			Trend:  "down",
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
-		"Successful Aroon validation of trend parameter with 'up' value": {
+		"Successful Aroon validation of trend parameter with 'up' trend": {
 			Trend:  "up",
 			Length: 5,
 		},
-		"Successful Aroon validation of trend parameter with 'down' value": {
+		"Successful Aroon validation of trend parameter with 'down' trend": {
 			Trend:  "down",
 			Length: 5,
 		},
@@ -86,7 +86,11 @@ func TestAroonValidation(t *testing.T) {
 			a := Aroon{trend: c.Trend, length: c.Length}
 			err := a.validate()
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
 			} else {
 				assert.Nil(t, err)
 			}
@@ -94,7 +98,7 @@ func TestAroonValidation(t *testing.T) {
 	}
 }
 
-func TestAroonCalc(t *testing.T) {
+func TestAroon_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Trend  String
 		Length int
@@ -102,13 +106,13 @@ func TestAroonCalc(t *testing.T) {
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully Aroon threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+		"Successfully Aroon returned an ErrInvalidDataSize with insufficient amount of data points": {
 			Trend:  "down",
 			Length: 5,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
 		"Successful Aroon calculation with trend parameter set to 'up'": {
 			Trend:  "up",
@@ -155,22 +159,22 @@ func TestAroonCalc(t *testing.T) {
 	}
 }
 
-func TestAroonCount(t *testing.T) {
+func TestAroon_Count(t *testing.T) {
 	a := Aroon{trend: "down", length: 5}
 	assert.Equal(t, 5, a.Count())
 }
 
-func TestAroonUnmarshal(t *testing.T) {
+func TestAroon_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    Aroon
 		Error     error
 	}{
-		"Successfully Aroon unmarshal threw an error": {
+		"Successfully Aroon unmarshal returned an error": {
 			ByteArray: []byte(`{\"_"/`),
 			Error:     assert.AnError,
 		},
-		"Successfully Aroon validate threw an error": {
+		"Successfully Aroon validate returned an error": {
 			ByteArray: []byte(`{"trend":"upp","length":1}`),
 			Error:     assert.AnError,
 		},
@@ -201,7 +205,7 @@ func TestAroonUnmarshal(t *testing.T) {
 	}
 }
 
-func TestAroonMarshal(t *testing.T) {
+func TestAroon_MarshalJSON(t *testing.T) {
 	a := Aroon{trend: "down", length: 1}
 	r := []byte(`{"trend":"down","length":1}`)
 
@@ -210,7 +214,7 @@ func TestAroonMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestAroonNamedMarshal(t *testing.T) {
+func TestAroon_namedMarshalJSON(t *testing.T) {
 	a := Aroon{trend: "down", length: 1}
 	r := []byte(`{"name":"aroon","trend":"down","length":1}`)
 
@@ -219,13 +223,13 @@ func TestAroonNamedMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestCCINew(t *testing.T) {
+func Test_NewCCI(t *testing.T) {
 	cc := map[string]struct {
 		Source Indicator
 		Result CCI
 		Error  error
 	}{
-		"Successfully CCI creation threw an error when no values were provided": {
+		"Successfully CCI creation returned an error when no parameters were provided": {
 			Error: assert.AnError,
 		},
 		"Successful creation of CCI": {
@@ -250,13 +254,13 @@ func TestCCINew(t *testing.T) {
 	}
 }
 
-func TestCCIValidation(t *testing.T) {
+func TestCCI_validate(t *testing.T) {
 	cc := map[string]struct {
 		Source Indicator
 		Error  error
 	}{
-		"Successfully CCI threw an error when source wasn't provided": {
-			Error: ErrSourceNotSet,
+		"Successfully CCI returned an error when invalid source was provided": {
+			Error: ErrInvalidSource,
 		},
 		"Successful CCI validation": {
 			Source: Aroon{trend: "down", length: 1},
@@ -283,21 +287,21 @@ func TestCCIValidation(t *testing.T) {
 	}
 }
 
-func TestCCICalc(t *testing.T) {
+func TestCCI_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Source Indicator
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully CCI threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+		"Successfully CCI returned an ErrInvalidDataSize with insufficient amount of data points": {
 			Source: EMA{length: 10},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
-		"Successfully CCI source threw an error": {
+		"Successfully CCI source returned an error": {
 			Source: IndicatorMock{},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
@@ -353,22 +357,22 @@ func TestCCICalc(t *testing.T) {
 	}
 }
 
-func TestCCICount(t *testing.T) {
+func TestCCI_Count(t *testing.T) {
 	c := CCI{source: Aroon{trend: "down", length: 10}}
 	assert.Equal(t, c.source.Count(), c.Count())
 }
 
-func TestCCIUnmarshal(t *testing.T) {
+func TestCCI_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    CCI
 		Error     error
 	}{
-		"Successfully CCI unmarshal threw an error": {
+		"Successfully CCI unmarshal returned an error": {
 			ByteArray: []byte(`{\-_-/}`),
 			Error:     assert.AnError,
 		},
-		"Successfully CCI fromJSON threw an error": {
+		"Successfully CCI fromJSON returned an error": {
 			ByteArray: []byte(`{"trend":"up"}`),
 			Error:     assert.AnError,
 		},
@@ -395,13 +399,13 @@ func TestCCIUnmarshal(t *testing.T) {
 	}
 }
 
-func TestCCIMarshal(t *testing.T) {
+func TestCCI_MarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		CCI    CCI
 		Result []byte
 		Error  error
 	}{
-		"Successfully CCI source marshal threw an error": {
+		"Successfully CCI source marshal returned an error": {
 			CCI:   CCI{source: IndicatorMock{}},
 			Error: assert.AnError,
 		},
@@ -427,13 +431,13 @@ func TestCCIMarshal(t *testing.T) {
 	}
 }
 
-func TestCCINamedMarshal(t *testing.T) {
+func TestCCI_namedMarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		CCI    CCI
 		Result []byte
 		Error  error
 	}{
-		"Successfully CCI source marshal threw an error": {
+		"Successfully CCI source marshal returned an error": {
 			CCI:   CCI{source: IndicatorMock{}},
 			Error: assert.AnError,
 		},
@@ -459,13 +463,13 @@ func TestCCINamedMarshal(t *testing.T) {
 	}
 }
 
-func TestDEMANew(t *testing.T) {
+func Test_NewDEMA(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Result DEMA
 		Error  error
 	}{
-		"Successfully DEMA threw an error when no values were provided": {
+		"Successfully DEMA returned an error when no parameters were provided": {
 			Error: assert.AnError,
 		},
 		"Successful creation of DEMA": {
@@ -490,12 +494,12 @@ func TestDEMANew(t *testing.T) {
 	}
 }
 
-func TestDEMAValidation(t *testing.T) {
+func TestDEMA_validate(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Error  error
 	}{
-		"Successfully DEMA threw an ErrInvalidLength with less than 1 length": {
+		"Successfully DEMA returned an ErrInvalidLength with less than 1 length": {
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
@@ -520,19 +524,19 @@ func TestDEMAValidation(t *testing.T) {
 	}
 }
 
-func TestDEMACalc(t *testing.T) {
+func TestDEMA_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully DEMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+		"Successfully DEMA returned an ErrInvalidDataSize with insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
 		"Successful DEMA calculation": {
 			Length: 2,
@@ -565,22 +569,22 @@ func TestDEMACalc(t *testing.T) {
 	}
 }
 
-func TestDEMACount(t *testing.T) {
+func TestDEMA_Count(t *testing.T) {
 	d := DEMA{length: 15}
 	assert.Equal(t, 29, d.Count())
 }
 
-func TestDEMAUnmarshal(t *testing.T) {
+func TestDEMA_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    DEMA
 		Error     error
 	}{
-		"Successfully DEMA unmarshal threw an error": {
+		"Successfully DEMA unmarshal returned an error": {
 			ByteArray: []byte(`{\"_"/`),
 			Error:     assert.AnError,
 		},
-		"Successfully DEMA validate threw an error": {
+		"Successfully DEMA validate returned an error": {
 			ByteArray: []byte(`{"length":0}`),
 			Error:     assert.AnError,
 		},
@@ -607,7 +611,7 @@ func TestDEMAUnmarshal(t *testing.T) {
 	}
 }
 
-func TestDEMAMarshal(t *testing.T) {
+func TestDEMA_MarshalJSON(t *testing.T) {
 	dm := DEMA{length: 1}
 	r := []byte(`{"length":1}`)
 
@@ -616,7 +620,7 @@ func TestDEMAMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestDEMANamedMarshal(t *testing.T) {
+func TestDEMA_namedMarshalJSON(t *testing.T) {
 	dm := DEMA{length: 1}
 	r := []byte(`{"name":"dema","length":1}`)
 
@@ -625,13 +629,13 @@ func TestDEMANamedMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestEMANew(t *testing.T) {
+func Test_NewEMA(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Result EMA
 		Error  error
 	}{
-		"Successfully EMA creation threw an error when no values were provided": {
+		"Successfully EMA creation returned an error when no parameters were provided": {
 			Error: assert.AnError,
 		},
 		"Successful creation of EMA": {
@@ -656,12 +660,12 @@ func TestEMANew(t *testing.T) {
 	}
 }
 
-func TestEMAValidation(t *testing.T) {
+func TestEMA_validate(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Error  error
 	}{
-		"Successfully EMA threw an ErrInvalidLength with less than 1 length": {
+		"Successfully EMA returned an ErrInvalidLength with less than 1 length": {
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
@@ -686,19 +690,19 @@ func TestEMAValidation(t *testing.T) {
 	}
 }
 
-func TestEMACalc(t *testing.T) {
+func TestEMA_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully EMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+		"Successfully EMA returned an ErrInvalidDataSize with insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
 		"Successful EMA calculation": {
 			Length: 2,
@@ -731,27 +735,27 @@ func TestEMACalc(t *testing.T) {
 	}
 }
 
-func TestEMACount(t *testing.T) {
+func TestEMA_Count(t *testing.T) {
 	e := EMA{length: 15}
 	assert.Equal(t, 29, e.Count())
 }
 
-func TestEMAMultiplier(t *testing.T) {
+func TestEMA_multiplier(t *testing.T) {
 	e := EMA{length: 3}
 	assert.Equal(t, decimal.NewFromFloat(0.5), e.multiplier())
 }
 
-func TestEMAUnmarshal(t *testing.T) {
+func TestEMA_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    EMA
 		Error     error
 	}{
-		"Successfully EMA unmarshal threw an error": {
+		"Successfully EMA unmarshal returned an error": {
 			ByteArray: []byte(`{\"_"/`),
 			Error:     assert.AnError,
 		},
-		"Successfully EMA validate threw an error": {
+		"Successfully EMA validate returned an error": {
 			ByteArray: []byte(`{"length":0}`),
 			Error:     assert.AnError,
 		},
@@ -778,7 +782,7 @@ func TestEMAUnmarshal(t *testing.T) {
 	}
 }
 
-func TestEMAMarshal(t *testing.T) {
+func TestEMA_MarshalJSON(t *testing.T) {
 	e := EMA{length: 1}
 	r := []byte(`{"length":1}`)
 
@@ -787,7 +791,7 @@ func TestEMAMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestEMANamedMarshal(t *testing.T) {
+func TestEMA_namedMarshalJSON(t *testing.T) {
 	e := EMA{length: 1}
 	r := []byte(`{"name":"ema","length":1}`)
 
@@ -796,13 +800,13 @@ func TestEMANamedMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestHMANew(t *testing.T) {
+func Test_NewHMA(t *testing.T) {
 	cc := map[string]struct {
 		WMA    WMA
 		Result HMA
 		Error  error
 	}{
-		"Successfully HMA threw an error when no values were provided": {
+		"Successfully HMA returned an error when no parameters were provided": {
 			Error: assert.AnError,
 		},
 		"Successful HMA creation": {
@@ -827,17 +831,17 @@ func TestHMANew(t *testing.T) {
 	}
 }
 
-func TestHMAValidation(t *testing.T) {
+func TestHMA_validate(t *testing.T) {
 	cc := map[string]struct {
 		WMA   WMA
 		Error error
 	}{
-		"Successfully HMA wma threw an error": {
+		"Successfully HMA wma returned an error": {
 			WMA:   WMA{length: -1},
 			Error: assert.AnError,
 		},
-		"Successfully HMA threw an ErrMANotSet when WMA wasn't set": {
-			Error: ErrMANotSet,
+		"Successfully HMA returned an error when WMA wasn't set": {
+			Error: assert.AnError,
 		},
 		"Successful HMA validation": {
 			WMA: WMA{length: 1},
@@ -852,11 +856,7 @@ func TestHMAValidation(t *testing.T) {
 			h := HMA{wma: c.WMA}
 			err := h.validate()
 			if c.Error != nil {
-				if c.Error == assert.AnError {
-					assert.NotNil(t, err)
-				} else {
-					assert.Equal(t, c.Error, err)
-				}
+				assert.NotNil(t, err)
 			} else {
 				assert.Nil(t, err)
 			}
@@ -864,19 +864,19 @@ func TestHMAValidation(t *testing.T) {
 	}
 }
 
-func TestHMACalc(t *testing.T) {
+func TestHMA_Calc(t *testing.T) {
 	cc := map[string]struct {
 		WMA    WMA
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully HMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+		"Successfully HMA returned an ErrInvalidDataSize with insufficient amount of data points": {
 			WMA: WMA{length: 5},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
 		"Successful HMA calculation": {
 			WMA: WMA{length: 3},
@@ -909,22 +909,22 @@ func TestHMACalc(t *testing.T) {
 	}
 }
 
-func TestHMACount(t *testing.T) {
+func TestHMA_Count(t *testing.T) {
 	h := HMA{wma: WMA{length: 15}}
 	assert.Equal(t, 29, h.Count())
 }
 
-func TestHMAUnmarshal(t *testing.T) {
+func TestHMA_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    HMA
 		Error     error
 	}{
-		"Successfully HMA unmarshal threw an error": {
+		"Successfully HMA unmarshal returned an error": {
 			ByteArray: []byte(`{\"_"/`),
 			Error:     assert.AnError,
 		},
-		"Successfully HMA validate threw an error": {
+		"Successfully HMA validate returned an error": {
 			ByteArray: []byte(`{"length":0}`),
 			Error:     assert.AnError,
 		},
@@ -951,7 +951,7 @@ func TestHMAUnmarshal(t *testing.T) {
 	}
 }
 
-func TestHMAMarshal(t *testing.T) {
+func TestHMA_MarshalJSON(t *testing.T) {
 	h := HMA{wma: WMA{length: 1}}
 	r := []byte(`{"wma":{"length":1}}`)
 
@@ -960,7 +960,7 @@ func TestHMAMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestHMANamedMarshal(t *testing.T) {
+func TestHMA_namedMarshalJSON(t *testing.T) {
 	h := HMA{wma: WMA{length: 1}}
 	r := []byte(`{"name":"hma","wma":{"length":1}}`)
 
@@ -969,14 +969,14 @@ func TestHMANamedMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestMACDNew(t *testing.T) {
+func Test_NewMACD(t *testing.T) {
 	cc := map[string]struct {
 		Source1 Indicator
 		Source2 Indicator
 		Result  MACD
 		Error   error
 	}{
-		"Successfully MACD creation threw an error when no values were provided": {
+		"Successfully MACD creation returned an error when no parameters were provided": {
 			Error: assert.AnError,
 		},
 		"Successful creation of MACD": {
@@ -1002,19 +1002,19 @@ func TestMACDNew(t *testing.T) {
 	}
 }
 
-func TestMACDValidation(t *testing.T) {
+func TestMACD_validate(t *testing.T) {
 	cc := map[string]struct {
 		Source1 Indicator
 		Source2 Indicator
 		Error   error
 	}{
-		"Successfully MACD threw an error when source1 wasn't provided": {
+		"Successfully MACD returned an error when source1 wasn't provided": {
 			Source1: EMA{length: 1},
-			Error:   ErrSourceNotSet,
+			Error:   ErrInvalidSource,
 		},
-		"Successfully MACD threw an error when source2 wasn't provided": {
+		"Successfully MACD returned an error when source2 wasn't provided": {
 			Source2: EMA{length: 1},
-			Error:   ErrSourceNotSet,
+			Error:   ErrInvalidSource,
 		},
 		"Successful MACD validation": {
 			Source1: EMA{length: 1},
@@ -1038,7 +1038,7 @@ func TestMACDValidation(t *testing.T) {
 	}
 }
 
-func TestMACDCalc(t *testing.T) {
+func TestMACD_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Source1 Indicator
 		Source2 Indicator
@@ -1046,23 +1046,23 @@ func TestMACDCalc(t *testing.T) {
 		Result  decimal.Decimal
 		Error   error
 	}{
-		"Successfully MACD threw an ErrInvalidDataPointCount with insufficient amount of data points for source1": {
+		"Successfully MACD returned an ErrInvalidDataSize with insufficient amount of data points for source1": {
 			Source1: EMA{length: 4},
 			Source2: EMA{length: 1},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
-		"Successfully MACD threw an ErrInvalidDataPointCount with insufficient amount of data points for source2": {
+		"Successfully MACD returned an ErrInvalidDataSize with insufficient amount of data points for source2": {
 			Source1: EMA{length: 1},
 			Source2: EMA{length: 4},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
-		"Successfully MACD source1 threw an error": {
+		"Successfully MACD source1 returned an error": {
 			Source1: IndicatorMock{},
 			Source2: SMA{length: 3},
 			Data: []decimal.Decimal{
@@ -1075,7 +1075,7 @@ func TestMACDCalc(t *testing.T) {
 			},
 			Error: assert.AnError,
 		},
-		"Successfully MACD source2 threw an error": {
+		"Successfully MACD source2 returned an error": {
 			Source1: SMA{length: 3},
 			Source2: IndicatorMock{},
 			Data: []decimal.Decimal{
@@ -1124,7 +1124,7 @@ func TestMACDCalc(t *testing.T) {
 	}
 }
 
-func TestMACDCount(t *testing.T) {
+func TestMACD_Count(t *testing.T) {
 	m := MACD{source1: EMA{length: 10}, source2: EMA{length: 1}}
 	assert.Equal(t, m.Count(), m.source1.Count())
 
@@ -1132,22 +1132,22 @@ func TestMACDCount(t *testing.T) {
 	assert.Equal(t, m.Count(), m.source2.Count())
 }
 
-func TestMACDUnmarshal(t *testing.T) {
+func TestMACD_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    MACD
 		Error     error
 	}{
-		"Successfully MACD unmarshal threw an error": {
+		"Successfully MACD unmarshal returned an error": {
 			ByteArray: []byte(`{\-_-/}`),
 			Error:     assert.AnError,
 		},
-		"Successfully MACD fromJSON threw an error with source1 value": {
+		"Successfully MACD fromJSON returned an error with invalid source1 parameters": {
 			ByteArray: []byte(`{"source1":{"name":"aroon","trend":"dsown","length":2},
 			"source2":{"name":"cci","source":{"name":"ema", "length":2}}}`),
 			Error: assert.AnError,
 		},
-		"Successfully MACD fromJSON threw an error with source2 value": {
+		"Successfully MACD fromJSON returned an error with invalid source2 parameters": {
 			ByteArray: []byte(`{"source1":{"name":"aroon","trend":"down","length":2},
 			"source2":{"name":"ccis","source":{"name":"ema", "length":2}}}`),
 			Error: assert.AnError,
@@ -1177,18 +1177,18 @@ func TestMACDUnmarshal(t *testing.T) {
 	}
 }
 
-func TestMACDMarshal(t *testing.T) {
+func TestMACD_MarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		MACD   MACD
 		Result []byte
 		Error  error
 	}{
-		"Successfully MACD source1 marshal threw an error": {
+		"Successfully MACD source1 marshal returned an error": {
 			MACD: MACD{source1: IndicatorMock{},
 				source2: CCI{source: EMA{length: 2}}},
 			Error: assert.AnError,
 		},
-		"Successfully MACD source2 marshal threw an error": {
+		"Successfully MACD source2 marshal returned an error": {
 			MACD: MACD{source1: Aroon{trend: "down", length: 2},
 				source2: IndicatorMock{}},
 			Error: assert.AnError,
@@ -1216,18 +1216,18 @@ func TestMACDMarshal(t *testing.T) {
 	}
 }
 
-func TestMACDNamedMarshal(t *testing.T) {
+func TestMACD_namedMarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		MACD   MACD
 		Result []byte
 		Error  error
 	}{
-		"Successfully MACD source1 marshal threw an error": {
+		"Successfully MACD source1 marshal returned an error": {
 			MACD: MACD{source1: IndicatorMock{},
 				source2: CCI{source: EMA{length: 2}}},
 			Error: assert.AnError,
 		},
-		"Successfully MACD source2 marshal threw an error": {
+		"Successfully MACD source2 marshal returned an error": {
 			MACD: MACD{source1: Aroon{trend: "down", length: 2},
 				source2: IndicatorMock{}},
 			Error: assert.AnError,
@@ -1255,13 +1255,13 @@ func TestMACDNamedMarshal(t *testing.T) {
 	}
 }
 
-func TestROCNew(t *testing.T) {
+func Test_NewROC(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Result ROC
 		Error  error
 	}{
-		"Successfully ROC threw an error when no values were provided": {
+		"Successfully ROC returned an error when no parameters were provided": {
 			Error: assert.AnError,
 		},
 		"Successful creation of ROC": {
@@ -1286,12 +1286,12 @@ func TestROCNew(t *testing.T) {
 	}
 }
 
-func TestROCValidation(t *testing.T) {
+func TestROC_validate(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Error  error
 	}{
-		"Successfully ROC threw an ErrInvalidLength with less than 1 length": {
+		"Successfully ROC returned an ErrInvalidLength with less than 1 length": {
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
@@ -1316,19 +1316,19 @@ func TestROCValidation(t *testing.T) {
 	}
 }
 
-func TestROCCalc(t *testing.T) {
+func TestROC_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully ROC threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+		"Successfully ROC returned an ErrInvalidDataSize with insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
 		"Successful ROC calculation": {
 			Length: 5,
@@ -1360,22 +1360,22 @@ func TestROCCalc(t *testing.T) {
 	}
 }
 
-func TestROCCount(t *testing.T) {
+func TestROC_Count(t *testing.T) {
 	r := ROC{length: 15}
 	assert.Equal(t, 15, r.Count())
 }
 
-func TestROCUnmarshal(t *testing.T) {
+func TestROC_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    ROC
 		Error     error
 	}{
-		"Successfully ROC unmarshal threw an error": {
+		"Successfully ROC unmarshal returned an error": {
 			ByteArray: []byte(`{\"_"/`),
 			Error:     assert.AnError,
 		},
-		"Successfully ROC validate threw an error": {
+		"Successfully ROC validate returned an error": {
 			ByteArray: []byte(`{"length":0}`),
 			Error:     assert.AnError,
 		},
@@ -1402,7 +1402,7 @@ func TestROCUnmarshal(t *testing.T) {
 	}
 }
 
-func TestROCMarshal(t *testing.T) {
+func TestROC_MarshalJSON(t *testing.T) {
 	rc := ROC{length: 1}
 	r := []byte(`{"length":1}`)
 
@@ -1411,7 +1411,7 @@ func TestROCMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestROCNamedMarshal(t *testing.T) {
+func TestROC_namedMarshalJSON(t *testing.T) {
 	rc := ROC{length: 1}
 	r := []byte(`{"name":"roc","length":1}`)
 
@@ -1420,13 +1420,13 @@ func TestROCNamedMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestRSINew(t *testing.T) {
+func Test_NewRSI(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Result RSI
 		Error  error
 	}{
-		"Successfully RSI threw an error when no values were provided": {
+		"Successfully RSI returned an error when no parameters were provided": {
 			Error: assert.AnError,
 		},
 		"Successful creation of RSI": {
@@ -1451,12 +1451,12 @@ func TestRSINew(t *testing.T) {
 	}
 }
 
-func TestRSIValidation(t *testing.T) {
+func TestRSI_validate(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Error  error
 	}{
-		"Successfully RSI threw an ErrInvalidLength with less than 1 length": {
+		"Successfully RSI returned an ErrInvalidLength with less than 1 length": {
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
@@ -1481,19 +1481,19 @@ func TestRSIValidation(t *testing.T) {
 	}
 }
 
-func TestRSICalc(t *testing.T) {
+func TestRSI_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully RSI threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+		"Successfully RSI returned an ErrInvalidDataSize with insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
 		"Successful RSI calculation": {
 			Length: 14,
@@ -1534,22 +1534,22 @@ func TestRSICalc(t *testing.T) {
 	}
 }
 
-func TestRSICount(t *testing.T) {
+func TestRSI_Count(t *testing.T) {
 	r := RSI{length: 15}
 	assert.Equal(t, 15, r.Count())
 }
 
-func TestRSIUnmarshal(t *testing.T) {
+func TestRSI_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    RSI
 		Error     error
 	}{
-		"Successfully RSI unmarshal threw an error": {
+		"Successfully RSI unmarshal returned an error": {
 			ByteArray: []byte(`{\"_"/`),
 			Error:     assert.AnError,
 		},
-		"Successfully RSI validate threw an error": {
+		"Successfully RSI validate returned an error": {
 			ByteArray: []byte(`{"length":0}`),
 			Error:     assert.AnError,
 		},
@@ -1576,7 +1576,7 @@ func TestRSIUnmarshal(t *testing.T) {
 	}
 }
 
-func TestRSIMarshal(t *testing.T) {
+func TestRSI_MarshalJSON(t *testing.T) {
 
 	rs := RSI{length: 1}
 	r := []byte(`{"length":1}`)
@@ -1586,7 +1586,7 @@ func TestRSIMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestRSINamedMarshal(t *testing.T) {
+func TestRSI_namedMarshalJSON(t *testing.T) {
 
 	rs := RSI{length: 1}
 	r := []byte(`{"name":"rsi","length":1}`)
@@ -1596,13 +1596,13 @@ func TestRSINamedMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestSMANew(t *testing.T) {
+func Test_NewSMA(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Result SMA
 		Error  error
 	}{
-		"Successfully SMA threw an error when no values were provided": {
+		"Successfully SMA returned an error when no parameters were provided": {
 			Error: assert.AnError,
 		},
 		"Successful creation of SMA": {
@@ -1627,12 +1627,12 @@ func TestSMANew(t *testing.T) {
 	}
 }
 
-func TestSMAValidation(t *testing.T) {
+func TestSMA_validate(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Error  error
 	}{
-		"Successfully SMA threw an ErrInvalidLength with less than 1 length": {
+		"Successfully SMA returned an ErrInvalidLength with less than 1 length": {
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
@@ -1657,19 +1657,19 @@ func TestSMAValidation(t *testing.T) {
 	}
 }
 
-func TestSMACalc(t *testing.T) {
+func TestSMA_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully SMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+		"Successfully SMA returned an ErrInvalidDataSize with insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
 		"Successful SMA calculation": {
 			Length: 3,
@@ -1699,22 +1699,22 @@ func TestSMACalc(t *testing.T) {
 	}
 }
 
-func TestSMACount(t *testing.T) {
+func TestSMA_Count(t *testing.T) {
 	s := SMA{length: 15}
 	assert.Equal(t, 15, s.Count())
 }
 
-func TestSMAUnmarshal(t *testing.T) {
+func TestSMA_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    SMA
 		Error     error
 	}{
-		"Successfully SMA unmarshal threw an error": {
+		"Successfully SMA unmarshal returned an error": {
 			ByteArray: []byte(`{\"_"/`),
 			Error:     assert.AnError,
 		},
-		"Successfully SMA validate threw an error": {
+		"Successfully SMA validate returned an error": {
 			ByteArray: []byte(`{"length":0}`),
 			Error:     assert.AnError,
 		},
@@ -1741,7 +1741,7 @@ func TestSMAUnmarshal(t *testing.T) {
 	}
 }
 
-func TestSMAMarshal(t *testing.T) {
+func TestSMA_MarshalJSON(t *testing.T) {
 	s := SMA{length: 1}
 	r := []byte(`{"length":1}`)
 
@@ -1750,7 +1750,7 @@ func TestSMAMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestSMANamedMarshal(t *testing.T) {
+func TestSMA_namedMarshalJSON(t *testing.T) {
 	s := SMA{length: 1}
 	r := []byte(`{"name":"sma","length":1}`)
 
@@ -1759,13 +1759,13 @@ func TestSMANamedMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestStochNew(t *testing.T) {
+func Test_NewStoch(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Result Stoch
 		Error  error
 	}{
-		"Successfully Stoch threw an error when no values were provided": {
+		"Successfully Stoch returned an error when no parameters were provided": {
 			Error: assert.AnError,
 		},
 		"Successful creation of Stoch": {
@@ -1790,12 +1790,12 @@ func TestStochNew(t *testing.T) {
 	}
 }
 
-func TestStochValidation(t *testing.T) {
+func TestStoch_validate(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Error  error
 	}{
-		"Successfully Stoch threw an ErrInvalidLength with less than 1 length": {
+		"Successfully Stoch returned an ErrInvalidLength with less than 1 length": {
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
@@ -1821,19 +1821,19 @@ func TestStochValidation(t *testing.T) {
 	}
 }
 
-func TestStochCalc(t *testing.T) {
+func TestStoch_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully Stoch threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+		"Successfully Stoch returned an ErrInvalidDataSize with insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
 		"Successful stoch calculation when lower lows are made": {
 			Length: 3,
@@ -1873,22 +1873,22 @@ func TestStochCalc(t *testing.T) {
 	}
 }
 
-func TestStochCount(t *testing.T) {
+func TestStoch_Count(t *testing.T) {
 	s := Stoch{length: 15}
 	assert.Equal(t, 15, s.Count())
 }
 
-func TestStochUnmarshal(t *testing.T) {
+func TestStoch_UnmarshalMarshal(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    Stoch
 		Error     error
 	}{
-		"Successfully Stoch unmarshal threw an error": {
+		"Successfully Stoch unmarshal returned an error": {
 			ByteArray: []byte(`{"length": "down"}`),
 			Error:     assert.AnError,
 		},
-		"Successfully Stoch validate threw an error": {
+		"Successfully Stoch validate returned an error": {
 			ByteArray: []byte(`{"length":0}`),
 			Error:     assert.AnError,
 		},
@@ -1915,7 +1915,7 @@ func TestStochUnmarshal(t *testing.T) {
 	}
 }
 
-func TestStochMarshal(t *testing.T) {
+func TestStoch_MarshalJSON(t *testing.T) {
 	s := Stoch{length: 1}
 	r := []byte(`{"length":1}`)
 
@@ -1924,7 +1924,7 @@ func TestStochMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestStochNamedMarshal(t *testing.T) {
+func TestStoch_namedMarshalJSON(t *testing.T) {
 	s := Stoch{length: 1}
 	r := []byte(`{"name":"stoch","length":1}`)
 
@@ -1933,13 +1933,13 @@ func TestStochNamedMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestWMANew(t *testing.T) {
+func Test_NewWMA(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Result WMA
 		Error  error
 	}{
-		"Successfully WMA threw an error when no values were provided": {
+		"Successfully WMA returned an error when no parameters were provided": {
 			Error: assert.AnError,
 		},
 		"Successful creation of WMA": {
@@ -1964,12 +1964,12 @@ func TestWMANew(t *testing.T) {
 	}
 }
 
-func TestWMAValidation(t *testing.T) {
+func TestWMA_validate(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Error  error
 	}{
-		"Successfully WMA threw an ErrInvalidLength with less than 1 length": {
+		"Successfully WMA returned an ErrInvalidLength with less than 1 length": {
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
@@ -1994,19 +1994,19 @@ func TestWMAValidation(t *testing.T) {
 	}
 }
 
-func TestWMACalc(t *testing.T) {
+func TestWMA_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully WMA threw an ErrInvalidDataPointCount with insufficient amount of data points": {
+		"Successfully WMA returned an ErrInvalidDataSize with insufficient amount of data points": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataPointCount,
+			Error: ErrInvalidDataSize,
 		},
 		"Successful WMA calculation": {
 			Length: 3,
@@ -2039,22 +2039,22 @@ func TestWMACalc(t *testing.T) {
 	}
 }
 
-func TestWMACount(t *testing.T) {
+func TestWMA_Count(t *testing.T) {
 	w := WMA{length: 15}
 	assert.Equal(t, 15, w.Count())
 }
 
-func TestWMAUnmarshal(t *testing.T) {
+func TestWMA_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    WMA
 		Error     error
 	}{
-		"Successfully DEMA unmarshal threw an error": {
+		"Successfully DEMA unmarshal returned an error": {
 			ByteArray: []byte(`{\"_"/`),
 			Error:     assert.AnError,
 		},
-		"Successfully WMA validate threw an error": {
+		"Successfully WMA validate returned an error": {
 			ByteArray: []byte(`{"length":0}`),
 			Error:     assert.AnError,
 		},
@@ -2081,7 +2081,7 @@ func TestWMAUnmarshal(t *testing.T) {
 	}
 }
 
-func TestWMAMarshal(t *testing.T) {
+func TestWMA_MarshalJSON(t *testing.T) {
 	w := WMA{length: 1}
 	r := []byte(`{"length":1}`)
 
@@ -2090,7 +2090,7 @@ func TestWMAMarshal(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
-func TestWMANamedMarshal(t *testing.T) {
+func TestWMA_namedMarshalJSON(t *testing.T) {
 	w := WMA{length: 1}
 	r := []byte(`{"name":"wma","length":1}`)
 
