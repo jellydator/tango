@@ -43,30 +43,30 @@ func (s String) MarshalText() ([]byte, error) {
 
 // resize cuts given array based on length to use for
 // calculations.
-func resize(dd []decimal.Decimal, lh int) ([]decimal.Decimal, error) {
-	if lh < 1 {
+func resize(dd []decimal.Decimal, length int) ([]decimal.Decimal, error) {
+	if length < 1 {
 		return dd, nil
 	}
 
-	if lh > len(dd) {
+	if length > len(dd) {
 		return nil, ErrInvalidDataSize
 	}
 
-	return dd[len(dd)-lh:], nil
+	return dd[len(dd)-length:], nil
 }
 
 // resizeCandles cuts given array based on length to use for
 // calculations.
-func resizeCandles(cc []chartype.Candle, lh int) ([]chartype.Candle, error) {
-	if lh < 1 {
+func resizeCandles(cc []chartype.Candle, length int) ([]chartype.Candle, error) {
+	if length < 1 {
 		return cc, nil
 	}
 
-	if lh > len(cc) {
+	if length > len(cc) {
 		return nil, ErrInvalidDataSize
 	}
 
-	return cc[len(cc)-lh:], nil
+	return cc[len(cc)-length:], nil
 }
 
 // typicalPrice recalculates array of candles into an array of typical prices

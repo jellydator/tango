@@ -204,6 +204,86 @@ func Test_meanDeviation(t *testing.T) {
 	}
 }
 
+func Test_calcMultiple(t *testing.T) {
+	cc := map[string]struct {
+		Data      []decimal.Decimal
+		Amount    int
+		Indicator Indicator
+		Result    []decimal.Decimal
+		Error     error
+	}{
+		"Successfully calcMultiple returned an ErrInvalidDataSize with insufficient amount of data points": {
+			Indicator: SMA{length: 2},
+			Amount:    1,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successfully calcMultiple indicator returned an error": {
+			Indicator: IndicatorMock{},
+			Amount:    1,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: assert.AnError,
+		},
+		"Successful calcMultiple calculation with amount less than 1": {
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(3),
+				decimal.NewFromInt(4),
+				decimal.NewFromInt(5),
+				decimal.NewFromInt(6),
+				decimal.NewFromInt(7),
+			},
+			Amount:    0,
+			Indicator: SMA{length: 2},
+			Result:    []decimal.Decimal{},
+		},
+		"Successful calcMultiple calculation with amount more than 1": {
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(3),
+				decimal.NewFromInt(4),
+				decimal.NewFromInt(5),
+				decimal.NewFromInt(6),
+				decimal.NewFromInt(7),
+			},
+			Amount:    3,
+			Indicator: SMA{length: 2},
+			Result: []decimal.Decimal{
+				decimal.NewFromFloat(6.5),
+				decimal.NewFromFloat(5.5),
+				decimal.NewFromFloat(4.5),
+			},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := calcMultiple(c.Data, c.Amount, c.Indicator)
+
+			if c.Error != nil {
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
+			} else {
+				assert.Nil(t, err)
+
+				for i := 0; i < len(c.Result); i++ {
+					assert.Equal(t, c.Result[i].Round(8), res[i].Round(8))
+				}
+			}
+		})
+	}
+}
+
 func Test_fromJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
@@ -249,6 +329,10 @@ func Test_fromJSON(t *testing.T) {
 		"Successful creation of a SMA indicator": {
 			ByteArray: []byte(`{"name":"sma","length":1}`),
 			Result:    SMA{length: 1},
+		},
+		"Successful creation of a SRSI indicator": {
+			ByteArray: []byte(`{"name":"srsi", "rsi":{"name":"rsi","length":1}}`),
+			Result:    SRSI{rsi: RSI{length: 1}},
 		},
 		"Successful creation of a Stoch indicator": {
 			ByteArray: []byte(`{"name":"stoch","length":1}`),
