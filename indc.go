@@ -19,6 +19,7 @@ const (
 	NameROC   = "roc"
 	NameRSI   = "rsi"
 	NameSMA   = "sma"
+	NameSRSI  = "srsi"
 	NameStoch = "stoch"
 	NameWMA   = "wma"
 )
@@ -977,6 +978,120 @@ func (s SMA) namedMarshalJSON() ([]byte, error) {
 	}{
 		N: NameSMA,
 		L: s.length,
+	})
+}
+
+// SRSI holds all the neccesary information needed to calculate stoch
+// relative strenght index.
+type SRSI struct {
+	// rsi configures relative strengh index.
+	rsi RSI
+}
+
+// NewSRSI verifies provided parameters and
+// creates hull moving average indicator.
+func NewSRSI(r RSI) (SRSI, error) {
+	s := SRSI{rsi: r}
+
+	if err := s.validate(); err != nil {
+		return SRSI{}, err
+	}
+
+	return s, nil
+}
+
+// validate checks all SRSI parameters stored in func receiver to make sure that
+// they're matching their requirements.
+func (s SRSI) validate() error {
+	if s.rsi == (RSI{}) {
+		return errors.New("invalid rsi")
+	}
+
+	if s.rsi.length < 1 {
+		return ErrInvalidLength
+	}
+
+	return nil
+}
+
+// Calc calculates SRSI by using parameters stored in the func receiver.
+func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	dd, err := resize(dd, s.Count())
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	c, err := s.rsi.Calc(dd)
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	l := c
+	h := c
+
+	for i := 1; i < len(dd); i++ {
+		r, err := s.rsi.Calc(dd[:s.rsi.Count()+i])
+		if err != nil {
+			return decimal.Zero, err
+		}
+
+		if r.LessThan(l) {
+			l = dd[i]
+		}
+
+		if r.GreaterThan(h) {
+			h = dd[i]
+		}
+	}
+
+	return c.Sub(l).Div(h.Sub(l)), nil
+}
+
+// Count determines the total amount of data points needed for SRSI
+// calculation by using parameters stored in the receiver.
+func (s SRSI) Count() int {
+	return s.rsi.Count()*2 - 1
+}
+
+// UnmarshalJSON parse JSON into an indicator source.
+func (s *SRSI) UnmarshalJSON(d []byte) error {
+	var i struct {
+		RSI struct {
+			L int `json:"length"`
+		} `json:"rsi"`
+	}
+
+	if err := json.Unmarshal(d, &i); err != nil {
+		return err
+	}
+
+	r, err := NewRSI(i.RSI.L)
+	if err != nil {
+		return err
+	}
+
+	s.rsi = r
+
+	return nil
+}
+
+// MarshalJSON converts SRSI data into byte array.
+func (s SRSI) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		R RSI `json:"rsi"`
+	}{
+		R: s.rsi,
+	})
+}
+
+// namedMarshalJSON converts SRSI data with its name into byte array.
+func (s SRSI) namedMarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		N String `json:"name"`
+		R RSI    `json:"rsi"`
+	}{
+		N: NameHMA,
+		R: s.rsi,
 	})
 }
 
