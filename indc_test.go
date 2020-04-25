@@ -1830,12 +1830,12 @@ func TestSRSI_Calc(t *testing.T) {
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully SRSI returned an ErrInvalidDataSize with insufficient amount of data points": {
+		"Successfully SRSI calcMultiple returned an error with insufficient amount of data points": {
 			RSI: RSI{length: 5},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataSize,
+			Error: assert.AnError,
 		},
 		"Successful SRSI calculation": {
 			RSI: RSI{length: 5},
@@ -1867,7 +1867,11 @@ func TestSRSI_Calc(t *testing.T) {
 			s := SRSI{rsi: c.RSI}
 			res, err := s.Calc(c.Data)
 			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
+				if c.Error == assert.AnError {
+					assert.NotNil(t, err)
+				} else {
+					assert.Equal(t, c.Error, err)
+				}
 			} else {
 				assert.Nil(t, err)
 				assert.Equal(t, c.Result.String(), res.Round(8).String())

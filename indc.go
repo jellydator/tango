@@ -1025,11 +1025,6 @@ func (s SRSI) validate() error {
 
 // Calc calculates SRSI by using parameters stored in the func receiver.
 func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-	dd, err := resize(dd, s.Count())
-	if err != nil {
-		return decimal.Zero, err
-	}
-
 	v, err := calcMultiple(dd, s.rsi.length, s.rsi)
 	if err != nil {
 		return decimal.Zero, err
