@@ -839,7 +839,16 @@ func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		}
 	}
 
+	if ag == decimal.Zero {
+		return decimal.NewFromInt(0), nil
+	}
+
+	if al == decimal.Zero {
+		return decimal.NewFromInt(100), nil
+	}
+
 	ag = ag.Div(decimal.NewFromInt(int64(r.length)))
+
 	al = al.Div(decimal.NewFromInt(int64(r.length)))
 
 	return decimal.NewFromInt(100).Sub(decimal.NewFromInt(100).
@@ -1021,30 +1030,50 @@ func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	c, err := s.rsi.Calc(dd)
-	if err != nil {
-		return decimal.Zero, err
-	}
+	v := make([]decimal.Decimal, s.rsi.length)
 
-	l := c
-	h := c
+	// s := SMA{length: dm.length}
+	// v[0], _ = s.Calc(dd[:dm.length])
 
-	for i := 1; i < len(dd); i++ {
-		r, err := s.rsi.Calc(dd[:s.rsi.Count()+i])
+	// e := EMA{length: dm.length}
+
+	for i := 0; i < s.rsi.length; i++ {
+		v[i], err = s.rsi.Calc(dd[:s.rsi.Count()+i])
 		if err != nil {
 			return decimal.Zero, err
 		}
-
-		if r.LessThan(l) {
-			l = dd[i]
-		}
-
-		if r.GreaterThan(h) {
-			h = dd[i]
-		}
+		// v[i-dm.length+1] = e.CalcNext(v[i-dm.length], dd[i])
 	}
 
-	return c.Sub(l).Div(h.Sub(l)), nil
+	stoch, err := NewStoch(s.rsi.length)
+	if err != nil {
+		return decimal.Zero, err
+	}
+	return stoch.Calc(v)
+	// c, err := s.rsi.Calc(dd)
+	// if err != nil {
+	// 	return decimal.Zero, err
+	// }
+
+	// l := c
+	// h := c
+
+	// for i := 1; i < len(dd); i++ {
+	// 	r, err := s.rsi.Calc(dd[:s.rsi.Count()+i])
+	// 	if err != nil {
+	// 		return decimal.Zero, err
+	// 	}
+
+	// 	if r.LessThan(l) {
+	// 		l = dd[i]
+	// 	}
+
+	// 	if r.GreaterThan(h) {
+	// 		h = dd[i]
+	// 	}
+	// }
+
+	// return c.Sub(l).Div(h.Sub(l)), nil
 }
 
 // Count determines the total amount of data points needed for SRSI
@@ -1090,7 +1119,7 @@ func (s SRSI) namedMarshalJSON() ([]byte, error) {
 		N String `json:"name"`
 		R RSI    `json:"rsi"`
 	}{
-		N: NameHMA,
+		N: NameSRSI,
 		R: s.rsi,
 	})
 }
