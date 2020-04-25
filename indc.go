@@ -991,14 +991,14 @@ func (s SMA) namedMarshalJSON() ([]byte, error) {
 }
 
 // SRSI holds all the neccesary information needed to calculate stoch
-// relative strenght index.
+// relative strength index.
 type SRSI struct {
 	// rsi configures relative strengh index.
 	rsi RSI
 }
 
 // NewSRSI verifies provided parameters and
-// creates hull moving average indicator.
+// creates stochastic relative strength index indicator.
 func NewSRSI(r RSI) (SRSI, error) {
 	s := SRSI{rsi: r}
 
