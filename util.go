@@ -98,6 +98,30 @@ func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	return rez.Div(decimal.NewFromInt(int64(len(dd)))).Round(8)
 }
 
+// calcMultiple calculates specified amount of indicator within given list.
+func calcMultiple(dd []decimal.Decimal, a int, s Indicator) ([]decimal.Decimal, error) {
+	if a < 1 {
+		return []decimal.Decimal{}, nil
+	}
+
+	dd, err := resize(dd, s.Count()+a-1)
+
+	if err != nil {
+		return nil, ErrInvalidDataSize
+	}
+
+	v := make([]decimal.Decimal, a)
+
+	for i := 0; i < a; i++ {
+		v[i], err = s.Calc(dd[:len(dd)-i])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return v, nil
+}
+
 // fromJSON finds a source indicator based on its name and returns it.
 func fromJSON(d []byte) (Indicator, error) {
 	var i struct {

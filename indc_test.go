@@ -1830,24 +1830,32 @@ func TestSRSI_Calc(t *testing.T) {
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully SRSI returned an ErrInvalidDataSize with insufficient amount of data points": {
+		// "Successfully SRSI returned an ErrInvalidDataSize with insufficient amount of data points": {
+		// 	RSI: RSI{length: 5},
+		// 	Data: []decimal.Decimal{
+		// 		decimal.NewFromInt(30),
+		// 	},
+		// 	Error: ErrInvalidDataSize,
+		// },
+		"Successful SRSI calculation": {
 			RSI: RSI{length: 5},
 			Data: []decimal.Decimal{
-				decimal.NewFromInt(30),
+				decimal.NewFromFloat(54.09),
+				decimal.NewFromFloat(59.9),
+				decimal.NewFromFloat(58.2),
+				decimal.NewFromFloat(59.76),
+				decimal.NewFromFloat(52.35),
+				decimal.NewFromFloat(52.82),
+				decimal.NewFromFloat(56.94),
+				decimal.NewFromFloat(57.47),
+				decimal.NewFromFloat(55.26),
+				decimal.NewFromFloat(57.51),
+				decimal.NewFromFloat(54.8),
+				decimal.NewFromFloat(51.47),
+				decimal.NewFromFloat(56.16),
+				decimal.NewFromFloat(58.34),
 			},
-			Error: ErrInvalidDataSize,
-		},
-		"Successful SRSI calculation": {
-			RSI: RSI{length: 3},
-			Data: []decimal.Decimal{
-				decimal.NewFromInt(30),
-				decimal.NewFromInt(31),
-				decimal.NewFromInt(32),
-				decimal.NewFromInt(30),
-				decimal.NewFromInt(30),
-				decimal.NewFromInt(31),
-			},
-			Result: decimal.NewFromFloat(31.5),
+			Result: decimal.NewFromFloat(0.58524401),
 		},
 	}
 
@@ -1862,7 +1870,7 @@ func TestSRSI_Calc(t *testing.T) {
 				assert.Equal(t, c.Error, err)
 			} else {
 				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
+				assert.Equal(t, c.Result.String(), res.Round(8).String())
 			}
 		})
 	}
