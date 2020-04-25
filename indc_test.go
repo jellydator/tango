@@ -1759,6 +1759,175 @@ func TestSMA_namedMarshalJSON(t *testing.T) {
 	assert.Equal(t, r, d)
 }
 
+func Test_NewSRSI(t *testing.T) {
+	cc := map[string]struct {
+		RSI    RSI
+		Result SRSI
+		Error  error
+	}{
+		"Successfully SRSI returned an error when no parameters were provided": {
+			Error: assert.AnError,
+		},
+		"Successful SRSI creation": {
+			RSI:    RSI{length: 1},
+			Result: SRSI{rsi: RSI{length: 1}},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			s, err := NewSRSI(c.RSI)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, s)
+			}
+		})
+	}
+}
+
+func TestSRSI_validate(t *testing.T) {
+	cc := map[string]struct {
+		RSI   RSI
+		Error error
+	}{
+		"Successfully SRSI rsi returned an error": {
+			RSI:   RSI{length: -1},
+			Error: assert.AnError,
+		},
+		"Successfully SRSI returned an error when rsi wasn't set": {
+			Error: assert.AnError,
+		},
+		"Successful SRSI validation": {
+			RSI: RSI{length: 1},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			s := SRSI{rsi: c.RSI}
+			err := s.validate()
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestSRSI_Calc(t *testing.T) {
+	cc := map[string]struct {
+		RSI    RSI
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Successfully SRSI returned an ErrInvalidDataSize with insufficient amount of data points": {
+			RSI: RSI{length: 5},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful SRSI calculation": {
+			RSI: RSI{length: 3},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+			},
+			Result: decimal.NewFromFloat(31.5),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			s := SRSI{rsi: c.RSI}
+			res, err := s.Calc(c.Data)
+			if c.Error != nil {
+				assert.Equal(t, c.Error, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result.String(), res.String())
+			}
+		})
+	}
+}
+
+func TestSRSI_Count(t *testing.T) {
+	s := SRSI{rsi: RSI{length: 15}}
+	assert.Equal(t, 29, s.Count())
+}
+
+func TestSRSI_UnmarshalJSON(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    SRSI
+		Error     error
+	}{
+		"Successfully SRSI unmarshal returned an error": {
+			ByteArray: []byte(`{\"_"/`),
+			Error:     assert.AnError,
+		},
+		"Successfully SRSI validate returned an error": {
+			ByteArray: []byte(`{"length":0}`),
+			Error:     assert.AnError,
+		},
+		"Successful unmarshal of a SRSI": {
+			ByteArray: []byte(`{"rsi":{"length":1}}`),
+			Result:    SRSI{rsi: RSI{length: 1}},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			s := SRSI{}
+			err := s.UnmarshalJSON(c.ByteArray)
+			if c.Error != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, c.Result, s)
+			}
+		})
+	}
+}
+
+func TestSRSI_MarshalJSON(t *testing.T) {
+	s := SRSI{rsi: RSI{length: 1}}
+	r := []byte(`{"rsi":{"length":1}}`)
+
+	d, _ := s.MarshalJSON()
+
+	assert.Equal(t, r, d)
+}
+
+func TestSRSI_namedMarshalJSON(t *testing.T) {
+	s := SRSI{rsi: RSI{length: 1}}
+	r := []byte(`{"name":"srsi","rsi":{"length":1}}`)
+
+	d, _ := s.namedMarshalJSON()
+
+	assert.Equal(t, r, d)
+}
+
 func Test_NewStoch(t *testing.T) {
 	cc := map[string]struct {
 		Length int

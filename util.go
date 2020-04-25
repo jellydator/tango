@@ -145,6 +145,10 @@ func fromJSON(d []byte) (Indicator, error) {
 		s := SMA{}
 		err := json.Unmarshal(d, &s)
 		return s, err
+	case NameSRSI:
+		s := SRSI{}
+		err := json.Unmarshal(d, &s)
+		return s, err
 	case NameStoch:
 		s := Stoch{}
 		err := json.Unmarshal(d, &s)
