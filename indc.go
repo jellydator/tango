@@ -23,6 +23,20 @@ const (
 	NameWMA   = "wma"
 )
 
+// Indicator is an interface that every indicator should implement.
+type Indicator interface {
+	// Calc should calculate and return indicator's value.
+	Calc(dd []decimal.Decimal) (decimal.Decimal, error)
+
+	// Count determines the total amount of data points needed
+	// for indicator's calculation.
+	Count() int
+
+	// namedMarshalJSON helps indicators using other indicators to identify
+	// their names.
+	namedMarshalJSON() ([]byte, error)
+}
+
 // Aroon holds all the neccesary information needed to calculate aroon.
 type Aroon struct {
 	// trend configures which aroon trend to measure (it can either
@@ -1153,18 +1167,4 @@ func (w WMA) namedMarshalJSON() ([]byte, error) {
 		N: NameWMA,
 		L: w.length,
 	})
-}
-
-// Indicator is an interface that every indicator should implement.
-type Indicator interface {
-	// Calc should calculate and return indicator's value.
-	Calc(dd []decimal.Decimal) (decimal.Decimal, error)
-
-	// Count determines the total amount of data points needed
-	// for indicator's calculation.
-	Count() int
-
-	// namedMarshalJSON helps indicators using other indicators to identify
-	// their names.
-	namedMarshalJSON() ([]byte, error)
 }
