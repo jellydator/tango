@@ -1030,50 +1030,26 @@ func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	v := make([]decimal.Decimal, s.rsi.length)
-
-	// s := SMA{length: dm.length}
-	// v[0], _ = s.Calc(dd[:dm.length])
-
-	// e := EMA{length: dm.length}
-
-	for i := 0; i < s.rsi.length; i++ {
-		v[i], err = s.rsi.Calc(dd[:s.rsi.Count()+i])
-		if err != nil {
-			return decimal.Zero, err
-		}
-		// v[i-dm.length+1] = e.CalcNext(v[i-dm.length], dd[i])
-	}
-
-	stoch, err := NewStoch(s.rsi.length)
+	v, err := calcMultiple(dd, s.rsi.length, s.rsi)
 	if err != nil {
 		return decimal.Zero, err
 	}
-	return stoch.Calc(v)
-	// c, err := s.rsi.Calc(dd)
-	// if err != nil {
-	// 	return decimal.Zero, err
-	// }
 
-	// l := c
-	// h := c
+	c := v[0]
+	h := v[0]
+	l := v[0]
 
-	// for i := 1; i < len(dd); i++ {
-	// 	r, err := s.rsi.Calc(dd[:s.rsi.Count()+i])
-	// 	if err != nil {
-	// 		return decimal.Zero, err
-	// 	}
+	for i := 1; i < len(v); i++ {
+		if h.LessThan(v[i]) {
+			h = v[i]
+		}
 
-	// 	if r.LessThan(l) {
-	// 		l = dd[i]
-	// 	}
+		if l.GreaterThan(v[i]) {
+			l = v[i]
+		}
+	}
 
-	// 	if r.GreaterThan(h) {
-	// 		h = dd[i]
-	// 	}
-	// }
-
-	// return c.Sub(l).Div(h.Sub(l)), nil
+	return c.Sub(l).Div(h.Sub(l)), nil
 }
 
 // Count determines the total amount of data points needed for SRSI
