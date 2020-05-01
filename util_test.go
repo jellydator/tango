@@ -9,7 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func assertEqualError(t *testing.T, exp, err error) {
+func equalError(t *testing.T, exp, err error) {
+	t.Helper()
+
 	if exp != nil {
 		if exp == assert.AnError {
 			assert.Error(t, err)
@@ -90,7 +92,7 @@ func Test_resize(t *testing.T) {
 			t.Parallel()
 
 			res, err := resize(c.Data, c.Length)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -149,7 +151,7 @@ func Test_resizeCandles(t *testing.T) {
 			t.Parallel()
 
 			res, err := resizeCandles(c.Data, c.Length)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -286,7 +288,7 @@ func Test_calcMultiple(t *testing.T) {
 			t.Parallel()
 
 			res, err := calcMultiple(c.Data, c.Amount, c.Indicator)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -372,7 +374,7 @@ func Test_fromJSON(t *testing.T) {
 			t.Parallel()
 
 			res, err := fromJSON(c.ByteArray)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}

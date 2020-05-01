@@ -42,7 +42,7 @@ func Test_NewAroon(t *testing.T) {
 			t.Parallel()
 
 			a, err := NewAroon(c.Trend, c.Length)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -84,7 +84,7 @@ func Test_Aroon_validate(t *testing.T) {
 			t.Parallel()
 
 			a := Aroon{trend: c.Trend, length: c.Length}
-			assertEqualError(t, c.Error, a.validate())
+			equalError(t, c.Error, a.validate())
 		})
 	}
 }
@@ -140,7 +140,7 @@ func Test_Aroon_Calc(t *testing.T) {
 
 			a := Aroon{trend: c.Trend, length: c.Length}
 			res, err := a.Calc(c.Data)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -182,7 +182,7 @@ func Test_Aroon_UnmarshalJSON(t *testing.T) {
 
 			a := Aroon{}
 			err := a.UnmarshalJSON([]byte(c.JSON))
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -229,7 +229,7 @@ func Test_NewCCI(t *testing.T) {
 			t.Parallel()
 
 			cci, err := NewCCI(c.Source)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -258,7 +258,7 @@ func Test_CCI_validate(t *testing.T) {
 			t.Parallel()
 
 			cci := CCI{source: c.Source}
-			assertEqualError(t, c.Error, cci.validate())
+			equalError(t, c.Error, cci.validate())
 		})
 	}
 }
@@ -319,7 +319,7 @@ func Test_CCI_Calc(t *testing.T) {
 
 			cci := CCI{source: c.Source}
 			res, err := cci.Calc(c.Data)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -361,7 +361,7 @@ func Test_CCI_UnmarshalJSON(t *testing.T) {
 
 			cci := CCI{}
 			err := cci.UnmarshalJSON([]byte(c.JSON))
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -393,7 +393,7 @@ func Test_CCI_MarshalJSON(t *testing.T) {
 			t.Parallel()
 
 			d, err := c.CCI.MarshalJSON()
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -425,7 +425,7 @@ func Test_CCI_namedMarshalJSON(t *testing.T) {
 			t.Parallel()
 
 			d, err := c.CCI.namedMarshalJSON()
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -456,7 +456,7 @@ func Test_NewDEMA(t *testing.T) {
 			t.Parallel()
 
 			dm, err := NewDEMA(c.Length)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -486,7 +486,7 @@ func Test_DEMA_validate(t *testing.T) {
 			t.Parallel()
 
 			d := DEMA{length: c.Length}
-			assertEqualError(t, c.Error, d.validate())
+			equalError(t, c.Error, d.validate())
 		})
 	}
 }
@@ -526,7 +526,7 @@ func Test_DEMA_Calc(t *testing.T) {
 
 			d := DEMA{length: c.Length}
 			res, err := d.Calc(c.Data)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -568,7 +568,7 @@ func Test_DEMA_UnmarshalJSON(t *testing.T) {
 
 			dm := DEMA{}
 			err := dm.UnmarshalJSON([]byte(c.JSON))
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -615,7 +615,7 @@ func Test_NewEMA(t *testing.T) {
 			t.Parallel()
 
 			e, err := NewEMA(c.Length)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -645,7 +645,7 @@ func Test_EMA_validate(t *testing.T) {
 			t.Parallel()
 
 			e := EMA{length: c.Length}
-			assertEqualError(t, c.Error, e.validate())
+			equalError(t, c.Error, e.validate())
 		})
 	}
 }
@@ -685,7 +685,7 @@ func Test_EMA_Calc(t *testing.T) {
 
 			e := EMA{length: c.Length}
 			res, err := e.Calc(c.Data)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -732,7 +732,7 @@ func Test_EMA_UnmarshalJSON(t *testing.T) {
 
 			e := EMA{}
 			err := e.UnmarshalJSON([]byte(c.JSON))
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -779,7 +779,7 @@ func Test_NewHMA(t *testing.T) {
 			t.Parallel()
 
 			h, err := NewHMA(c.WMA)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -812,7 +812,7 @@ func Test_HMA_validate(t *testing.T) {
 			t.Parallel()
 
 			h := HMA{wma: c.WMA}
-			assertEqualError(t, c.Error, h.validate())
+			equalError(t, c.Error, h.validate())
 		})
 	}
 }
@@ -852,7 +852,7 @@ func Test_HMA_Calc(t *testing.T) {
 
 			h := HMA{wma: c.WMA}
 			res, err := h.Calc(c.Data)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -894,7 +894,7 @@ func Test_HMA_UnmarshalJSON(t *testing.T) {
 
 			h := HMA{}
 			err := h.UnmarshalJSON([]byte(c.JSON))
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -943,7 +943,7 @@ func Test_NewMACD(t *testing.T) {
 			t.Parallel()
 
 			m, err := NewMACD(c.Source1, c.Source2)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -979,7 +979,7 @@ func Test_MACD_validate(t *testing.T) {
 			t.Parallel()
 
 			m := MACD{source1: c.Source1, source2: c.Source2}
-			assertEqualError(t, c.Error, m.validate())
+			equalError(t, c.Error, m.validate())
 		})
 	}
 }
@@ -1056,7 +1056,7 @@ func Test_MACD_Calc(t *testing.T) {
 
 			m := MACD{source1: c.Source1, source2: c.Source2}
 			res, err := m.Calc(c.Data)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1109,7 +1109,7 @@ func Test_MACD_UnmarshalJSON(t *testing.T) {
 
 			m := MACD{}
 			err := m.UnmarshalJSON([]byte(c.JSON))
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1148,7 +1148,7 @@ func Test_MACD_MarshalJSON(t *testing.T) {
 			t.Parallel()
 
 			d, err := c.MACD.MarshalJSON()
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1187,7 +1187,7 @@ func Test_MACD_namedMarshalJSON(t *testing.T) {
 			t.Parallel()
 
 			d, err := c.MACD.namedMarshalJSON()
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1218,7 +1218,7 @@ func Test_NewROC(t *testing.T) {
 			t.Parallel()
 
 			r, err := NewROC(c.Length)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1248,7 +1248,7 @@ func Test_ROC_validate(t *testing.T) {
 			t.Parallel()
 
 			r := ROC{length: c.Length}
-			assertEqualError(t, c.Error, r.validate())
+			equalError(t, c.Error, r.validate())
 		})
 	}
 }
@@ -1287,7 +1287,7 @@ func Test_ROC_Calc(t *testing.T) {
 
 			r := ROC{length: c.Length}
 			res, err := r.Calc(c.Data)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1329,7 +1329,7 @@ func Test_ROC_UnmarshalJSON(t *testing.T) {
 
 			r := ROC{}
 			err := r.UnmarshalJSON([]byte(c.JSON))
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1376,7 +1376,7 @@ func Test_NewRSI(t *testing.T) {
 			t.Parallel()
 
 			r, err := NewRSI(c.Length)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1406,7 +1406,7 @@ func Test_RSI_validate(t *testing.T) {
 			t.Parallel()
 
 			r := RSI{length: c.Length}
-			assertEqualError(t, c.Error, r.validate())
+			equalError(t, c.Error, r.validate())
 		})
 	}
 }
@@ -1454,7 +1454,7 @@ func Test_RSI_Calc(t *testing.T) {
 
 			r := RSI{length: c.Length}
 			res, err := r.Calc(c.Data)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1496,7 +1496,7 @@ func Test_RSI_UnmarshalJSON(t *testing.T) {
 
 			r := RSI{}
 			err := r.UnmarshalJSON([]byte(c.JSON))
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1543,7 +1543,7 @@ func Test_NewSMA(t *testing.T) {
 			t.Parallel()
 
 			s, err := NewSMA(c.Length)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1573,7 +1573,7 @@ func Test_SMA_validate(t *testing.T) {
 			t.Parallel()
 
 			s := SMA{length: c.Length}
-			assertEqualError(t, c.Error, s.validate())
+			equalError(t, c.Error, s.validate())
 		})
 	}
 }
@@ -1610,7 +1610,7 @@ func Test_SMA_Calc(t *testing.T) {
 
 			s := SMA{length: c.Length}
 			res, err := s.Calc(c.Data)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1652,7 +1652,7 @@ func Test_SMA_UnmarshalJSON(t *testing.T) {
 
 			s := SMA{}
 			err := s.UnmarshalJSON([]byte(c.JSON))
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1699,7 +1699,7 @@ func Test_NewSRSI(t *testing.T) {
 			t.Parallel()
 
 			s, err := NewSRSI(c.RSI)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1732,7 +1732,7 @@ func Test_SRSI_validate(t *testing.T) {
 			t.Parallel()
 
 			s := SRSI{rsi: c.RSI}
-			assertEqualError(t, c.Error, s.validate())
+			equalError(t, c.Error, s.validate())
 		})
 	}
 }
@@ -1780,7 +1780,7 @@ func Test_SRSI_Calc(t *testing.T) {
 
 			s := SRSI{rsi: c.RSI}
 			res, err := s.Calc(c.Data)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1822,7 +1822,7 @@ func Test_SRSI_UnmarshalJSON(t *testing.T) {
 
 			s := SRSI{}
 			err := s.UnmarshalJSON([]byte(c.JSON))
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1869,7 +1869,7 @@ func Test_NewStoch(t *testing.T) {
 			t.Parallel()
 
 			s, err := NewStoch(c.Length)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1899,7 +1899,7 @@ func Test_Stoch_validate(t *testing.T) {
 			t.Parallel()
 
 			s := Stoch{length: c.Length}
-			assertEqualError(t, c.Error, s.validate())
+			equalError(t, c.Error, s.validate())
 		})
 	}
 }
@@ -1945,7 +1945,7 @@ func Test_Stoch_Calc(t *testing.T) {
 
 			s := Stoch{length: c.Length}
 			res, err := s.Calc(c.Data)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -1987,7 +1987,7 @@ func Test_Stoch_UnmarshalJSON(t *testing.T) {
 
 			s := Stoch{}
 			err := s.UnmarshalJSON([]byte(c.JSON))
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -2034,7 +2034,7 @@ func Test_NewWMA(t *testing.T) {
 			t.Parallel()
 
 			w, err := NewWMA(c.Length)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -2064,7 +2064,7 @@ func Test_WMA_validate(t *testing.T) {
 			t.Parallel()
 
 			w := WMA{length: c.Length}
-			assertEqualError(t, c.Error, w.validate())
+			equalError(t, c.Error, w.validate())
 		})
 	}
 }
@@ -2104,7 +2104,7 @@ func Test_WMA_Calc(t *testing.T) {
 
 			w := WMA{length: c.Length}
 			res, err := w.Calc(c.Data)
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
@@ -2146,7 +2146,7 @@ func Test_WMA_UnmarshalJSON(t *testing.T) {
 
 			w := WMA{}
 			err := w.UnmarshalJSON([]byte(c.JSON))
-			assertEqualError(t, c.Error, err)
+			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
