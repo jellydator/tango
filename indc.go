@@ -107,7 +107,7 @@ func (a Aroon) Count() int {
 	return a.length
 }
 
-// UnmarshalJSON parse JSON into an indicator source.
+// UnmarshalJSON parses JSON into aroon structure.
 func (a *Aroon) UnmarshalJSON(d []byte) error {
 	var i struct {
 		T String `json:"trend"`
@@ -128,7 +128,7 @@ func (a *Aroon) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-// MarshalJSON converts Aroon data into byte array.
+// MarshalJSON converts Aroon data into JSON.
 func (a Aroon) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T String `json:"trend"`
@@ -138,7 +138,7 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// namedMarshalJSON converts Aroon data with its name into byte array.
+// namedMarshalJSON converts Aroon data with its name into JSON.
 func (a Aroon) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		N String `json:"name"`

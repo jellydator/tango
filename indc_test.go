@@ -26,10 +26,10 @@ func Test_NewAroon(t *testing.T) {
 		Result Aroon
 		Error  error
 	}{
-		"Successfully Aroon creation returned an error when no parameters were provided": {
+		"Invalid parameters": {
 			Error: assert.AnError,
 		},
-		"Successful creation of Aroon": {
+		"Successful creation": {
 			Trend:  "down",
 			Length: 5,
 			Result: Aroon{trend: "down", length: 5},
@@ -42,37 +42,37 @@ func Test_NewAroon(t *testing.T) {
 			t.Parallel()
 
 			a, err := NewAroon(c.Trend, c.Length)
-			if c.Error != nil {
-				assert.NotNil(t, err)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result, a)
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
 			}
+
+			assert.Equal(t, c.Result, a)
 		})
 	}
 }
 
-func TestAroon_validate(t *testing.T) {
+func Test_Aroon_validate(t *testing.T) {
 	cc := map[string]struct {
 		Trend  String
 		Length int
 		Error  error
 	}{
-		"Successfully Aroon returned an ErrInvalidType with incorrect trend": {
+		"Invalid trend": {
 			Trend:  "downn",
 			Length: 5,
 			Error:  assert.AnError,
 		},
-		"Successfully Aroon returned an ErrInvalidLength with less than 1 length": {
+		"Invalid length": {
 			Trend:  "down",
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
-		"Successful Aroon validation of trend parameter with 'up' trend": {
+		"Successful validation with 'up' trend": {
 			Trend:  "up",
 			Length: 5,
 		},
-		"Successful Aroon validation of trend parameter with 'down' trend": {
+		"Successful validation with 'down' trend": {
 			Trend:  "down",
 			Length: 5,
 		},
@@ -84,21 +84,12 @@ func TestAroon_validate(t *testing.T) {
 			t.Parallel()
 
 			a := Aroon{trend: c.Trend, length: c.Length}
-			err := a.validate()
-			if c.Error != nil {
-				if c.Error == assert.AnError {
-					assert.NotNil(t, err)
-				} else {
-					assert.Equal(t, c.Error, err)
-				}
-			} else {
-				assert.Nil(t, err)
-			}
+			assertEqualError(t, c.Error, a.validate())
 		})
 	}
 }
 
-func TestAroon_Calc(t *testing.T) {
+func Test_Aroon_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Trend  String
 		Length int
@@ -106,7 +97,7 @@ func TestAroon_Calc(t *testing.T) {
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully Aroon returned an ErrInvalidDataSize with insufficient amount of data points": {
+		"Invalid data size": {
 			Trend:  "down",
 			Length: 5,
 			Data: []decimal.Decimal{
@@ -114,7 +105,7 @@ func TestAroon_Calc(t *testing.T) {
 			},
 			Error: ErrInvalidDataSize,
 		},
-		"Successful Aroon calculation with trend parameter set to 'up'": {
+		"Successful calculation with 'up' trend": {
 			Trend:  "up",
 			Length: 5,
 			Data: []decimal.Decimal{
@@ -127,7 +118,7 @@ func TestAroon_Calc(t *testing.T) {
 			},
 			Result: decimal.NewFromFloat(40),
 		},
-		"Successful Aroon calculation with trend parameter set to 'down'": {
+		"Successful calculation with 'down' trend": {
 			Trend:  "down",
 			Length: 5,
 			Data: []decimal.Decimal{
@@ -149,36 +140,36 @@ func TestAroon_Calc(t *testing.T) {
 
 			a := Aroon{trend: c.Trend, length: c.Length}
 			res, err := a.Calc(c.Data)
-			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.String())
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
 			}
+
+			assert.Equal(t, c.Result, res)
 		})
 	}
 }
 
-func TestAroon_Count(t *testing.T) {
+func Test_Aroon_Count(t *testing.T) {
 	a := Aroon{trend: "down", length: 5}
 	assert.Equal(t, 5, a.Count())
 }
 
-func TestAroon_UnmarshalJSON(t *testing.T) {
+func Test_Aroon_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    Aroon
 		Error     error
 	}{
-		"Successfully Aroon unmarshal returned an error": {
+		"Invalid JSON": {
 			ByteArray: []byte(`{\"_"/`),
 			Error:     assert.AnError,
 		},
-		"Successfully Aroon validate returned an error": {
+		"Invalid trend": {
 			ByteArray: []byte(`{"trend":"upp","length":1}`),
 			Error:     assert.AnError,
 		},
-		"Successful unmarshal of an Aroon": {
+		"Successful unmarshal": {
 			ByteArray: []byte(`{"trend":"up","length":1}`),
 			Result:    Aroon{trend: "up", length: 1},
 		},
@@ -191,36 +182,30 @@ func TestAroon_UnmarshalJSON(t *testing.T) {
 
 			a := Aroon{}
 			err := a.UnmarshalJSON(c.ByteArray)
-			if c.Error != nil {
-				if c.Error == assert.AnError {
-					assert.NotNil(t, err)
-				} else {
-					assert.Equal(t, c.Error, err)
-				}
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result, a)
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
 			}
+
+			assert.Equal(t, c.Result, a)
 		})
 	}
 }
 
-func TestAroon_MarshalJSON(t *testing.T) {
+func Test_Aroon_MarshalJSON(t *testing.T) {
 	a := Aroon{trend: "down", length: 1}
-	r := []byte(`{"trend":"down","length":1}`)
+	d, err := a.MarshalJSON()
 
-	d, _ := a.MarshalJSON()
-
-	assert.Equal(t, r, d)
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"trend":"down","length":1}`, string(d))
 }
 
-func TestAroon_namedMarshalJSON(t *testing.T) {
+func Test_Aroon_namedMarshalJSON(t *testing.T) {
 	a := Aroon{trend: "down", length: 1}
-	r := []byte(`{"name":"aroon","trend":"down","length":1}`)
+	d, err := a.namedMarshalJSON()
 
-	d, _ := a.namedMarshalJSON()
-
-	assert.Equal(t, r, d)
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"name":"aroon","trend":"down","length":1}`, string(d))
 }
 
 func Test_NewCCI(t *testing.T) {
@@ -229,10 +214,10 @@ func Test_NewCCI(t *testing.T) {
 		Result CCI
 		Error  error
 	}{
-		"Successfully CCI creation returned an error when no parameters were provided": {
+		"Invalid parameters": {
 			Error: assert.AnError,
 		},
-		"Successful creation of CCI": {
+		"Successful creation": {
 			Source: Aroon{trend: "down", length: 1},
 			Result: CCI{source: Aroon{trend: "down", length: 1}},
 		},
@@ -244,25 +229,25 @@ func Test_NewCCI(t *testing.T) {
 			t.Parallel()
 
 			cci, err := NewCCI(c.Source)
-			if c.Error != nil {
-				assert.NotNil(t, err)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result, cci)
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
 			}
+
+			assert.Equal(t, c.Result, cci)
 		})
 	}
 }
 
-func TestCCI_validate(t *testing.T) {
+func Test_CCI_validate(t *testing.T) {
 	cc := map[string]struct {
 		Source Indicator
 		Error  error
 	}{
-		"Successfully CCI returned an error when invalid source was provided": {
+		"Invalid source": {
 			Error: ErrInvalidSource,
 		},
-		"Successful CCI validation": {
+		"Successful validation": {
 			Source: Aroon{trend: "down", length: 1},
 		},
 	}
@@ -273,42 +258,33 @@ func TestCCI_validate(t *testing.T) {
 			t.Parallel()
 
 			cci := CCI{source: c.Source}
-			err := cci.validate()
-			if c.Error != nil {
-				if c.Error == assert.AnError {
-					assert.NotNil(t, err)
-				} else {
-					assert.Equal(t, c.Error, err)
-				}
-			} else {
-				assert.Nil(t, err)
-			}
+			assertEqualError(t, c.Error, cci.validate())
 		})
 	}
 }
 
-func TestCCI_Calc(t *testing.T) {
+func Test_CCI_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Source Indicator
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully CCI returned an ErrInvalidDataSize with insufficient amount of data points": {
+		"Invalid data size": {
 			Source: EMA{length: 10},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
-		"Successfully CCI source returned an error": {
+		"Error returned by the source": {
 			Source: IndicatorMock{},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: assert.AnError,
 		},
-		"Successful CCI calculation with given source": {
+		"Successful calculation": {
 			Source: SMA{length: 20},
 			Data: []decimal.Decimal{
 				decimal.NewFromFloat(23.98),
@@ -343,40 +319,36 @@ func TestCCI_Calc(t *testing.T) {
 
 			cci := CCI{source: c.Source}
 			res, err := cci.Calc(c.Data)
-			if c.Error != nil {
-				if c.Error == assert.AnError {
-					assert.NotNil(t, err)
-				} else {
-					assert.Equal(t, c.Error, err)
-				}
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.Round(14).String())
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
 			}
+
+			assert.Equal(t, c.Result, res.Round(14))
 		})
 	}
 }
 
-func TestCCI_Count(t *testing.T) {
+func Test_CCI_Count(t *testing.T) {
 	c := CCI{source: Aroon{trend: "down", length: 10}}
 	assert.Equal(t, c.source.Count(), c.Count())
 }
 
-func TestCCI_UnmarshalJSON(t *testing.T) {
+func Test_CCI_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    CCI
 		Error     error
 	}{
-		"Successfully CCI unmarshal returned an error": {
+		"Invalid JSON": {
 			ByteArray: []byte(`{\-_-/}`),
 			Error:     assert.AnError,
 		},
-		"Successfully CCI fromJSON returned an error": {
+		"Error returned during source parsing": {
 			ByteArray: []byte(`{"trend":"up"}`),
 			Error:     assert.AnError,
 		},
-		"Successful CCI unmarshal": {
+		"Successful CCI": {
 			ByteArray: []byte(`{"source":{"name":"aroon","trend":"up","length":1}}`),
 			Result:    CCI{Aroon{trend: "up", length: 1}},
 		},
@@ -389,29 +361,29 @@ func TestCCI_UnmarshalJSON(t *testing.T) {
 
 			cci := CCI{}
 			err := cci.UnmarshalJSON(c.ByteArray)
-			if c.Error != nil {
-				assert.NotNil(t, err)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result, cci)
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
 			}
+
+			assert.Equal(t, c.Result, cci)
 		})
 	}
 }
 
-func TestCCI_MarshalJSON(t *testing.T) {
+func Test_CCI_MarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		CCI    CCI
-		Result []byte
+		Result string
 		Error  error
 	}{
-		"Successfully CCI source marshal returned an error": {
+		"Error returned during source marshalling": {
 			CCI:   CCI{source: IndicatorMock{}},
 			Error: assert.AnError,
 		},
-		"Successful CCI unmarshal": {
+		"Successful CCI": {
 			CCI:    CCI{source: Aroon{trend: "down", length: 1}},
-			Result: []byte(`{"source":{"name":"aroon","trend":"down","length":1}}`),
+			Result: `{"source":{"name":"aroon","trend":"down","length":1}}`,
 		},
 	}
 
@@ -421,29 +393,29 @@ func TestCCI_MarshalJSON(t *testing.T) {
 			t.Parallel()
 
 			d, err := c.CCI.MarshalJSON()
-			if c.Error != nil {
-				assert.NotNil(t, err)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result, d)
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
 			}
+
+			assert.JSONEq(t, c.Result, string(d))
 		})
 	}
 }
 
-func TestCCI_namedMarshalJSON(t *testing.T) {
+func Test_CCI_namedMarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		CCI    CCI
-		Result []byte
+		Result string
 		Error  error
 	}{
-		"Successfully CCI source marshal returned an error": {
+		"Error returned during source marshalling": {
 			CCI:   CCI{source: IndicatorMock{}},
 			Error: assert.AnError,
 		},
-		"Successful CCI unmarshal": {
+		"Successful CCI": {
 			CCI:    CCI{source: Aroon{trend: "down", length: 1}},
-			Result: []byte(`{"name":"cci","source":{"name":"aroon","trend":"down","length":1}}`),
+			Result: `{"name":"cci","source":{"name":"aroon","trend":"down","length":1}}`,
 		},
 	}
 
@@ -453,12 +425,12 @@ func TestCCI_namedMarshalJSON(t *testing.T) {
 			t.Parallel()
 
 			d, err := c.CCI.namedMarshalJSON()
-			if c.Error != nil {
-				assert.NotNil(t, err)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result, d)
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
 			}
+
+			assert.JSONEq(t, c.Result, string(d))
 		})
 	}
 }
@@ -469,10 +441,10 @@ func Test_NewDEMA(t *testing.T) {
 		Result DEMA
 		Error  error
 	}{
-		"Successfully DEMA returned an error when no parameters were provided": {
+		"Invalid parameters": {
 			Error: assert.AnError,
 		},
-		"Successful creation of DEMA": {
+		"Successful creation": {
 			Length: 1,
 			Result: DEMA{length: 1},
 		},
@@ -484,26 +456,26 @@ func Test_NewDEMA(t *testing.T) {
 			t.Parallel()
 
 			dm, err := NewDEMA(c.Length)
-			if c.Error != nil {
-				assert.NotNil(t, err)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result, dm)
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
 			}
+
+			assert.Equal(t, c.Result, dm)
 		})
 	}
 }
 
-func TestDEMA_validate(t *testing.T) {
+func Test_DEMA_validate(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Error  error
 	}{
-		"Successfully DEMA returned an ErrInvalidLength with less than 1 length": {
+		"Invalid length": {
 			Length: 0,
 			Error:  ErrInvalidLength,
 		},
-		"Successful DEMA validation": {
+		"Successful validation": {
 			Length: 1,
 		},
 	}
@@ -514,31 +486,26 @@ func TestDEMA_validate(t *testing.T) {
 			t.Parallel()
 
 			d := DEMA{length: c.Length}
-			err := d.validate()
-			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-			} else {
-				assert.Nil(t, err)
-			}
+			assertEqualError(t, c.Error, d.validate())
 		})
 	}
 }
 
-func TestDEMA_Calc(t *testing.T) {
+func Test_DEMA_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Length int
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
-		"Successfully DEMA returned an ErrInvalidDataSize with insufficient amount of data points": {
+		"Invalid data size": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
-		"Successful DEMA calculation": {
+		"Successful calculation": {
 			Length: 2,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
@@ -559,36 +526,36 @@ func TestDEMA_Calc(t *testing.T) {
 
 			d := DEMA{length: c.Length}
 			res, err := d.Calc(c.Data)
-			if c.Error != nil {
-				assert.Equal(t, c.Error, err)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result.String(), res.Round(14).String())
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
 			}
+
+			assert.Equal(t, c.Result, res.Round(14))
 		})
 	}
 }
 
-func TestDEMA_Count(t *testing.T) {
+func Test_DEMA_Count(t *testing.T) {
 	d := DEMA{length: 15}
 	assert.Equal(t, 29, d.Count())
 }
 
-func TestDEMA_UnmarshalJSON(t *testing.T) {
+func Test_DEMA_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		ByteArray []byte
 		Result    DEMA
 		Error     error
 	}{
-		"Successfully DEMA unmarshal returned an error": {
+		"Invalid JSON": {
 			ByteArray: []byte(`{\"_"/`),
 			Error:     assert.AnError,
 		},
-		"Successfully DEMA validate returned an error": {
+		"Invalid length": {
 			ByteArray: []byte(`{"length":0}`),
 			Error:     assert.AnError,
 		},
-		"Successful unmarshal of a DEMA": {
+		"Successful unmarshal": {
 			ByteArray: []byte(`{"length":1}`),
 			Result:    DEMA{length: 1},
 		},
@@ -601,32 +568,30 @@ func TestDEMA_UnmarshalJSON(t *testing.T) {
 
 			dm := DEMA{}
 			err := dm.UnmarshalJSON(c.ByteArray)
-			if c.Error != nil {
-				assert.NotNil(t, err)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result, dm)
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
 			}
+
+			assert.Equal(t, c.Result, dm)
 		})
 	}
 }
 
-func TestDEMA_MarshalJSON(t *testing.T) {
+func Test_DEMA_MarshalJSON(t *testing.T) {
 	dm := DEMA{length: 1}
-	r := []byte(`{"length":1}`)
+	d, err := dm.MarshalJSON()
 
-	d, _ := dm.MarshalJSON()
-
-	assert.Equal(t, r, d)
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"length":1}`, string(d))
 }
 
-func TestDEMA_namedMarshalJSON(t *testing.T) {
+func Test_DEMA_namedMarshalJSON(t *testing.T) {
 	dm := DEMA{length: 1}
-	r := []byte(`{"name":"dema","length":1}`)
+	d, err := dm.namedMarshalJSON()
 
-	d, _ := dm.namedMarshalJSON()
-
-	assert.Equal(t, r, d)
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"name":"dema","length":1}`, string(d))
 }
 
 func Test_NewEMA(t *testing.T) {
