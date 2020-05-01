@@ -9,12 +9,40 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func assertEqualError(t *testing.T, exp, err error) {
+	if exp != nil {
+		if exp == assert.AnError {
+			assert.Error(t, err)
+			return
+		}
+
+		assert.Equal(t, exp, err)
+		return
+	}
+
+	assert.NoError(t, err)
+}
+
 func Test_CleanString(t *testing.T) {
 	var e String
 	e = "aroon"
 	r := CleanString(" aRooN ")
 	assert.Equal(t, e, r)
 }
+
+func Test_String_UnmarshalText(t *testing.T) {
+	var s String
+	assert.NoError(t, s.UnmarshalText([]byte("   TEST       ")))
+	assert.Equal(t, "test", string(s))
+}
+
+func Test_String_MarshalText(t *testing.T) {
+	var s String = "test"
+	v, err := s.MarshalText()
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("test"), v)
+}
+
 func Test_resize(t *testing.T) {
 	cc := map[string]struct {
 		Length int
@@ -22,14 +50,14 @@ func Test_resize(t *testing.T) {
 		Result []decimal.Decimal
 		Error  error
 	}{
-		"Successfully resize returned an ErrInvalidDataSize with insufficient amount of data points": {
+		"Invalid data size": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
-		"Successfully resize returned unchanged list with length less than 1": {
+		"Unmodified slice returned when length is 1": {
 			Length: 0,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
@@ -38,7 +66,7 @@ func Test_resize(t *testing.T) {
 				decimal.NewFromInt(30),
 			},
 		},
-		"Successful resize computation": {
+		"Successful computation": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
@@ -62,17 +90,13 @@ func Test_resize(t *testing.T) {
 			t.Parallel()
 
 			res, err := resize(c.Data, c.Length)
-			if c.Error != nil {
-				if c.Error == assert.AnError {
-					assert.NotNil(t, err)
-				} else {
-					assert.Equal(t, c.Error, err)
-				}
-			} else {
-				assert.Nil(t, err)
-				for i := 0; i < len(c.Result); i++ {
-					assert.Equal(t, c.Result[i].Round(8), res[i].Round(8))
-				}
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
+			}
+
+			for i := 0; i < len(c.Result); i++ {
+				assert.Equal(t, c.Result[i].Round(8), res[i].Round(8))
 			}
 		})
 	}
@@ -85,14 +109,14 @@ func Test_resizeCandles(t *testing.T) {
 		Result []chartype.Candle
 		Error  error
 	}{
-		"Successfully resizeCandles returned an ErrInvalidDataSize with insufficient amount of data points": {
+		"Invalid data size": {
 			Length: 3,
 			Data: []chartype.Candle{
 				{Close: decimal.NewFromInt(30)},
 			},
 			Error: ErrInvalidDataSize,
 		},
-		"Successfully resizeCandles returned unchanged list with length less than 1": {
+		"Unmodified slice returned when length is 1": {
 			Length: 0,
 			Data: []chartype.Candle{
 				{Close: decimal.NewFromInt(30)},
@@ -101,7 +125,7 @@ func Test_resizeCandles(t *testing.T) {
 				{Close: decimal.NewFromInt(30)},
 			},
 		},
-		"Successful resizeCandles computation": {
+		"Successful computation": {
 			Length: 3,
 			Data: []chartype.Candle{
 				{Close: decimal.NewFromInt(30)},
@@ -125,17 +149,13 @@ func Test_resizeCandles(t *testing.T) {
 			t.Parallel()
 
 			res, err := resizeCandles(c.Data, c.Length)
-			if c.Error != nil {
-				if c.Error == assert.AnError {
-					assert.NotNil(t, err)
-				} else {
-					assert.Equal(t, c.Error, err)
-				}
-			} else {
-				assert.Nil(t, err)
-				for i := 0; i < len(c.Result); i++ {
-					assert.Equal(t, c.Result[i].Close.Round(8), res[i].Close.Round(8))
-				}
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
+			}
+
+			for i := 0; i < len(c.Result); i++ {
+				assert.Equal(t, c.Result[i].Close.Round(8), res[i].Close.Round(8))
 			}
 		})
 	}
@@ -146,7 +166,7 @@ func Test_typicalPrice(t *testing.T) {
 		Data   []chartype.Candle
 		Result []decimal.Decimal
 	}{
-		"Successful typical price calculation": {
+		"Successful calculation": {
 			Data: []chartype.Candle{
 				{High: decimal.NewFromFloat(24.2), Low: decimal.NewFromFloat(23.85), Close: decimal.NewFromFloat(23.89)},
 				{High: decimal.NewFromFloat(24.07), Low: decimal.NewFromFloat(23.72), Close: decimal.NewFromFloat(23.95)},
@@ -179,7 +199,7 @@ func Test_meanDeviation(t *testing.T) {
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 	}{
-		"Successful mean deviation calculation": {
+		"Successful calculation": {
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(2),
 				decimal.NewFromInt(5),
@@ -212,7 +232,7 @@ func Test_calcMultiple(t *testing.T) {
 		Result    []decimal.Decimal
 		Error     error
 	}{
-		"Successfully calcMultiple returned an ErrInvalidDataSize with insufficient amount of data points": {
+		"Invalid data size": {
 			Indicator: SMA{length: 2},
 			Amount:    1,
 			Data: []decimal.Decimal{
@@ -220,7 +240,7 @@ func Test_calcMultiple(t *testing.T) {
 			},
 			Error: ErrInvalidDataSize,
 		},
-		"Successfully calcMultiple indicator returned an error": {
+		"Error returned by Indicator": {
 			Indicator: IndicatorMock{},
 			Amount:    1,
 			Data: []decimal.Decimal{
@@ -228,7 +248,7 @@ func Test_calcMultiple(t *testing.T) {
 			},
 			Error: assert.AnError,
 		},
-		"Successful calcMultiple calculation with amount less than 1": {
+		"Successful calculation with amount less than 1": {
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(2),
 				decimal.NewFromInt(3),
@@ -241,7 +261,7 @@ func Test_calcMultiple(t *testing.T) {
 			Indicator: SMA{length: 2},
 			Result:    []decimal.Decimal{},
 		},
-		"Successful calcMultiple calculation with amount more than 1": {
+		"Successful calculation with amount more than 1": {
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(2),
 				decimal.NewFromInt(3),
@@ -266,19 +286,13 @@ func Test_calcMultiple(t *testing.T) {
 			t.Parallel()
 
 			res, err := calcMultiple(c.Data, c.Amount, c.Indicator)
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-			if c.Error != nil {
-				if c.Error == assert.AnError {
-					assert.NotNil(t, err)
-				} else {
-					assert.Equal(t, c.Error, err)
-				}
-			} else {
-				assert.Nil(t, err)
-
-				for i := 0; i < len(c.Result); i++ {
-					assert.Equal(t, c.Result[i].Round(8), res[i].Round(8))
-				}
+			for i := 0; i < len(c.Result); i++ {
+				assert.Equal(t, c.Result[i].Round(8), res[i].Round(8))
 			}
 		})
 	}
@@ -290,65 +304,65 @@ func Test_fromJSON(t *testing.T) {
 		Result    Indicator
 		Error     error
 	}{
-		"Successful creation of an Aroon indicator": {
+		"Invalid JSON": {
+			ByteArray: []byte(`{\"_"/`),
+			Error:     assert.AnError,
+		},
+		"Invalid source name": {
+			ByteArray: []byte(`{"name":"aa"}`),
+			Error:     ErrInvalidSource,
+		},
+		"Successful creation of Aroon": {
 			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1}`),
 			Result:    Aroon{trend: "up", length: 1},
 		},
-		"Successful creation of a CCI indicator": {
+		"Successful creation of CCI": {
 			ByteArray: []byte(`{"name":"cci",
 			"source":{"name":"aroon","trend":"up","length":1}}`),
 			Result: CCI{Aroon{trend: "up", length: 1}},
 		},
-		"Successful creation of a DEMA indicator": {
+		"Successful creation of DEMA": {
 			ByteArray: []byte(`{"name":"dema","length":1}`),
 			Result:    DEMA{length: 1},
 		},
-		"Successful creation of an EMA indicator": {
+		"Successful creation of EMA": {
 			ByteArray: []byte(`{"name":"ema","length":1}`),
 			Result:    EMA{length: 1},
 		},
-		"Successful creation of a HMA indicator": {
+		"Successful creation of HMA": {
 			ByteArray: []byte(`{"name":"hma", "wma":{"name":"wma","length":1}}`),
 			Result:    HMA{wma: WMA{length: 1}},
 		},
-		"Successful creation of a MACD indicator": {
+		"Successful creation of MACD": {
 			ByteArray: []byte(`{"name":"macd",
 			"source1":{"name":"aroon","trend":"down","length":2},
 			"source2":{"name":"cci","source":{"name":"ema", "length":2}}}`),
 			Result: MACD{Aroon{trend: "down", length: 2},
 				CCI{EMA{length: 2}}},
 		},
-		"Successful creation of a ROC indicator": {
+		"Successful creation of ROC": {
 			ByteArray: []byte(`{"name":"roc","length":1}`),
 			Result:    ROC{length: 1},
 		},
-		"Successful creation of a RSI indicator": {
+		"Successful creation of RSI": {
 			ByteArray: []byte(`{"name":"rsi","length":1}`),
 			Result:    RSI{length: 1},
 		},
-		"Successful creation of a SMA indicator": {
+		"Successful creation of SMA": {
 			ByteArray: []byte(`{"name":"sma","length":1}`),
 			Result:    SMA{length: 1},
 		},
-		"Successful creation of a SRSI indicator": {
+		"Successful creation of SRSI": {
 			ByteArray: []byte(`{"name":"srsi", "rsi":{"name":"rsi","length":1}}`),
 			Result:    SRSI{rsi: RSI{length: 1}},
 		},
-		"Successful creation of a Stoch indicator": {
+		"Successful creation of Stoch": {
 			ByteArray: []byte(`{"name":"stoch","length":1}`),
 			Result:    Stoch{length: 1},
 		},
-		"Successful creation of an WMA indicator": {
+		"Successful creation of WMA": {
 			ByteArray: []byte(`{"name":"wma","length":1}`),
 			Result:    WMA{length: 1},
-		},
-		"Successfully fromJSON JSON unmarshal returned an error": {
-			ByteArray: []byte(`{\"_"/`),
-			Error:     assert.AnError,
-		},
-		"Successfully fromJSON returned an ErrInvalidDataPointCount with invalid source name": {
-			ByteArray: []byte(`{"name":"aa"}`),
-			Error:     ErrInvalidSource,
 		},
 	}
 
@@ -358,16 +372,12 @@ func Test_fromJSON(t *testing.T) {
 			t.Parallel()
 
 			res, err := fromJSON(c.ByteArray)
-			if c.Error != nil {
-				if c.Error == assert.AnError {
-					assert.NotNil(t, err)
-				} else {
-					assert.Equal(t, c.Error, err)
-				}
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, c.Result, res)
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
 			}
+
+			assert.Equal(t, c.Result, res)
 		})
 	}
 }
