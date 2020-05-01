@@ -1139,6 +1139,7 @@ func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		if dd[i].LessThan(l) {
 			l = dd[i]
 		}
+
 		if dd[i].GreaterThan(h) {
 			h = dd[i]
 		}
