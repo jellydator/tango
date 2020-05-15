@@ -8,22 +8,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// Names of all available indicators.
-const (
-	NameAroon = "aroon"
-	NameCCI   = "cci"
-	NameDEMA  = "dema"
-	NameEMA   = "ema"
-	NameMACD  = "macd"
-	NameHMA   = "hma"
-	NameROC   = "roc"
-	NameRSI   = "rsi"
-	NameSMA   = "sma"
-	NameSRSI  = "srsi"
-	NameStoch = "stoch"
-	NameWMA   = "wma"
-)
-
 // Indicator is an interface that every indicator should implement.
 type Indicator interface {
 	// Calc should calculate and return indicator's value.
@@ -37,6 +21,9 @@ type Indicator interface {
 	// their names.
 	namedMarshalJSON() ([]byte, error)
 }
+
+// NameAroon returns Aroon indicator name.
+const NameAroon = "aroon"
 
 // Aroon holds all the neccesary information needed to calculate aroon.
 type Aroon struct {
@@ -151,6 +138,9 @@ func (a Aroon) namedMarshalJSON() ([]byte, error) {
 	})
 }
 
+// NameCCI returns CCI indicator name.
+const NameCCI = "cci"
+
 // CCI holds all the neccesary information needed to calculate commodity
 // channel index.
 type CCI struct {
@@ -252,6 +242,9 @@ func (c CCI) namedMarshalJSON() ([]byte, error) {
 	})
 }
 
+// NameDEMA returns DEMA indicator name.
+const NameDEMA = "dema"
+
 // DEMA holds all the neccesary information needed to calculate
 // double exponential moving average.
 type DEMA struct {
@@ -352,6 +345,9 @@ func (dm DEMA) namedMarshalJSON() ([]byte, error) {
 		L: dm.length,
 	})
 }
+
+// NameEMA returns EMA indicator name.
+const NameEMA = "ema"
 
 // EMA holds all the neccesary information needed to calculate exponential
 // moving average.
@@ -455,6 +451,9 @@ func (e EMA) namedMarshalJSON() ([]byte, error) {
 		L: e.length,
 	})
 }
+
+// NameHMA returns HMA indicator name.
+const NameHMA = "hma"
 
 // HMA holds all the neccesary information needed to calculate
 // hull moving average.
@@ -564,6 +563,9 @@ func (h HMA) namedMarshalJSON() ([]byte, error) {
 		WMA: h.wma,
 	})
 }
+
+// NameMACD returns MACD indicator name.
+const NameMACD = "macd"
 
 // MACD holds all the neccesary information needed to calculate
 // difference between two source indicators.
@@ -705,6 +707,9 @@ func (m MACD) namedMarshalJSON() ([]byte, error) {
 	})
 }
 
+// NameROC returns ROC indicator name.
+const NameROC = "roc"
+
 // ROC holds all the neccesary information needed to calculate rate
 // of change.
 type ROC struct {
@@ -791,6 +796,9 @@ func (r ROC) namedMarshalJSON() ([]byte, error) {
 		L: r.length,
 	})
 }
+
+// NameRSI returns RSI indicator name.
+const NameRSI = "rsi"
 
 // RSI holds all the neccesary information needed to calculate relative
 // strength index.
@@ -900,6 +908,9 @@ func (r RSI) namedMarshalJSON() ([]byte, error) {
 	})
 }
 
+// NameSMA returns SMA indicator name.
+const NameSMA = "sma"
+
 // SMA holds all the neccesary information needed to calculate simple
 // moving average.
 type SMA struct {
@@ -989,6 +1000,9 @@ func (s SMA) namedMarshalJSON() ([]byte, error) {
 		L: s.length,
 	})
 }
+
+// NameSRSI returns SRSI indicator name.
+const NameSRSI = "srsi"
 
 // SRSI holds all the neccesary information needed to calculate stoch
 // relative strength index.
@@ -1095,6 +1109,9 @@ func (s SRSI) namedMarshalJSON() ([]byte, error) {
 	})
 }
 
+// NameStoch returns Stoch  indicator name.
+const NameStoch = "stoch"
+
 // Stoch holds all the neccesary information needed to calculate stochastic
 // oscillator.
 type Stoch struct {
@@ -1191,6 +1208,9 @@ func (s Stoch) namedMarshalJSON() ([]byte, error) {
 		L: s.length,
 	})
 }
+
+// NameWMA returns WMA  indicator name.
+const NameWMA = "wma"
 
 // WMA holds all the neccesary information needed to calculate weighted
 // moving average.
