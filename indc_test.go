@@ -89,6 +89,16 @@ func Test_Aroon_validate(t *testing.T) {
 	}
 }
 
+func Test_Aroon_Length(t *testing.T) {
+	a := Aroon{length: 1}
+	assert.Equal(t, 1, a.Length())
+}
+
+func Test_Aroon_Trend(t *testing.T) {
+	a := Aroon{trend: CleanString("up")}
+	assert.Equal(t, CleanString("up"), a.Trend())
+}
+
 func Test_Aroon_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Trend  String
@@ -237,6 +247,11 @@ func Test_NewCCI(t *testing.T) {
 			assert.Equal(t, c.Result, cci)
 		})
 	}
+}
+
+func Test_CCI_Sub(t *testing.T) {
+	c := CCI{source: IndicatorMock{}}
+	assert.Equal(t, IndicatorMock{}, c.Sub())
 }
 
 func Test_CCI_validate(t *testing.T) {
@@ -466,6 +481,11 @@ func Test_NewDEMA(t *testing.T) {
 	}
 }
 
+func Test_DEMA_Length(t *testing.T) {
+	dm := DEMA{length: 1}
+	assert.Equal(t, 1, dm.Length())
+}
+
 func Test_DEMA_validate(t *testing.T) {
 	cc := map[string]struct {
 		Length int
@@ -623,6 +643,11 @@ func Test_NewEMA(t *testing.T) {
 			assert.Equal(t, c.Result, e)
 		})
 	}
+}
+
+func Test_EMA_Length(t *testing.T) {
+	e := EMA{length: 1}
+	assert.Equal(t, 1, e.Length())
 }
 
 func Test_EMA_validate(t *testing.T) {
@@ -789,6 +814,11 @@ func Test_NewHMA(t *testing.T) {
 	}
 }
 
+func Test_HMA_WMA(t *testing.T) {
+	h := HMA{wma: WMA{length: 1}}
+	assert.Equal(t, WMA{length: 1}, h.WMA())
+}
+
 func Test_HMA_validate(t *testing.T) {
 	cc := map[string]struct {
 		WMA   WMA
@@ -951,6 +981,16 @@ func Test_NewMACD(t *testing.T) {
 			assert.Equal(t, c.Result, m)
 		})
 	}
+}
+
+func Test_MACD_Sub1(t *testing.T) {
+	m := MACD{source1: EMA{length: 1}, source2: IndicatorMock{}}
+	assert.Equal(t, EMA{length: 1}, m.Sub1())
+}
+
+func Test_MACD_Sub2(t *testing.T) {
+	m := MACD{source1: IndicatorMock{}, source2: EMA{length: 1}}
+	assert.Equal(t, EMA{length: 1}, m.Sub2())
 }
 
 func Test_MACD_validate(t *testing.T) {
@@ -1228,6 +1268,11 @@ func Test_NewROC(t *testing.T) {
 	}
 }
 
+func Test_ROC_Length(t *testing.T) {
+	r := ROC{length: 1}
+	assert.Equal(t, 1, r.Length())
+}
+
 func Test_ROC_validate(t *testing.T) {
 	cc := map[string]struct {
 		Length int
@@ -1384,6 +1429,11 @@ func Test_NewRSI(t *testing.T) {
 			assert.Equal(t, c.Result, r)
 		})
 	}
+}
+
+func Test_RSI_Length(t *testing.T) {
+	r := RSI{length: 1}
+	assert.Equal(t, 1, r.Length())
 }
 
 func Test_RSI_validate(t *testing.T) {
@@ -1553,6 +1603,11 @@ func Test_NewSMA(t *testing.T) {
 	}
 }
 
+func Test_SMA_Length(t *testing.T) {
+	s := SMA{length: 1}
+	assert.Equal(t, 1, s.Length())
+}
+
 func Test_SMA_validate(t *testing.T) {
 	cc := map[string]struct {
 		Length int
@@ -1707,6 +1762,11 @@ func Test_NewSRSI(t *testing.T) {
 			assert.Equal(t, c.Result, s)
 		})
 	}
+}
+
+func Test_SRSI_RSI(t *testing.T) {
+	s := SRSI{rsi: RSI{length: 1}}
+	assert.Equal(t, RSI{length: 1}, s.RSI())
 }
 
 func Test_SRSI_validate(t *testing.T) {
@@ -1879,6 +1939,11 @@ func Test_NewStoch(t *testing.T) {
 	}
 }
 
+func Test_Stoch_Length(t *testing.T) {
+	s := Stoch{length: 1}
+	assert.Equal(t, 1, s.Length())
+}
+
 func Test_Stoch_validate(t *testing.T) {
 	cc := map[string]struct {
 		Length int
@@ -2042,6 +2107,11 @@ func Test_NewWMA(t *testing.T) {
 			assert.Equal(t, c.Result, w)
 		})
 	}
+}
+
+func Test_WMA_Length(t *testing.T) {
+	w := WMA{length: 1}
+	assert.Equal(t, 1, w.Length())
 }
 
 func Test_WMA_validate(t *testing.T) {
