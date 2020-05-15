@@ -48,6 +48,16 @@ func NewAroon(trend String, length int) (Aroon, error) {
 	return a, nil
 }
 
+// Length returns length configuration option.
+func (a Aroon) Length() int {
+	return a.length
+}
+
+// Trend returns trend configuration option.
+func (a Aroon) Trend() String {
+	return a.trend
+}
+
 // validate checks all Aroon parameters stored in func receiver to
 // make sure that they're matching their requirements.
 func (a Aroon) validate() error {
@@ -160,6 +170,11 @@ func NewCCI(source Indicator) (CCI, error) {
 	return c, nil
 }
 
+// Sub returns source configuration option.
+func (c CCI) Sub() Indicator {
+	return c.source
+}
+
 // validate checks all CCI parameters stored in func receiver to make sure that
 // they're matching their requirements.
 func (c CCI) validate() error {
@@ -263,6 +278,11 @@ func NewDEMA(length int) (DEMA, error) {
 	}
 
 	return d, nil
+}
+
+// Length returns length configuration option.
+func (dm DEMA) Length() int {
+	return dm.length
 }
 
 // Validate checks all DEMA parameters stored in func receiver to
@@ -369,6 +389,11 @@ func NewEMA(length int) (EMA, error) {
 	return e, nil
 }
 
+// Length returns length configuration option.
+func (e EMA) Length() int {
+	return e.length
+}
+
 // Validate checks all EMA parameters stored in func receiver to make sure that
 // they're matching their requirements.
 func (e EMA) validate() error {
@@ -472,6 +497,11 @@ func NewHMA(w WMA) (HMA, error) {
 	}
 
 	return h, nil
+}
+
+// WMA returns wma configuration option.
+func (h HMA) WMA() WMA {
+	return h.wma
 }
 
 // validate checks all HMA parameters stored in func receiver to make sure that
@@ -589,6 +619,16 @@ func NewMACD(source1, source2 Indicator) (MACD, error) {
 	}
 
 	return m, nil
+}
+
+// Sub1 returns source1 configuration option.
+func (m MACD) Sub1() Indicator {
+	return m.source1
+}
+
+// Sub2 returns source2 configuration option.
+func (m MACD) Sub2() Indicator {
+	return m.source2
 }
 
 // validate checks all MACD parameters stored in func receiver
@@ -730,6 +770,11 @@ func NewROC(length int) (ROC, error) {
 	return r, nil
 }
 
+// Length returns length configuration option.
+func (r ROC) Length() int {
+	return r.length
+}
+
 // Validate checks all ROC parameters stored in func receiver to make sure that
 // they're matching their requirements.
 func (r ROC) validate() error {
@@ -818,6 +863,11 @@ func NewRSI(length int) (RSI, error) {
 	}
 
 	return r, nil
+}
+
+// Length returns length configuration option.
+func (r RSI) Length() int {
+	return r.length
 }
 
 // Validate checks all RSI parameters stored in func receiver to make sure that
@@ -931,6 +981,11 @@ func NewSMA(length int) (SMA, error) {
 	return s, nil
 }
 
+// Length returns length configuration option.
+func (s SMA) Length() int {
+	return s.length
+}
+
 // validate checks all SMA parameters stored in func receiver to make sure that
 // they're matching their requirements.
 func (s SMA) validate() error {
@@ -1021,6 +1076,11 @@ func NewSRSI(r RSI) (SRSI, error) {
 	}
 
 	return s, nil
+}
+
+// RSI returns rsi configuration option.
+func (s SRSI) RSI() RSI {
+	return s.rsi
 }
 
 // validate checks all SRSI parameters stored in func receiver to make sure that
@@ -1132,6 +1192,11 @@ func NewStoch(length int) (Stoch, error) {
 	return s, nil
 }
 
+// Length returns length configuration option.
+func (s Stoch) Length() int {
+	return s.length
+}
+
 // Validate checks all stochastic parameters stored in func receiver to make
 // sure that they're matching their requirements.
 func (s Stoch) validate() error {
@@ -1230,6 +1295,11 @@ func NewWMA(length int) (WMA, error) {
 	}
 
 	return w, nil
+}
+
+// Length returns length configuration option.
+func (w WMA) Length() int {
+	return w.length
 }
 
 // Validate checks all WMA parameters stored in func receiver to make sure that
