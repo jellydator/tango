@@ -32,11 +32,11 @@ func CleanString(s string) String {
 
 // UnmarshalText parses String from a string form input (works with JSON, etc).
 func (s *String) UnmarshalText(d []byte) error {
-	*s = String(CleanString(string(d)))
+	*s = CleanString(string(d))
 	return nil
 }
 
-// MarshalText converts String to a string ouput (works with JSON, etc).
+// MarshalText converts String to a string output (works with JSON, etc).
 func (s String) MarshalText() ([]byte, error) {
 	return []byte(s), nil
 }
@@ -69,7 +69,7 @@ func resizeCandles(cc []chartype.Candle, length int) ([]chartype.Candle, error) 
 	return cc[len(cc)-length:], nil
 }
 
-// typicalPrice recalculates array of candles into an array of typical prices
+// typicalPrice recalculates array of candles into an array of typical prices.
 func typicalPrice(cc []chartype.Candle) []decimal.Decimal {
 	tp := make([]decimal.Decimal, len(cc))
 
@@ -80,7 +80,7 @@ func typicalPrice(cc []chartype.Candle) []decimal.Decimal {
 	return tp
 }
 
-// meanDeviation calculates mean deviation of given array
+// meanDeviation calculates mean deviation of given array.
 func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	s := decimal.Zero
 	rez := decimal.Zero
@@ -105,7 +105,6 @@ func calcMultiple(dd []decimal.Decimal, a int, s Indicator) ([]decimal.Decimal, 
 	}
 
 	dd, err := resize(dd, s.Count()+a-1)
-
 	if err != nil {
 		return nil, ErrInvalidDataSize
 	}
@@ -136,50 +135,62 @@ func fromJSON(d []byte) (Indicator, error) {
 	case NameAroon:
 		a := Aroon{}
 		err := json.Unmarshal(d, &a)
+
 		return a, err
 	case NameCCI:
 		c := CCI{}
 		err := json.Unmarshal(d, &c)
+
 		return c, err
 	case NameDEMA:
 		dm := DEMA{}
 		err := json.Unmarshal(d, &dm)
+
 		return dm, err
 	case NameEMA:
 		e := EMA{}
 		err := json.Unmarshal(d, &e)
+
 		return e, err
 	case NameHMA:
 		h := HMA{}
 		err := json.Unmarshal(d, &h)
+
 		return h, err
 	case NameMACD:
 		m := MACD{}
 		err := json.Unmarshal(d, &m)
+
 		return m, err
 	case NameROC:
 		r := ROC{}
 		err := json.Unmarshal(d, &r)
+
 		return r, err
 	case NameRSI:
 		r := RSI{}
 		err := json.Unmarshal(d, &r)
+
 		return r, err
 	case NameSMA:
 		s := SMA{}
 		err := json.Unmarshal(d, &s)
+
 		return s, err
 	case NameSRSI:
 		s := SRSI{}
 		err := json.Unmarshal(d, &s)
+
 		return s, err
 	case NameStoch:
 		s := Stoch{}
 		err := json.Unmarshal(d, &s)
+
 		return s, err
 	case NameWMA:
 		w := WMA{}
 		err := json.Unmarshal(d, &w)
+
 		return w, err
 	}
 

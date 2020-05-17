@@ -9,8 +9,6 @@ import (
 
 type IndicatorMock struct{}
 
-func (im IndicatorMock) validate() error { return assert.AnError }
-
 func (im IndicatorMock) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return decimal.Zero, assert.AnError
 }
@@ -38,6 +36,7 @@ func Test_NewAroon(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -80,6 +79,7 @@ func Test_Aroon_validate(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -145,6 +145,7 @@ func Test_Aroon_Calc(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -187,6 +188,7 @@ func Test_Aroon_UnmarshalJSON(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -229,12 +231,13 @@ func Test_NewCCI(t *testing.T) {
 		},
 		"Successful creation": {
 			Source: Aroon{trend: "down", length: 1},
-			Result: CCI{source: Aroon{trend: "down", length: 1}},
+			Result: CCI{Aroon{trend: "down", length: 1}},
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -250,7 +253,7 @@ func Test_NewCCI(t *testing.T) {
 }
 
 func Test_CCI_Sub(t *testing.T) {
-	c := CCI{source: IndicatorMock{}}
+	c := CCI{IndicatorMock{}}
 	assert.Equal(t, IndicatorMock{}, c.Sub())
 }
 
@@ -269,10 +272,11 @@ func Test_CCI_validate(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			cci := CCI{source: c.Source}
+			cci := CCI{c.Source}
 			equalError(t, c.Error, cci.validate())
 		})
 	}
@@ -286,7 +290,7 @@ func Test_CCI_Calc(t *testing.T) {
 		Error  error
 	}{
 		"Invalid data size": {
-			Source: EMA{length: 10},
+			Source: EMA{SMA{length: 10}},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
@@ -329,10 +333,11 @@ func Test_CCI_Calc(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			cci := CCI{source: c.Source}
+			cci := CCI{c.Source}
 			res, err := cci.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
@@ -345,7 +350,7 @@ func Test_CCI_Calc(t *testing.T) {
 }
 
 func Test_CCI_Count(t *testing.T) {
-	c := CCI{source: Aroon{trend: "down", length: 10}}
+	c := CCI{Aroon{trend: "down", length: 10}}
 	assert.Equal(t, c.source.Count(), c.Count())
 }
 
@@ -371,6 +376,7 @@ func Test_CCI_UnmarshalJSON(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -393,17 +399,18 @@ func Test_CCI_MarshalJSON(t *testing.T) {
 		Error  error
 	}{
 		"Error returned during source marshalling": {
-			CCI:   CCI{source: IndicatorMock{}},
+			CCI:   CCI{IndicatorMock{}},
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			CCI:    CCI{source: Aroon{trend: "down", length: 1}},
+			CCI:    CCI{Aroon{trend: "down", length: 1}},
 			Result: `{"source":{"name":"aroon","trend":"down","length":1}}`,
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -425,17 +432,18 @@ func Test_CCI_namedMarshalJSON(t *testing.T) {
 		Error  error
 	}{
 		"Error returned during source marshalling": {
-			CCI:   CCI{source: IndicatorMock{}},
+			CCI:   CCI{IndicatorMock{}},
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			CCI:    CCI{source: Aroon{trend: "down", length: 1}},
+			CCI:    CCI{Aroon{trend: "down", length: 1}},
 			Result: `{"name":"cci","source":{"name":"aroon","trend":"down","length":1}}`,
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -452,7 +460,7 @@ func Test_CCI_namedMarshalJSON(t *testing.T) {
 
 func Test_NewDEMA(t *testing.T) {
 	cc := map[string]struct {
-		Length int
+		EMA    EMA
 		Result DEMA
 		Error  error
 	}{
@@ -460,17 +468,18 @@ func Test_NewDEMA(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful creation": {
-			Length: 1,
-			Result: DEMA{length: 1},
+			EMA:    EMA{SMA{length: 1}},
+			Result: DEMA{EMA{SMA{length: 1}}},
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			dm, err := NewDEMA(c.Length)
+			dm, err := NewDEMA(c.EMA)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -482,30 +491,31 @@ func Test_NewDEMA(t *testing.T) {
 }
 
 func Test_DEMA_Length(t *testing.T) {
-	dm := DEMA{length: 1}
+	dm := DEMA{EMA{SMA{length: 1}}}
 	assert.Equal(t, 1, dm.Length())
 }
 
 func Test_DEMA_validate(t *testing.T) {
 	cc := map[string]struct {
-		Length int
-		Error  error
+		EMA   EMA
+		Error error
 	}{
-		"Invalid length": {
-			Length: 0,
-			Error:  ErrInvalidLength,
+		"Invalid EMA": {
+			EMA:   EMA{SMA{length: -1}},
+			Error: assert.AnError,
 		},
 		"Successful validation": {
-			Length: 1,
+			EMA: EMA{SMA{length: 1}},
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			d := DEMA{length: c.Length}
+			d := DEMA{c.EMA}
 			equalError(t, c.Error, d.validate())
 		})
 	}
@@ -513,20 +523,20 @@ func Test_DEMA_validate(t *testing.T) {
 
 func Test_DEMA_Calc(t *testing.T) {
 	cc := map[string]struct {
-		Length int
+		EMA    EMA
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
 		"Invalid data size": {
-			Length: 3,
+			EMA: EMA{SMA{length: 3}},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Successful calculation": {
-			Length: 2,
+			EMA: EMA{SMA{length: 2}},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -541,10 +551,11 @@ func Test_DEMA_Calc(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			d := DEMA{length: c.Length}
+			d := DEMA{c.EMA}
 			res, err := d.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
@@ -557,7 +568,7 @@ func Test_DEMA_Calc(t *testing.T) {
 }
 
 func Test_DEMA_Count(t *testing.T) {
-	d := DEMA{length: 15}
+	d := DEMA{EMA{SMA{length: 15}}}
 	assert.Equal(t, 29, d.Count())
 }
 
@@ -576,13 +587,14 @@ func Test_DEMA_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
-			JSON:   `{"length":1}`,
-			Result: DEMA{length: 1},
+			JSON:   `{"ema":{"sma":{"length":1}}}`,
+			Result: DEMA{EMA{SMA{length: 1}}},
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -599,24 +611,24 @@ func Test_DEMA_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_DEMA_MarshalJSON(t *testing.T) {
-	dm := DEMA{length: 1}
+	dm := DEMA{EMA{SMA{length: 1}}}
 	d, err := dm.MarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"length":1}`, string(d))
+	assert.JSONEq(t, `{"ema":{"sma":{"length":1}}}`, string(d))
 }
 
 func Test_DEMA_namedMarshalJSON(t *testing.T) {
-	dm := DEMA{length: 1}
+	dm := DEMA{EMA{SMA{length: 1}}}
 	d, err := dm.namedMarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"name":"dema","length":1}`, string(d))
+	assert.JSONEq(t, `{"name":"dema","ema":{"sma":{"length":1}}}`, string(d))
 }
 
 func Test_NewEMA(t *testing.T) {
 	cc := map[string]struct {
-		Length int
+		SMA    SMA
 		Result EMA
 		Error  error
 	}{
@@ -624,17 +636,18 @@ func Test_NewEMA(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful creation": {
-			Length: 1,
-			Result: EMA{length: 1},
+			SMA:    SMA{length: 1},
+			Result: EMA{sma: SMA{length: 1}},
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			e, err := NewEMA(c.Length)
+			e, err := NewEMA(c.SMA)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -646,30 +659,31 @@ func Test_NewEMA(t *testing.T) {
 }
 
 func Test_EMA_Length(t *testing.T) {
-	e := EMA{length: 1}
+	e := EMA{SMA{length: 1}}
 	assert.Equal(t, 1, e.Length())
 }
 
 func Test_EMA_validate(t *testing.T) {
 	cc := map[string]struct {
-		Length int
-		Error  error
+		SMA   SMA
+		Error error
 	}{
-		"Invalid length": {
-			Length: 0,
-			Error:  ErrInvalidLength,
+		"Invalid SMA": {
+			SMA:   SMA{length: -1},
+			Error: assert.AnError,
 		},
 		"Successful validation": {
-			Length: 1,
+			SMA: SMA{length: 1},
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			e := EMA{length: c.Length}
+			e := EMA{c.SMA}
 			equalError(t, c.Error, e.validate())
 		})
 	}
@@ -677,20 +691,20 @@ func Test_EMA_validate(t *testing.T) {
 
 func Test_EMA_Calc(t *testing.T) {
 	cc := map[string]struct {
-		Length int
+		SMA    SMA
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
 		"Invalid data size": {
-			Length: 3,
+			SMA: SMA{length: 3},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Successful calculation": {
-			Length: 2,
+			SMA: SMA{length: 2},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -705,10 +719,11 @@ func Test_EMA_Calc(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			e := EMA{length: c.Length}
+			e := EMA{c.SMA}
 			res, err := e.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
@@ -721,12 +736,12 @@ func Test_EMA_Calc(t *testing.T) {
 }
 
 func Test_EMA_Count(t *testing.T) {
-	e := EMA{length: 15}
+	e := EMA{SMA{length: 15}}
 	assert.Equal(t, 29, e.Count())
 }
 
 func Test_EMA_multiplier(t *testing.T) {
-	e := EMA{length: 3}
+	e := EMA{SMA{length: 3}}
 	assert.Equal(t, decimal.NewFromFloat(0.5), e.multiplier())
 }
 
@@ -745,13 +760,14 @@ func Test_EMA_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
-			JSON:   `{"length":1}`,
-			Result: EMA{length: 1},
+			JSON:   `{"sma":{"length":1}}`,
+			Result: EMA{SMA{length: 1}},
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -768,19 +784,19 @@ func Test_EMA_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_EMA_MarshalJSON(t *testing.T) {
-	e := EMA{length: 1}
+	e := EMA{SMA{length: 1}}
 	d, err := e.MarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"length":1}`, string(d))
+	assert.JSONEq(t, `{"sma":{"length":1}}`, string(d))
 }
 
 func Test_EMA_namedMarshalJSON(t *testing.T) {
-	e := EMA{length: 1}
+	e := EMA{SMA{length: 1}}
 	d, err := e.namedMarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"name":"ema","length":1}`, string(d))
+	assert.JSONEq(t, `{"name":"ema","sma":{"length":1}}`, string(d))
 }
 
 func Test_NewHMA(t *testing.T) {
@@ -794,12 +810,13 @@ func Test_NewHMA(t *testing.T) {
 		},
 		"Successful creation": {
 			WMA:    WMA{length: 1},
-			Result: HMA{wma: WMA{length: 1}},
+			Result: HMA{WMA{length: 1}},
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -815,7 +832,7 @@ func Test_NewHMA(t *testing.T) {
 }
 
 func Test_HMA_WMA(t *testing.T) {
-	h := HMA{wma: WMA{length: 1}}
+	h := HMA{WMA{length: 1}}
 	assert.Equal(t, WMA{length: 1}, h.WMA())
 }
 
@@ -825,9 +842,6 @@ func Test_HMA_validate(t *testing.T) {
 		Error error
 	}{
 		"Invalid WMA": {
-			Error: assert.AnError,
-		},
-		"Invalid WMA length": {
 			WMA:   WMA{length: -1},
 			Error: assert.AnError,
 		},
@@ -838,6 +852,7 @@ func Test_HMA_validate(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -877,10 +892,11 @@ func Test_HMA_Calc(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			h := HMA{wma: c.WMA}
+			h := HMA{c.WMA}
 			res, err := h.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
@@ -893,7 +909,7 @@ func Test_HMA_Calc(t *testing.T) {
 }
 
 func Test_HMA_Count(t *testing.T) {
-	h := HMA{wma: WMA{length: 15}}
+	h := HMA{WMA{length: 15}}
 	assert.Equal(t, 29, h.Count())
 }
 
@@ -919,6 +935,7 @@ func Test_HMA_UnmarshalJSON(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -935,7 +952,7 @@ func Test_HMA_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_HMA_MarshalJSON(t *testing.T) {
-	h := HMA{wma: WMA{length: 1}}
+	h := HMA{WMA{length: 1}}
 	d, err := h.MarshalJSON()
 
 	assert.NoError(t, err)
@@ -943,7 +960,7 @@ func Test_HMA_MarshalJSON(t *testing.T) {
 }
 
 func Test_HMA_namedMarshalJSON(t *testing.T) {
-	h := HMA{wma: WMA{length: 1}}
+	h := HMA{WMA{length: 1}}
 	d, err := h.namedMarshalJSON()
 
 	assert.NoError(t, err)
@@ -963,12 +980,13 @@ func Test_NewMACD(t *testing.T) {
 		"Successful creation": {
 			Source1: WMA{length: 1},
 			Source2: WMA{length: 1},
-			Result:  MACD{source1: WMA{length: 1}, source2: WMA{length: 1}},
+			Result:  MACD{WMA{length: 1}, WMA{length: 1}},
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -984,13 +1002,13 @@ func Test_NewMACD(t *testing.T) {
 }
 
 func Test_MACD_Sub1(t *testing.T) {
-	m := MACD{source1: EMA{length: 1}, source2: IndicatorMock{}}
-	assert.Equal(t, EMA{length: 1}, m.Sub1())
+	m := MACD{EMA{SMA{length: 1}}, IndicatorMock{}}
+	assert.Equal(t, EMA{SMA{length: 1}}, m.Sub1())
 }
 
 func Test_MACD_Sub2(t *testing.T) {
-	m := MACD{source1: IndicatorMock{}, source2: EMA{length: 1}}
-	assert.Equal(t, EMA{length: 1}, m.Sub2())
+	m := MACD{IndicatorMock{}, EMA{SMA{length: 1}}}
+	assert.Equal(t, EMA{sma: SMA{length: 1}}, m.Sub2())
 }
 
 func Test_MACD_validate(t *testing.T) {
@@ -1000,25 +1018,26 @@ func Test_MACD_validate(t *testing.T) {
 		Error   error
 	}{
 		"Invalid source1": {
-			Source1: EMA{length: 1},
+			Source1: EMA{SMA{length: 1}},
 			Error:   ErrInvalidSource,
 		},
 		"Invalid source2": {
-			Source2: EMA{length: 1},
+			Source2: EMA{SMA{length: 1}},
 			Error:   ErrInvalidSource,
 		},
 		"Successful MACD": {
-			Source1: EMA{length: 1},
-			Source2: EMA{length: 1},
+			Source1: EMA{SMA{length: 1}},
+			Source2: EMA{SMA{length: 1}},
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			m := MACD{source1: c.Source1, source2: c.Source2}
+			m := MACD{c.Source1, c.Source2}
 			equalError(t, c.Error, m.validate())
 		})
 	}
@@ -1033,16 +1052,16 @@ func Test_MACD_Calc(t *testing.T) {
 		Error   error
 	}{
 		"Invalid data size for source1": {
-			Source1: EMA{length: 4},
-			Source2: EMA{length: 1},
+			Source1: EMA{SMA{length: 4}},
+			Source2: EMA{SMA{length: 1}},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Invalid data size for source2": {
-			Source1: EMA{length: 1},
-			Source2: EMA{length: 4},
+			Source1: EMA{SMA{length: 1}},
+			Source2: EMA{SMA{length: 4}},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
@@ -1091,10 +1110,11 @@ func Test_MACD_Calc(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			m := MACD{source1: c.Source1, source2: c.Source2}
+			m := MACD{c.Source1, c.Source2}
 			res, err := m.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
@@ -1107,10 +1127,10 @@ func Test_MACD_Calc(t *testing.T) {
 }
 
 func Test_MACD_Count(t *testing.T) {
-	m := MACD{source1: EMA{length: 10}, source2: EMA{length: 1}}
+	m := MACD{EMA{SMA{length: 10}}, EMA{SMA{length: 1}}}
 	assert.Equal(t, m.Count(), m.source1.Count())
 
-	m = MACD{source1: EMA{length: 2}, source2: EMA{length: 9}}
+	m = MACD{EMA{SMA{length: 2}}, EMA{SMA{length: 9}}}
 	assert.Equal(t, m.Count(), m.source2.Count())
 }
 
@@ -1126,24 +1146,24 @@ func Test_MACD_UnmarshalJSON(t *testing.T) {
 		},
 		"Invalid source1": {
 			JSON: `{"source1":{"name":"aroon","trend":"dsown","length":2},
-			"source2":{"name":"cci","source":{"name":"ema", "length":2}}}`,
+			"source2":{"name":"cci","source":{"name":"ema", "sma":{"length":2}}}}`,
 			Error: assert.AnError,
 		},
 		"Invalid source2": {
 			JSON: `{"source1":{"name":"aroon","trend":"down","length":2},
-			"source2":{"name":"ccis","source":{"name":"ema", "length":2}}}`,
+			"source2":{"name":"ccis","source":{"name":"ema", "sma":{"length":2}}}}`,
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
 			JSON: `{"source1":{"name":"aroon","trend":"down","length":2},
-			"source2":{"name":"cci","source":{"name":"ema", "length":2}}}`,
-			Result: MACD{source1: Aroon{trend: "down", length: 2},
-				source2: CCI{source: EMA{length: 2}}},
+			"source2":{"name":"cci","source":{"name":"ema", "sma":{"length":2}}}}`,
+			Result: MACD{Aroon{trend: "down", length: 2}, CCI{EMA{SMA{length: 2}}}},
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1166,24 +1186,22 @@ func Test_MACD_MarshalJSON(t *testing.T) {
 		Error  error
 	}{
 		"Error returned during source1 marshalling": {
-			MACD: MACD{source1: IndicatorMock{},
-				source2: CCI{source: EMA{length: 2}}},
+			MACD:  MACD{IndicatorMock{}, CCI{EMA{SMA{length: 2}}}},
 			Error: assert.AnError,
 		},
 		"Error returned during source2 marshalling": {
-			MACD: MACD{source1: Aroon{trend: "down", length: 2},
-				source2: IndicatorMock{}},
+			MACD:  MACD{Aroon{trend: "down", length: 2}, IndicatorMock{}},
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			MACD: MACD{source1: Aroon{trend: "down", length: 2},
-				source2: CCI{source: EMA{length: 2}}},
-			Result: `{"source1":{"name":"aroon","trend":"down","length":2},"source2":{"name":"cci","source":{"name":"ema","length":2}}}`,
+			MACD:   MACD{Aroon{trend: "down", length: 2}, CCI{EMA{SMA{length: 2}}}},
+			Result: `{"source1":{"name":"aroon","trend":"down","length":2},"source2":{"name":"cci","source":{"name":"ema","sma":{"length":2}}}}`,
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1205,24 +1223,22 @@ func Test_MACD_namedMarshalJSON(t *testing.T) {
 		Error  error
 	}{
 		"Error returned during source1 marshalling": {
-			MACD: MACD{source1: IndicatorMock{},
-				source2: CCI{source: EMA{length: 2}}},
+			MACD:  MACD{IndicatorMock{}, CCI{EMA{SMA{length: 2}}}},
 			Error: assert.AnError,
 		},
 		"Error returned during source2 marshalling": {
-			MACD: MACD{source1: Aroon{trend: "down", length: 2},
-				source2: IndicatorMock{}},
+			MACD:  MACD{Aroon{trend: "down", length: 2}, IndicatorMock{}},
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			MACD: MACD{source1: Aroon{trend: "down", length: 2},
-				source2: CCI{source: EMA{length: 2}}},
-			Result: `{"name":"macd","source1":{"name":"aroon","trend":"down","length":2},"source2":{"name":"cci","source":{"name":"ema","length":2}}}`,
+			MACD:   MACD{Aroon{trend: "down", length: 2}, CCI{EMA{SMA{length: 2}}}},
+			Result: `{"name":"macd","source1":{"name":"aroon","trend":"down","length":2},"source2":{"name":"cci","source":{"name":"ema","sma":{"length":2}}}}`,
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1254,6 +1270,7 @@ func Test_NewROC(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1289,6 +1306,7 @@ func Test_ROC_validate(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1327,6 +1345,7 @@ func Test_ROC_Calc(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1369,6 +1388,7 @@ func Test_ROC_UnmarshalJSON(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1417,6 +1437,7 @@ func Test_NewRSI(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1452,6 +1473,7 @@ func Test_RSI_validate(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1499,6 +1521,7 @@ func Test_RSI_Calc(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1541,6 +1564,7 @@ func Test_RSI_UnmarshalJSON(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1589,6 +1613,7 @@ func Test_NewSMA(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1624,6 +1649,7 @@ func Test_SMA_validate(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1660,6 +1686,7 @@ func Test_SMA_Calc(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1702,6 +1729,7 @@ func Test_SMA_UnmarshalJSON(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1744,12 +1772,13 @@ func Test_NewSRSI(t *testing.T) {
 		},
 		"Successful creation": {
 			RSI:    RSI{length: 1},
-			Result: SRSI{rsi: RSI{length: 1}},
+			Result: SRSI{RSI{length: 1}},
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1765,7 +1794,7 @@ func Test_NewSRSI(t *testing.T) {
 }
 
 func Test_SRSI_RSI(t *testing.T) {
-	s := SRSI{rsi: RSI{length: 1}}
+	s := SRSI{RSI{length: 1}}
 	assert.Equal(t, RSI{length: 1}, s.RSI())
 }
 
@@ -1788,6 +1817,7 @@ func Test_SRSI_validate(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1835,10 +1865,11 @@ func Test_SRSI_Calc(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := SRSI{rsi: c.RSI}
+			s := SRSI{c.RSI}
 			res, err := s.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
@@ -1851,7 +1882,7 @@ func Test_SRSI_Calc(t *testing.T) {
 }
 
 func Test_SRSI_Count(t *testing.T) {
-	s := SRSI{rsi: RSI{length: 15}}
+	s := SRSI{RSI{length: 15}}
 	assert.Equal(t, 29, s.Count())
 }
 
@@ -1871,12 +1902,13 @@ func Test_SRSI_UnmarshalJSON(t *testing.T) {
 		},
 		"Successful unmarshal": {
 			JSON:   `{"rsi":{"length":1}}`,
-			Result: SRSI{rsi: RSI{length: 1}},
+			Result: SRSI{RSI{length: 1}},
 		},
 	}
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1893,7 +1925,7 @@ func Test_SRSI_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_SRSI_MarshalJSON(t *testing.T) {
-	s := SRSI{rsi: RSI{length: 1}}
+	s := SRSI{RSI{length: 1}}
 	d, err := s.MarshalJSON()
 
 	assert.NoError(t, err)
@@ -1901,7 +1933,7 @@ func Test_SRSI_MarshalJSON(t *testing.T) {
 }
 
 func Test_SRSI_namedMarshalJSON(t *testing.T) {
-	s := SRSI{rsi: RSI{length: 1}}
+	s := SRSI{RSI{length: 1}}
 	d, err := s.namedMarshalJSON()
 
 	assert.NoError(t, err)
@@ -1925,6 +1957,7 @@ func Test_NewStoch(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -1960,6 +1993,7 @@ func Test_Stoch_validate(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -2005,6 +2039,7 @@ func Test_Stoch_Calc(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -2047,6 +2082,7 @@ func Test_Stoch_UnmarshalJSON(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -2095,6 +2131,7 @@ func Test_NewWMA(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -2130,6 +2167,7 @@ func Test_WMA_validate(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -2169,6 +2207,7 @@ func Test_WMA_Calc(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -2211,6 +2250,7 @@ func Test_WMA_UnmarshalJSON(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 

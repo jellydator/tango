@@ -1,6 +1,7 @@
 package indc
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/swithek/chartype"
@@ -13,12 +14,13 @@ func equalError(t *testing.T, exp, err error) {
 	t.Helper()
 
 	if exp != nil {
-		if exp == assert.AnError {
+		if errors.Is(exp, assert.AnError) {
 			assert.Error(t, err)
 			return
 		}
 
 		assert.Equal(t, exp, err)
+
 		return
 	}
 
@@ -26,14 +28,16 @@ func equalError(t *testing.T, exp, err error) {
 }
 
 func Test_CleanString(t *testing.T) {
-	var e String
-	e = "aroon"
+	var e String = "aroon"
+
 	r := CleanString(" aRooN ")
+
 	assert.Equal(t, e, r)
 }
 
 func Test_String_UnmarshalText(t *testing.T) {
 	var s String
+
 	assert.NoError(t, s.UnmarshalText([]byte("   TEST       ")))
 	assert.Equal(t, "test", string(s))
 }
@@ -88,6 +92,7 @@ func Test_resize(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -147,6 +152,7 @@ func Test_resizeCandles(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -184,6 +190,7 @@ func Test_typicalPrice(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -216,6 +223,7 @@ func Test_meanDeviation(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -284,6 +292,7 @@ func Test_calcMultiple(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
@@ -324,12 +333,12 @@ func Test_fromJSON(t *testing.T) {
 			Result: CCI{Aroon{trend: "up", length: 1}},
 		},
 		"Successful creation of DEMA": {
-			ByteArray: []byte(`{"name":"dema","length":1}`),
-			Result:    DEMA{length: 1},
+			ByteArray: []byte(`{"name":"dema","ema":{"sma":{"length":1}}}`),
+			Result:    DEMA{ema: EMA{sma: SMA{length: 1}}},
 		},
 		"Successful creation of EMA": {
-			ByteArray: []byte(`{"name":"ema","length":1}`),
-			Result:    EMA{length: 1},
+			ByteArray: []byte(`{"name":"ema","sma":{"length":1}}`),
+			Result:    EMA{sma: SMA{length: 1}},
 		},
 		"Successful creation of HMA": {
 			ByteArray: []byte(`{"name":"hma", "wma":{"name":"wma","length":1}}`),
@@ -338,9 +347,10 @@ func Test_fromJSON(t *testing.T) {
 		"Successful creation of MACD": {
 			ByteArray: []byte(`{"name":"macd",
 			"source1":{"name":"aroon","trend":"down","length":2},
-			"source2":{"name":"cci","source":{"name":"ema", "length":2}}}`),
+			"source2":{"name":"cci","source":{"name":"ema",
+			 "sma":{"length":2}}}}`),
 			Result: MACD{Aroon{trend: "down", length: 2},
-				CCI{EMA{length: 2}}},
+				CCI{EMA{SMA{length: 2}}}},
 		},
 		"Successful creation of ROC": {
 			ByteArray: []byte(`{"name":"roc","length":1}`),
@@ -370,6 +380,7 @@ func Test_fromJSON(t *testing.T) {
 
 	for cn, c := range cc {
 		c := c
+
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 

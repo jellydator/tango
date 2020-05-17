@@ -24,7 +24,7 @@ type Indicator interface {
 // NameAroon returns Aroon indicator name.
 const NameAroon = "aroon"
 
-// Aroon holds all the neccesary information needed to calculate Aroon.
+// Aroon holds all the necessary information needed to calculate Aroon.
 // The zero value is not usable.
 type Aroon struct {
 	// trend specifies which aroon trend to use during the
@@ -88,6 +88,7 @@ func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 		if a.trend == "up" && v.LessThanOrEqual(dd[i]) ||
 			a.trend == "down" && !v.LessThan(dd[i]) {
+
 			v = dd[i]
 			p = decimal.NewFromInt(int64(a.length - i - 1))
 		}
@@ -151,7 +152,7 @@ func (a Aroon) namedMarshalJSON() ([]byte, error) {
 // NameCCI returns CCI indicator name.
 const NameCCI = "cci"
 
-// CCI holds all the neccesary information needed to calculate commodity
+// CCI holds all the necessary information needed to calculate commodity
 // channel index.
 // The zero value is not usable.
 type CCI struct {
@@ -261,19 +262,18 @@ func (c CCI) namedMarshalJSON() ([]byte, error) {
 // NameDEMA returns DEMA indicator name.
 const NameDEMA = "dema"
 
-// DEMA holds all the neccesary information needed to calculate
+// DEMA holds all the necessary information needed to calculate
 // double exponential moving average.
 // The zero value is not usable.
 type DEMA struct {
-	// length specifies how many data points should be used
-	// during the calculations.
-	length int
+	// ema specifies what ema should be used for dema calculations.
+	ema EMA
 }
 
 // NewDEMA validates provided configuration options and creates double
 // exponential moving average indicator.
-func NewDEMA(length int) (DEMA, error) {
-	d := DEMA{length: length}
+func NewDEMA(ema EMA) (DEMA, error) {
+	d := DEMA{ema: ema}
 
 	if err := d.validate(); err != nil {
 		return DEMA{}, err
@@ -284,14 +284,15 @@ func NewDEMA(length int) (DEMA, error) {
 
 // Length returns length configuration option.
 func (dm DEMA) Length() int {
-	return dm.length
+	return dm.ema.sma.Length()
 }
 
 // validate checks whether DEMA was configured properly or not.
 func (dm DEMA) validate() error {
-	if dm.length < 1 {
-		return ErrInvalidLength
+	if err := dm.ema.validate(); err != nil {
+		return err
 	}
+
 	return nil
 }
 
@@ -302,21 +303,18 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	v := make([]decimal.Decimal, dm.length)
+	v := make([]decimal.Decimal, dm.Length())
 
-	s := SMA{length: dm.length}
-	v[0], _ = s.Calc(dd[:dm.length])
+	v[0], _ = dm.ema.sma.Calc(dd[:dm.Length()])
 
-	e := EMA{length: dm.length}
-
-	for i := dm.length; i < len(dd); i++ {
-		v[i-dm.length+1] = e.CalcNext(v[i-dm.length], dd[i])
+	for i := dm.Length(); i < len(dd); i++ {
+		v[i-dm.Length()+1] = dm.ema.CalcNext(v[i-dm.Length()], dd[i])
 	}
 
 	r := v[0]
 
 	for i := 0; i < len(v); i++ {
-		r = e.CalcNext(r, v[i])
+		r = dm.ema.CalcNext(r, v[i])
 	}
 
 	return r, nil
@@ -325,20 +323,34 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data needed for DEMA
 // calculation.
 func (dm DEMA) Count() int {
-	return dm.length*2 - 1
+	return dm.ema.sma.Length()*2 - 1
 }
 
 // UnmarshalJSON parses JSON into DEMA structure.
 func (dm *DEMA) UnmarshalJSON(d []byte) error {
 	var i struct {
-		L int `json:"length"`
+		EMA struct {
+			SMA struct {
+				L int `json:"length"`
+			} `json:"sma"`
+		} `json:"ema"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	dm.length = i.L
+	s, err := NewSMA(i.EMA.SMA.L)
+	if err != nil {
+		return err
+	}
+
+	e, err := NewEMA(s)
+	if err != nil {
+		return err
+	}
+
+	dm.ema = e
 
 	if err := dm.validate(); err != nil {
 		return err
@@ -350,9 +362,9 @@ func (dm *DEMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts DEMA configuration data into JSON.
 func (dm DEMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
+		E EMA `json:"ema"`
 	}{
-		L: dm.length,
+		E: dm.ema,
 	})
 }
 
@@ -361,29 +373,28 @@ func (dm DEMA) MarshalJSON() ([]byte, error) {
 func (dm DEMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		N String `json:"name"`
-		L int    `json:"length"`
+		E EMA    `json:"ema"`
 	}{
 		N: NameDEMA,
-		L: dm.length,
+		E: dm.ema,
 	})
 }
 
 // NameEMA returns EMA indicator name.
 const NameEMA = "ema"
 
-// EMA holds all the neccesary information needed to calculate exponential
+// EMA holds all the necessary information needed to calculate exponential
 // moving average.
 // The zero value is not usable.
 type EMA struct {
-	// length specifies how many data points should be used
-	// during the calculations.
-	length int
+	// sma specifies first EMA calculations SMA parameters.
+	sma SMA
 }
 
 // NewEMA validates provided configuration options and
 // creates exponential moving average indicator.
-func NewEMA(length int) (EMA, error) {
-	e := EMA{length: length}
+func NewEMA(sma SMA) (EMA, error) {
+	e := EMA{sma: sma}
 
 	if err := e.validate(); err != nil {
 		return EMA{}, err
@@ -394,14 +405,15 @@ func NewEMA(length int) (EMA, error) {
 
 // Length returns length configuration option.
 func (e EMA) Length() int {
-	return e.length
+	return e.sma.Count()
 }
 
 // validate checks whether EMA was configured properly or not.
 func (e EMA) validate() error {
-	if e.length < 1 {
-		return ErrInvalidLength
+	if err := e.sma.validate(); err != nil {
+		return err
 	}
+
 	return nil
 }
 
@@ -412,10 +424,9 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	s := SMA{length: e.length}
-	r, _ := s.Calc(dd[:e.length])
+	r, _ := e.sma.Calc(dd[:e.Length()])
 
-	for i := e.length; i < len(dd); i++ {
+	for i := e.Length(); i < len(dd); i++ {
 		r = e.CalcNext(r, dd[i])
 	}
 
@@ -430,26 +441,33 @@ func (e EMA) CalcNext(l, n decimal.Decimal) decimal.Decimal {
 
 // multiplier calculates EMA multiplier.
 func (e EMA) multiplier() decimal.Decimal {
-	return decimal.NewFromFloat(2.0 / float64(e.length+1))
+	return decimal.NewFromFloat(2.0 / float64(e.Length()+1))
 }
 
 // Count determines the total amount of data needed for EMA
 // calculation.
 func (e EMA) Count() int {
-	return e.length*2 - 1
+	return e.Length()*2 - 1
 }
 
 // UnmarshalJSON parses JSON into EMA structure.
 func (e *EMA) UnmarshalJSON(d []byte) error {
 	var i struct {
-		L int `json:"length"`
+		SMA struct {
+			L int `json:"length"`
+		} `json:"sma"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	e.length = i.L
+	s, err := NewSMA(i.SMA.L)
+	if err != nil {
+		return err
+	}
+
+	e.sma = s
 
 	if err := e.validate(); err != nil {
 		return err
@@ -461,9 +479,9 @@ func (e *EMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts EMA configuration data into JSON.
 func (e EMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
+		S SMA `json:"sma"`
 	}{
-		L: e.length,
+		S: e.sma,
 	})
 }
 
@@ -472,17 +490,17 @@ func (e EMA) MarshalJSON() ([]byte, error) {
 func (e EMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		N String `json:"name"`
-		L int    `json:"length"`
+		S SMA    `json:"sma"`
 	}{
 		N: NameEMA,
-		L: e.length,
+		S: e.sma,
 	})
 }
 
 // NameHMA returns HMA indicator name.
 const NameHMA = "hma"
 
-// HMA holds all the neccesary information needed to calculate
+// HMA holds all the necessary information needed to calculate
 // hull moving average.
 // The zero value is not usable.
 type HMA struct {
@@ -589,18 +607,18 @@ func (h HMA) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (h HMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N   String `json:"name"`
-		WMA WMA    `json:"wma"`
+		N String `json:"name"`
+		W WMA    `json:"wma"`
 	}{
-		N:   NameHMA,
-		WMA: h.wma,
+		N: NameHMA,
+		W: h.wma,
 	})
 }
 
 // NameMACD returns MACD indicator name.
 const NameMACD = "macd"
 
-// MACD holds all the neccesary information needed to calculate
+// MACD holds all the necessary information needed to calculate
 // difference between two source indicators.
 // The zero value is not usable.
 type MACD struct {
@@ -752,7 +770,7 @@ func (m MACD) namedMarshalJSON() ([]byte, error) {
 // NameROC returns ROC indicator name.
 const NameROC = "roc"
 
-// ROC holds all the neccesary information needed to calculate rate
+// ROC holds all the necessary information needed to calculate rate
 // of change.
 // The zero value is not usable.
 type ROC struct {
@@ -783,6 +801,7 @@ func (r ROC) validate() error {
 	if r.length < 1 {
 		return ErrInvalidLength
 	}
+
 	return nil
 }
 
@@ -848,7 +867,7 @@ func (r ROC) namedMarshalJSON() ([]byte, error) {
 // NameRSI returns RSI indicator name.
 const NameRSI = "rsi"
 
-// RSI holds all the neccesary information needed to calculate relative
+// RSI holds all the necessary information needed to calculate relative
 // strength index.
 // The zero value is not usable.
 type RSI struct {
@@ -879,6 +898,7 @@ func (r RSI) validate() error {
 	if r.length < 1 {
 		return ErrInvalidLength
 	}
+
 	return nil
 }
 
@@ -965,7 +985,7 @@ func (r RSI) namedMarshalJSON() ([]byte, error) {
 // NameSMA returns SMA indicator name.
 const NameSMA = "sma"
 
-// SMA holds all the neccesary information needed to calculate simple
+// SMA holds all the necessary information needed to calculate simple
 // moving average.
 // The zero value is not usable.
 type SMA struct {
@@ -996,6 +1016,7 @@ func (s SMA) validate() error {
 	if s.length < 1 {
 		return ErrInvalidLength
 	}
+
 	return nil
 }
 
@@ -1064,11 +1085,11 @@ func (s SMA) namedMarshalJSON() ([]byte, error) {
 // NameSRSI returns SRSI indicator name.
 const NameSRSI = "srsi"
 
-// SRSI holds all the neccesary information needed to calculate stoch
+// SRSI holds all the necessary information needed to calculate stoch
 // relative strength index.
 // The zero value is not usable.
 type SRSI struct {
-	// rsi specifies the base relative strengh index.
+	// rsi specifies the base relative strength index.
 	rsi RSI
 }
 
@@ -1178,7 +1199,7 @@ func (s SRSI) namedMarshalJSON() ([]byte, error) {
 // NameStoch returns Stoch  indicator name.
 const NameStoch = "stoch"
 
-// Stoch holds all the neccesary information needed to calculate stochastic
+// Stoch holds all the necessary information needed to calculate stochastic
 // oscillator.
 // The zero value is not usable.
 type Stoch struct {
@@ -1209,6 +1230,7 @@ func (s Stoch) validate() error {
 	if s.length < 1 {
 		return ErrInvalidLength
 	}
+
 	return nil
 }
 
@@ -1284,7 +1306,7 @@ func (s Stoch) namedMarshalJSON() ([]byte, error) {
 // NameWMA returns WMA  indicator name.
 const NameWMA = "wma"
 
-// WMA holds all the neccesary information needed to calculate weighted
+// WMA holds all the necessary information needed to calculate weighted
 // moving average.
 // The zero value is not usable.
 type WMA struct {
@@ -1315,6 +1337,7 @@ func (w WMA) validate() error {
 	if w.length < 1 {
 		return ErrInvalidLength
 	}
+
 	return nil
 }
 
