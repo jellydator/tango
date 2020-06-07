@@ -9,6 +9,7 @@ import (
 )
 
 // Indicator is an interface that every indicator should implement.
+//go:generate moq -out ./indicator_mock_test.go . Indicator
 type Indicator interface {
 	// Calc should calculate indicator's value.
 	Calc(dd []decimal.Decimal) (decimal.Decimal, error)
@@ -198,8 +199,13 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	return dd[len(dd)-1].Sub(m).Div(decimal.NewFromFloat(0.015).
-		Mul(meanDeviation(dd))), nil
+	denom := decimal.NewFromFloat(0.015).Mul(meanDeviation(dd))
+
+	if denom.Equal(decimal.Zero) {
+		return decimal.Zero, nil
+	}
+
+	return dd[len(dd)-1].Sub(m).Div(denom), nil
 }
 
 // Count determines the total amount of data needed for CCI
@@ -813,7 +819,11 @@ func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	}
 
 	n := dd[len(dd)-1]
-	l := dd[0]
+	l := dd[len(dd)-r.Count()]
+
+	if l.Equal(decimal.Zero) {
+		return decimal.Zero, nil
+	}
 
 	return n.Sub(l).Div(l).Mul(decimal.NewFromInt(100)), nil
 }
@@ -911,6 +921,7 @@ func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	ag := decimal.Zero
 	al := decimal.Zero
+	length := decimal.NewFromInt(int64(r.length))
 
 	for i := 1; i < len(dd); i++ {
 		if dd[i].Sub(dd[i-1]).LessThan(decimal.Zero) {
@@ -928,9 +939,9 @@ func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.NewFromInt(100), nil
 	}
 
-	ag = ag.Div(decimal.NewFromInt(int64(r.length)))
+	ag = ag.Div(length)
 
-	al = al.Div(decimal.NewFromInt(int64(r.length)))
+	al = al.Div(length)
 
 	return decimal.NewFromInt(100).Sub(decimal.NewFromInt(100).
 		Div(decimal.NewFromInt(1).Add(ag.Div(al)))), nil
@@ -1144,7 +1155,12 @@ func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		}
 	}
 
-	return c.Sub(l).Div(h.Sub(l)), nil
+	demin := h.Sub(l)
+	if demin.Equal(decimal.Zero) {
+		return decimal.Zero, nil
+	}
+
+	return c.Sub(l).Div(demin), nil
 }
 
 // Count determines the total amount of data needed for SRSI
@@ -1254,7 +1270,12 @@ func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		}
 	}
 
-	return dd[len(dd)-1].Sub(l).Div(h.Sub(l)).Mul(decimal.NewFromInt(100)), nil
+	demin := h.Sub(l)
+	if demin.Equal(decimal.Zero) {
+		return decimal.Zero, nil
+	}
+
+	return dd[len(dd)-1].Sub(l).Div(demin).Mul(decimal.NewFromInt(100)), nil
 }
 
 // Count determines the total amount of data needed for Stoch
