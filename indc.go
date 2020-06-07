@@ -1155,12 +1155,12 @@ func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		}
 	}
 
-	demin := h.Sub(l)
-	if demin.Equal(decimal.Zero) {
+	denom := h.Sub(l)
+	if denom.Equal(decimal.Zero) {
 		return decimal.Zero, nil
 	}
 
-	return c.Sub(l).Div(demin), nil
+	return c.Sub(l).Div(denom), nil
 }
 
 // Count determines the total amount of data needed for SRSI
@@ -1270,12 +1270,12 @@ func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		}
 	}
 
-	demin := h.Sub(l)
-	if demin.Equal(decimal.Zero) {
+	denom := h.Sub(l)
+	if denom.Equal(decimal.Zero) {
 		return decimal.Zero, nil
 	}
 
-	return dd[len(dd)-1].Sub(l).Div(demin).Mul(decimal.NewFromInt(100)), nil
+	return dd[len(dd)-1].Sub(l).Div(denom).Mul(decimal.NewFromInt(100)), nil
 }
 
 // Count determines the total amount of data needed for Stoch
