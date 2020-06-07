@@ -84,18 +84,23 @@ func typicalPrice(cc []chartype.Candle) []decimal.Decimal {
 func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	s := decimal.Zero
 	rez := decimal.Zero
+	length := decimal.NewFromInt(int64(len(dd)))
+
+	if length.Equal(decimal.Zero) {
+		return decimal.Zero
+	}
 
 	for i := 0; i < len(dd); i++ {
 		s = s.Add(dd[i])
 	}
 
-	s = s.Div(decimal.NewFromInt(int64(len(dd))))
+	s = s.Div(length)
 
 	for i := 0; i < len(dd); i++ {
 		rez = rez.Add(dd[i].Sub(s).Abs())
 	}
 
-	return rez.Div(decimal.NewFromInt(int64(len(dd)))).Round(8)
+	return rez.Div(length)
 }
 
 // calcMultiple calculates specified amount of indicator within given list.
@@ -192,6 +197,8 @@ func fromJSON(d []byte) (Indicator, error) {
 		err := json.Unmarshal(d, &w)
 
 		return w, err
+	case NameIndicatorMock:
+		return &IndicatorMock{}, nil
 	}
 
 	return nil, ErrInvalidSource

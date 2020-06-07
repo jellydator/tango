@@ -4,10 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/swithek/chartype"
-
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
+	"github.com/swithek/chartype"
 )
 
 func equalError(t *testing.T, exp, err error) {
@@ -208,16 +207,23 @@ func Test_meanDeviation(t *testing.T) {
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 	}{
+		"Successful calculation with no values": {
+			Data:   []decimal.Decimal{},
+			Result: decimal.NewFromFloat(0),
+		},
+		"Successful calculation with one value": {
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(2),
+			},
+			Result: decimal.NewFromFloat(0),
+		},
 		"Successful calculation": {
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(2),
 				decimal.NewFromInt(5),
-				decimal.NewFromInt(7),
-				decimal.NewFromInt(10),
-				decimal.NewFromInt(12),
-				decimal.NewFromInt(14),
+				decimal.NewFromInt(8),
 			},
-			Result: decimal.NewFromFloat(3.66666667),
+			Result: decimal.NewFromFloat(2),
 		},
 	}
 
@@ -229,12 +235,23 @@ func Test_meanDeviation(t *testing.T) {
 
 			res := meanDeviation(c.Data)
 
-			assert.Equal(t, c.Result, res)
+			assert.Equal(t, c.Result.String(), res.String())
 		})
 	}
 }
 
 func Test_calcMultiple(t *testing.T) {
+	stubIndicator := func(v decimal.Decimal, e error, a int) *IndicatorMock {
+		return &IndicatorMock{
+			CalcFunc: func(dd []decimal.Decimal) (decimal.Decimal, error) {
+				return v, e
+			},
+			CountFunc: func() int {
+				return a
+			},
+		}
+	}
+
 	cc := map[string]struct {
 		Data      []decimal.Decimal
 		Amount    int
@@ -243,20 +260,27 @@ func Test_calcMultiple(t *testing.T) {
 		Error     error
 	}{
 		"Invalid data size": {
-			Indicator: SMA{length: 2},
-			Amount:    1,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: ErrInvalidDataSize,
+			Indicator: stubIndicator(decimal.Zero, nil, 2),
+			Amount:    1,
+			Error:     ErrInvalidDataSize,
 		},
-		"Error returned by Indicator": {
-			Indicator: IndicatorMock{},
-			Amount:    1,
+		"Invalid Indicator": {
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
-			Error: assert.AnError,
+			Indicator: &IndicatorMock{
+				CalcFunc: func(dd []decimal.Decimal) (decimal.Decimal, error) {
+					return decimal.Zero, assert.AnError
+				},
+				CountFunc: func() int {
+					return 1
+				},
+			},
+			Amount: 1,
+			Error:  assert.AnError,
 		},
 		"Successful calculation with amount less than 1": {
 			Data: []decimal.Decimal{
@@ -268,7 +292,7 @@ func Test_calcMultiple(t *testing.T) {
 				decimal.NewFromInt(7),
 			},
 			Amount:    0,
-			Indicator: SMA{length: 2},
+			Indicator: stubIndicator(decimal.Zero, nil, 2),
 			Result:    []decimal.Decimal{},
 		},
 		"Successful calculation with amount more than 1": {
@@ -281,11 +305,11 @@ func Test_calcMultiple(t *testing.T) {
 				decimal.NewFromInt(7),
 			},
 			Amount:    3,
-			Indicator: SMA{length: 2},
+			Indicator: stubIndicator(decimal.NewFromInt(2), nil, 2),
 			Result: []decimal.Decimal{
-				decimal.NewFromFloat(6.5),
-				decimal.NewFromFloat(5.5),
-				decimal.NewFromFloat(4.5),
+				decimal.NewFromFloat(2),
+				decimal.NewFromFloat(2),
+				decimal.NewFromFloat(2),
 			},
 		},
 	}
