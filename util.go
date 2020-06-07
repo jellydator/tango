@@ -197,6 +197,7 @@ func fromJSON(d []byte) (Indicator, error) {
 		err := json.Unmarshal(d, &w)
 
 		return w, err
+	// remove me in production
 	case NameIndicatorMock:
 		return &IndicatorMock{}, nil
 	}
