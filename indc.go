@@ -199,8 +199,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	mult, _ := decimal.NewFromString("0.015")
-	denom := mult.Mul(meanDeviation(dd))
+	denom := decimal.RequireFromString("0.015").Mul(meanDeviation(dd))
 
 	if denom.Equal(decimal.Zero) {
 		return decimal.Zero, nil
