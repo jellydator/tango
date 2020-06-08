@@ -9,7 +9,7 @@ import (
 )
 
 // Indicator is an interface that every indicator should implement.
-//go:generate moq -out ./indicator_mock_test.go . Indicator
+//go:generate moq -out ./mock_test.go . Indicator
 type Indicator interface {
 	// Calc should calculate indicator's value.
 	Calc(dd []decimal.Decimal) (decimal.Decimal, error)
@@ -199,7 +199,8 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	denom := decimal.NewFromFloat(0.015).Mul(meanDeviation(dd))
+	mult, _ := decimal.NewFromString("0.015")
+	denom := mult.Mul(meanDeviation(dd))
 
 	if denom.Equal(decimal.Zero) {
 		return decimal.Zero, nil
@@ -447,7 +448,7 @@ func (e EMA) CalcNext(l, n decimal.Decimal) decimal.Decimal {
 
 // multiplier calculates EMA multiplier.
 func (e EMA) multiplier() decimal.Decimal {
-	return decimal.NewFromFloat(2.0 / float64(e.Length()+1))
+	return decimal.NewFromInt(2).Div(decimal.NewFromInt(int64(e.Length()) + 1))
 }
 
 // Count determines the total amount of data needed for EMA
@@ -1371,7 +1372,7 @@ func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	r := decimal.Zero
 
-	wi := decimal.NewFromFloat(float64(w.length*(w.length+1)) / 2.0)
+	wi := decimal.NewFromInt(int64(w.length * (w.length + 1))).Div(decimal.NewFromInt(2))
 
 	for i := 0; i < len(dd); i++ {
 		r = r.Add(dd[i].Mul(decimal.NewFromInt(int64(i + 1)).Div(wi)))

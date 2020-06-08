@@ -4,9 +4,8 @@
 package indc
 
 import (
-	"sync"
-
 	"github.com/shopspring/decimal"
+	"sync"
 )
 
 var (
