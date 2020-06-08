@@ -831,8 +831,8 @@ func Test_NewHMA(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful creation": {
-			WMA:    WMA{length: 1},
-			Result: HMA{WMA{length: 1}},
+			WMA:    WMA{length: 2},
+			Result: HMA{WMA{length: 2}},
 		},
 	}
 
@@ -868,7 +868,7 @@ func Test_HMA_validate(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful validation": {
-			WMA: WMA{length: 1},
+			WMA: WMA{length: 2},
 		},
 	}
 
