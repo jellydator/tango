@@ -365,8 +365,8 @@ func Test_fromJSON(t *testing.T) {
 			Result:    EMA{sma: SMA{length: 1}},
 		},
 		"Successful creation of HMA": {
-			ByteArray: []byte(`{"name":"hma", "wma":{"name":"wma","length":1}}`),
-			Result:    HMA{wma: WMA{length: 1}},
+			ByteArray: []byte(`{"name":"hma", "wma":{"name":"wma","length":2}}`),
+			Result:    HMA{wma: WMA{length: 2}},
 		},
 		"Successful creation of MACD": {
 			ByteArray: []byte(`{"name":"macd",
