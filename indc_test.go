@@ -7,9 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// NameIndicatorMock is used for testing only.
-const NameIndicatorMock = "indicatormock"
-
 func Test_NewAroon(t *testing.T) {
 	cc := map[string]struct {
 		Trend  String
@@ -371,8 +368,8 @@ func Test_CCI_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
-			JSON:   `{"source":{"name":"indicatormock"}}`,
-			Result: CCI{&IndicatorMock{}},
+			JSON:   `{"source":{"name":"sma","length":1}}`,
+			Result: CCI{SMA{length: 1}},
 		},
 	}
 
@@ -767,7 +764,7 @@ func Test_EMA_Count(t *testing.T) {
 
 func Test_EMA_multiplier(t *testing.T) {
 	e := EMA{SMA{length: 3}}
-	assert.Equal(t, decimal.NewFromFloat(0.5), e.multiplier())
+	assert.Equal(t, decimal.NewFromFloat(0.5).String(), e.multiplier().String())
 }
 
 func Test_EMA_UnmarshalJSON(t *testing.T) {
@@ -1184,8 +1181,8 @@ func Test_MACD_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
-			JSON:   `{"source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"}}`,
-			Result: MACD{&IndicatorMock{}, &IndicatorMock{}},
+			JSON:   `{"source1":{"name":"sma","length":1},"source2":{"name":"sma","length":2}}`,
+			Result: MACD{SMA{length: 1}, SMA{length: 2}},
 		},
 	}
 
@@ -1904,7 +1901,7 @@ func Test_SRSI_Calc(t *testing.T) {
 			},
 			Error: assert.AnError,
 		},
-		"Successfuly handled division by 0": {
+		"Successfully handled division by 0": {
 			RSI: RSI{length: 3},
 			Data: []decimal.Decimal{
 				decimal.NewFromFloat(8),
@@ -2091,7 +2088,7 @@ func Test_Stoch_Calc(t *testing.T) {
 			},
 			Result: decimal.NewFromInt(80),
 		},
-		"Successfuly handled division by 0": {
+		"Successfully handled division by 0": {
 			Length: 3,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(150),
