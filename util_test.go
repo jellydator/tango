@@ -1,7 +1,6 @@
 package indc
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -13,7 +12,7 @@ func equalError(t *testing.T, exp, err error) {
 	t.Helper()
 
 	if exp != nil {
-		if errors.Is(exp, assert.AnError) {
+		if exp == assert.AnError { //nolint:goerr113 // direct check is needed
 			assert.Error(t, err)
 			return
 		}
