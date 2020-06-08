@@ -537,7 +537,7 @@ func (h HMA) validate() error {
 		return errors.New("invalid wma")
 	}
 
-	if h.wma.length < 1 {
+	if h.wma.length < 2 {
 		return ErrInvalidLength
 	}
 
