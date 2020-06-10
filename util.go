@@ -10,6 +10,9 @@ import (
 )
 
 var (
+	// ErrInvalidIndicator is returned when indicator is invalid.
+	ErrInvalidIndicator = errors.New("invalid indicator")
+
 	// ErrInvalidLength is returned when incorrect length is provided.
 	ErrInvalidLength = errors.New("invalid length")
 

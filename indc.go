@@ -28,6 +28,9 @@ const NameAroon = "aroon"
 // Aroon holds all the necessary information needed to calculate Aroon.
 // The zero value is not usable.
 type Aroon struct {
+	// valid determines whether paremeters were validated
+	valid bool
+
 	// trend specifies which aroon trend to use during the
 	// calculation process. Allowed values: up, down.
 	trend String
@@ -60,7 +63,9 @@ func (a Aroon) Trend() String {
 }
 
 // validate checks whether Aroon was configured properly or not.
-func (a Aroon) validate() error {
+func (a *Aroon) validate() error {
+	a.valid = false
+
 	if a.trend != "down" && a.trend != "up" {
 		return errors.New("invalid trend")
 	}
@@ -69,11 +74,17 @@ func (a Aroon) validate() error {
 		return ErrInvalidLength
 	}
 
+	a.valid = true
+
 	return nil
 }
 
 // Calc calculates Aroon from the provided data slice.
 func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !a.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
 	dd, err := resize(dd, a.Count())
 	if err != nil {
 		return decimal.Zero, err
@@ -116,12 +127,12 @@ func (a *Aroon) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	a.trend = i.T
-	a.length = i.L
-
-	if err := a.validate(); err != nil {
+	na, err := NewAroon(i.T, i.L)
+	if err != nil {
 		return err
 	}
+
+	*a = na
 
 	return nil
 }
@@ -157,6 +168,9 @@ const NameCCI = "cci"
 // channel index.
 // The zero value is not usable.
 type CCI struct {
+	// valid determines whether paremeters were validated
+	valid bool
+
 	// source specifies the base indicator to be used by the CCI.
 	source Indicator
 }
@@ -179,16 +193,24 @@ func (c CCI) Sub() Indicator {
 }
 
 // validate checks whether CCI was configured properly or not.
-func (c CCI) validate() error {
+func (c *CCI) validate() error {
+	c.valid = false
+
 	if c.source == nil {
 		return ErrInvalidSource
 	}
+
+	c.valid = true
 
 	return nil
 }
 
 // Calc calculates CCI from the provided data slice.
 func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !c.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
 	dd, err := resize(dd, c.Count())
 	if err != nil {
 		return decimal.Zero, err
@@ -229,7 +251,13 @@ func (c *CCI) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	c.source = s
+	cn, err := NewCCI(s)
+	if err != nil {
+		// unlikely to happen
+		return err
+	}
+
+	*c = cn
 
 	return nil
 }
@@ -272,6 +300,9 @@ const NameDEMA = "dema"
 // double exponential moving average.
 // The zero value is not usable.
 type DEMA struct {
+	// valid determines whether paremeters were validated
+	valid bool
+
 	// ema specifies what ema should be used for dema calculations.
 	ema EMA
 }
@@ -294,16 +325,24 @@ func (dm DEMA) Length() int {
 }
 
 // validate checks whether DEMA was configured properly or not.
-func (dm DEMA) validate() error {
+func (dm *DEMA) validate() error {
+	dm.valid = false
+
 	if err := dm.ema.validate(); err != nil {
 		return err
 	}
+
+	dm.valid = true
 
 	return nil
 }
 
 // Calc calculates DEMA from the provided data slice.
 func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !dm.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
 	dd, err := resize(dd, dm.Count())
 	if err != nil {
 		return decimal.Zero, err
@@ -314,13 +353,13 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	v[0], _ = dm.ema.sma.Calc(dd[:dm.Length()])
 
 	for i := dm.Length(); i < len(dd); i++ {
-		v[i-dm.Length()+1] = dm.ema.CalcNext(v[i-dm.Length()], dd[i])
+		v[i-dm.Length()+1], _ = dm.ema.CalcNext(v[i-dm.Length()], dd[i])
 	}
 
 	r := v[0]
 
 	for i := 0; i < len(v); i++ {
-		r = dm.ema.CalcNext(r, v[i])
+		r, _ = dm.ema.CalcNext(r, v[i])
 	}
 
 	return r, nil
@@ -336,9 +375,7 @@ func (dm DEMA) Count() int {
 func (dm *DEMA) UnmarshalJSON(d []byte) error {
 	var i struct {
 		EMA struct {
-			SMA struct {
-				L int `json:"length"`
-			} `json:"sma"`
+			L int `json:"length"`
 		} `json:"ema"`
 	}
 
@@ -346,21 +383,18 @@ func (dm *DEMA) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	s, err := NewSMA(i.EMA.SMA.L)
+	ne, err := NewEMA(i.EMA.L)
 	if err != nil {
 		return err
 	}
 
-	e, err := NewEMA(s)
+	ndm, err := NewDEMA(ne)
 	if err != nil {
+		// unlikely to happen
 		return err
 	}
 
-	dm.ema = e
-
-	if err := dm.validate(); err != nil {
-		return err
-	}
+	*dm = ndm
 
 	return nil
 }
@@ -393,16 +427,25 @@ const NameEMA = "ema"
 // moving average.
 // The zero value is not usable.
 type EMA struct {
+	// valid determines whether paremeters were validated
+	valid bool
+
 	// sma specifies first EMA calculations SMA parameters.
 	sma SMA
 }
 
 // NewEMA validates provided configuration options and
 // creates exponential moving average indicator.
-func NewEMA(sma SMA) (EMA, error) {
-	e := EMA{sma: sma}
+func NewEMA(length int) (EMA, error) {
+	s, err := NewSMA(length)
+	if err != nil {
+		return EMA{}, err
+	}
+
+	e := EMA{sma: s}
 
 	if err := e.validate(); err != nil {
+		// unlikely to happen
 		return EMA{}, err
 	}
 
@@ -415,16 +458,24 @@ func (e EMA) Length() int {
 }
 
 // validate checks whether EMA was configured properly or not.
-func (e EMA) validate() error {
+func (e *EMA) validate() error {
+	e.valid = false
+
 	if err := e.sma.validate(); err != nil {
 		return err
 	}
+
+	e.valid = true
 
 	return nil
 }
 
 // Calc calculates EMA from the provided data slice.
 func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !e.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
 	dd, err := resize(dd, e.Count())
 	if err != nil {
 		return decimal.Zero, err
@@ -433,16 +484,21 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	r, _ := e.sma.Calc(dd[:e.Length()])
 
 	for i := e.Length(); i < len(dd); i++ {
-		r = e.CalcNext(r, dd[i])
+		r, _ = e.CalcNext(r, dd[i])
 	}
 
 	return r, nil
 }
 
 // CalcNext calculates sequential EMA by using previous ema.
-func (e EMA) CalcNext(l, n decimal.Decimal) decimal.Decimal {
+func (e EMA) CalcNext(l, n decimal.Decimal) (decimal.Decimal, error) {
+	if !e.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
 	m := e.multiplier()
-	return n.Mul(m).Add(l.Mul(decimal.NewFromInt(1).Sub(m)))
+
+	return n.Mul(m).Add(l.Mul(decimal.NewFromInt(1).Sub(m))), nil
 }
 
 // multiplier calculates EMA multiplier.
@@ -459,25 +515,19 @@ func (e EMA) Count() int {
 // UnmarshalJSON parses JSON into EMA structure.
 func (e *EMA) UnmarshalJSON(d []byte) error {
 	var i struct {
-		SMA struct {
-			L int `json:"length"`
-		} `json:"sma"`
+		L int `json:"length"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	s, err := NewSMA(i.SMA.L)
+	ne, err := NewEMA(i.L)
 	if err != nil {
 		return err
 	}
 
-	e.sma = s
-
-	if err := e.validate(); err != nil {
-		return err
-	}
+	*e = ne
 
 	return nil
 }
@@ -485,9 +535,9 @@ func (e *EMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts EMA configuration data into JSON.
 func (e EMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		S SMA `json:"sma"`
+		L int `json:"length"`
 	}{
-		S: e.sma,
+		L: e.sma.length,
 	})
 }
 
@@ -496,10 +546,10 @@ func (e EMA) MarshalJSON() ([]byte, error) {
 func (e EMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		N String `json:"name"`
-		S SMA    `json:"sma"`
+		L int    `json:"length"`
 	}{
 		N: NameEMA,
-		S: e.sma,
+		L: e.sma.length,
 	})
 }
 
@@ -510,6 +560,9 @@ const NameHMA = "hma"
 // hull moving average.
 // The zero value is not usable.
 type HMA struct {
+	// valid determines whether paremeters were validated
+	valid bool
+
 	// wma specifies the base moving average.
 	wma WMA
 }
@@ -532,7 +585,9 @@ func (h HMA) WMA() WMA {
 }
 
 // validate checks whether HMA was configured properly or not.
-func (h HMA) validate() error {
+func (h *HMA) validate() error {
+	h.valid = false
+
 	if h.wma == (WMA{}) {
 		return errors.New("invalid wma")
 	}
@@ -541,11 +596,17 @@ func (h HMA) validate() error {
 		return ErrInvalidLength
 	}
 
+	h.valid = true
+
 	return nil
 }
 
 // Calc calculates HMA from the provided data slice.
 func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !h.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
 	dd, err := resize(dd, h.Count())
 	if err != nil {
 		return decimal.Zero, err
@@ -553,9 +614,9 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	l := int(math.Sqrt(float64(h.wma.Count())))
 
-	w1 := WMA{length: h.wma.Count() / 2}
+	w1 := WMA{length: h.wma.Count() / 2, valid: true}
 	w2 := h.wma
-	w3 := WMA{length: l}
+	w3 := WMA{length: l, valid: true}
 
 	v := make([]decimal.Decimal, l)
 
@@ -595,7 +656,13 @@ func (h *HMA) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	h.wma = w
+	nh, err := NewHMA(w)
+	if err != nil {
+		// unlikely to happen
+		return err
+	}
+
+	*h = nh
 
 	return nil
 }
@@ -628,6 +695,9 @@ const NameMACD = "macd"
 // difference between two source indicators.
 // The zero value is not usable.
 type MACD struct {
+	// valid determines whether paremeters were validated
+	valid bool
+
 	// source1 specifies the first base indicator.
 	source1 Indicator
 
@@ -658,16 +728,24 @@ func (m MACD) Sub2() Indicator {
 }
 
 // validate checks whether MACD was configured properly or not.
-func (m MACD) validate() error {
+func (m *MACD) validate() error {
+	m.valid = false
+
 	if m.source1 == nil || m.source2 == nil {
 		return ErrInvalidSource
 	}
+
+	m.valid = true
 
 	return nil
 }
 
 // Calc calculates MACD from the provided data slice.
 func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !m.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
 	dd, err := resize(dd, m.Count())
 	if err != nil {
 		return decimal.Zero, err
@@ -717,14 +795,18 @@ func (m *MACD) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	m.source1 = s1
-
 	s2, err := fromJSON(i.S2)
 	if err != nil {
 		return err
 	}
 
-	m.source2 = s2
+	nm, err := NewMACD(s1, s2)
+	if err != nil {
+		// unikely to happen
+		return err
+	}
+
+	*m = nm
 
 	return nil
 }
@@ -780,6 +862,9 @@ const NameROC = "roc"
 // of change.
 // The zero value is not usable.
 type ROC struct {
+	// valid determines whether paremeters were validated
+	valid bool
+
 	// length specifies how many data points should be used
 	// during the calculations.
 	length int
@@ -803,16 +888,24 @@ func (r ROC) Length() int {
 }
 
 // validate checks whether ROC was configured properly or not.
-func (r ROC) validate() error {
+func (r *ROC) validate() error {
+	r.valid = false
+
 	if r.length < 1 {
 		return ErrInvalidLength
 	}
+
+	r.valid = true
 
 	return nil
 }
 
 // Calc calculates ROC from the provided data slice.
 func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !r.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
 	dd, err := resize(dd, r.Count())
 	if err != nil {
 		return decimal.Zero, err
@@ -844,11 +937,12 @@ func (r *ROC) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	r.length = i.L
-
-	if err := r.validate(); err != nil {
+	nr, err := NewROC(i.L)
+	if err != nil {
 		return err
 	}
+
+	*r = nr
 
 	return nil
 }
@@ -881,6 +975,9 @@ const NameRSI = "rsi"
 // strength index.
 // The zero value is not usable.
 type RSI struct {
+	// valid determines whether paremeters were validated
+	valid bool
+
 	// length specifies how many data points should be used
 	// during the calculations.
 	length int
@@ -904,16 +1001,24 @@ func (r RSI) Length() int {
 }
 
 // validate checks whether RSI was configured properly or not.
-func (r RSI) validate() error {
+func (r *RSI) validate() error {
+	r.valid = false
+
 	if r.length < 1 {
 		return ErrInvalidLength
 	}
+
+	r.valid = true
 
 	return nil
 }
 
 // Calc calculates RSI from the provided data slice.
 func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !r.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
 	dd, err := resize(dd, r.Count())
 	if err != nil {
 		return decimal.Zero, err
@@ -963,11 +1068,12 @@ func (r *RSI) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	r.length = i.L
-
-	if err := r.validate(); err != nil {
+	nr, err := NewRSI(i.L)
+	if err != nil {
 		return err
 	}
+
+	*r = nr
 
 	return nil
 }
@@ -1000,6 +1106,9 @@ const NameSMA = "sma"
 // moving average.
 // The zero value is not usable.
 type SMA struct {
+	// valid determines whether paremeters were validated
+	valid bool
+
 	// length specifies how many data points should be used
 	// during the calculations.
 	length int
@@ -1023,16 +1132,24 @@ func (s SMA) Length() int {
 }
 
 // validate checks whether SMA was configured properly or not.
-func (s SMA) validate() error {
+func (s *SMA) validate() error {
+	s.valid = false
+
 	if s.length < 1 {
 		return ErrInvalidLength
 	}
+
+	s.valid = true
 
 	return nil
 }
 
 // Calc calculates SMA from the provided data slice.
 func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !s.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
 	dd, err := resize(dd, s.Count())
 	if err != nil {
 		return decimal.Zero, err
@@ -1063,11 +1180,12 @@ func (s *SMA) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	s.length = i.L
-
-	if err := s.validate(); err != nil {
+	ns, err := NewSMA(i.L)
+	if err != nil {
 		return err
 	}
+
+	*s = ns
 
 	return nil
 }
@@ -1100,6 +1218,9 @@ const NameSRSI = "srsi"
 // relative strength index.
 // The zero value is not usable.
 type SRSI struct {
+	// valid determines whether paremeters were validated
+	valid bool
+
 	// rsi specifies the base relative strength index.
 	rsi RSI
 }
@@ -1122,7 +1243,9 @@ func (s SRSI) RSI() RSI {
 }
 
 // validate checks whether SRSI was configured properly or not.
-func (s SRSI) validate() error {
+func (s *SRSI) validate() error {
+	s.valid = false
+
 	if s.rsi == (RSI{}) {
 		return errors.New("invalid rsi")
 	}
@@ -1131,11 +1254,17 @@ func (s SRSI) validate() error {
 		return ErrInvalidLength
 	}
 
+	s.valid = true
+
 	return nil
 }
 
 // Calc calculates SRSI from the provided data slice.
 func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !s.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
 	v, err := calcMultiple(dd, s.rsi.length, s.rsi)
 	if err != nil {
 		return decimal.Zero, err
@@ -1186,7 +1315,12 @@ func (s *SRSI) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	s.rsi = r
+	ns, err := NewSRSI(r)
+	if err != nil {
+		return err
+	}
+
+	*s = ns
 
 	return nil
 }
@@ -1219,6 +1353,9 @@ const NameStoch = "stoch"
 // oscillator.
 // The zero value is not usable.
 type Stoch struct {
+	// valid determines whether paremeters were validated
+	valid bool
+
 	// length specifies how many data points should be used
 	// during the calculations.
 	length int
@@ -1242,16 +1379,24 @@ func (s Stoch) Length() int {
 }
 
 // validate checks whether Stoch was configured properly or not.
-func (s Stoch) validate() error {
+func (s *Stoch) validate() error {
+	s.valid = false
+
 	if s.length < 1 {
 		return ErrInvalidLength
 	}
+
+	s.valid = true
 
 	return nil
 }
 
 // Calc calculates Stoch from the provided data slice.
 func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !s.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
 	dd, err := resize(dd, s.Count())
 	if err != nil {
 		return decimal.Zero, err
@@ -1294,11 +1439,12 @@ func (s *Stoch) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	s.length = i.L
-
-	if err := s.validate(); err != nil {
+	ns, err := NewStoch(i.L)
+	if err != nil {
 		return err
 	}
+
+	*s = ns
 
 	return nil
 }
@@ -1331,6 +1477,9 @@ const NameWMA = "wma"
 // moving average.
 // The zero value is not usable.
 type WMA struct {
+	// valid determines whether paremeters were validated
+	valid bool
+
 	// length specifies how many data points should be used
 	// during the calculations.
 	length int
@@ -1354,16 +1503,24 @@ func (w WMA) Length() int {
 }
 
 // validate checks whether WMA was configured properly or not.
-func (w WMA) validate() error {
+func (w *WMA) validate() error {
+	w.valid = false
+
 	if w.length < 1 {
 		return ErrInvalidLength
 	}
+
+	w.valid = true
 
 	return nil
 }
 
 // Calc calculates WMA from the provided data slice.
 func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !w.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
 	dd, err := resize(dd, w.Count())
 	if err != nil {
 		return decimal.Zero, err
@@ -1396,11 +1553,12 @@ func (w *WMA) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	w.length = i.L
-
-	if err := w.validate(); err != nil {
+	nw, err := NewWMA(i.L)
+	if err != nil {
 		return err
 	}
+
+	*w = nw
 
 	return nil
 }
