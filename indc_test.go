@@ -20,7 +20,7 @@ func Test_NewAroon(t *testing.T) {
 		"Successful creation": {
 			Trend:  "down",
 			Length: 5,
-			Result: Aroon{trend: "down", length: 5},
+			Result: Aroon{trend: "down", length: 5, valid: true},
 		},
 	}
 
@@ -43,27 +43,27 @@ func Test_NewAroon(t *testing.T) {
 
 func Test_Aroon_validate(t *testing.T) {
 	cc := map[string]struct {
-		Trend  String
-		Length int
-		Error  error
+		Aroon Aroon
+		Error error
+		Valid bool
 	}{
 		"Invalid trend": {
-			Trend:  "downn",
-			Length: 5,
-			Error:  assert.AnError,
+			Aroon: Aroon{trend: "downn", length: 5},
+			Error: assert.AnError,
+			Valid: false,
 		},
 		"Invalid length": {
-			Trend:  "down",
-			Length: 0,
-			Error:  ErrInvalidLength,
+			Aroon: Aroon{trend: "down", length: 0},
+			Error: ErrInvalidLength,
+			Valid: false,
 		},
 		"Successful validation with trend being up": {
-			Trend:  "up",
-			Length: 5,
+			Aroon: Aroon{trend: "up", length: 1},
+			Valid: true,
 		},
 		"Successful validation with trend being down": {
-			Trend:  "down",
-			Length: 5,
+			Aroon: Aroon{trend: "down", length: 1},
+			Valid: true,
 		},
 	}
 
@@ -73,8 +73,8 @@ func Test_Aroon_validate(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			a := Aroon{trend: c.Trend, length: c.Length}
-			equalError(t, c.Error, a.validate())
+			equalError(t, c.Error, c.Aroon.validate())
+			assert.Equal(t, c.Valid, c.Aroon.valid)
 		})
 	}
 }
@@ -91,23 +91,24 @@ func Test_Aroon_Trend(t *testing.T) {
 
 func Test_Aroon_Calc(t *testing.T) {
 	cc := map[string]struct {
-		Trend  String
-		Length int
+		Aroon  Aroon
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
+		"Invalid indicator": {
+			Aroon: Aroon{},
+			Error: ErrInvalidIndicator,
+		},
 		"Invalid data size": {
-			Trend:  "down",
-			Length: 5,
+			Aroon: Aroon{trend: "down", length: 5, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Successful calculation with trend being up": {
-			Trend:  "up",
-			Length: 5,
+			Aroon: Aroon{trend: "up", length: 5, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(25),
 				decimal.NewFromInt(31),
@@ -116,11 +117,10 @@ func Test_Aroon_Calc(t *testing.T) {
 				decimal.NewFromInt(29),
 				decimal.NewFromInt(29),
 			},
-			Result: decimal.NewFromFloat(40),
+			Result: decimal.NewFromInt(40),
 		},
 		"Successful calculation with trend being down": {
-			Trend:  "down",
-			Length: 5,
+			Aroon: Aroon{trend: "down", length: 5, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(25),
 				decimal.NewFromInt(31),
@@ -129,7 +129,7 @@ func Test_Aroon_Calc(t *testing.T) {
 				decimal.NewFromInt(29),
 				decimal.NewFromInt(29),
 			},
-			Result: decimal.NewFromFloat(100),
+			Result: decimal.NewFromInt(100),
 		},
 	}
 
@@ -139,8 +139,7 @@ func Test_Aroon_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			a := Aroon{trend: c.Trend, length: c.Length}
-			res, err := a.Calc(c.Data)
+			res, err := c.Aroon.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -172,7 +171,7 @@ func Test_Aroon_UnmarshalJSON(t *testing.T) {
 		},
 		"Successful unmarshal": {
 			JSON:   `{"trend":"up","length":1}`,
-			Result: Aroon{trend: "up", length: 1},
+			Result: Aroon{trend: "up", length: 1, valid: true},
 		},
 	}
 
@@ -221,7 +220,7 @@ func Test_NewCCI(t *testing.T) {
 		},
 		"Successful creation": {
 			Source: &IndicatorMock{},
-			Result: CCI{&IndicatorMock{}},
+			Result: CCI{source: &IndicatorMock{}, valid: true},
 		},
 	}
 
@@ -243,20 +242,24 @@ func Test_NewCCI(t *testing.T) {
 }
 
 func Test_CCI_Sub(t *testing.T) {
-	c := CCI{&IndicatorMock{}}
+	c := CCI{source: &IndicatorMock{}}
 	assert.Equal(t, &IndicatorMock{}, c.Sub())
 }
 
 func Test_CCI_validate(t *testing.T) {
 	cc := map[string]struct {
-		Source Indicator
-		Error  error
+		CCI   CCI
+		Error error
+		Valid bool
 	}{
 		"Invalid source": {
+			CCI:   CCI{source: nil},
 			Error: ErrInvalidSource,
+			Valid: false,
 		},
 		"Successful validation": {
-			Source: &IndicatorMock{},
+			CCI:   CCI{source: &IndicatorMock{}},
+			Valid: true,
 		},
 	}
 
@@ -266,8 +269,8 @@ func Test_CCI_validate(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			cci := CCI{c.Source}
-			equalError(t, c.Error, cci.validate())
+			equalError(t, c.Error, c.CCI.validate())
+			assert.Equal(t, c.Valid, c.CCI.valid)
 		})
 	}
 }
@@ -285,40 +288,44 @@ func Test_CCI_Calc(t *testing.T) {
 	}
 
 	cc := map[string]struct {
-		Source Indicator
+		CCI    CCI
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
+		"Invalid indicator": {
+			CCI:   CCI{},
+			Error: ErrInvalidIndicator,
+		},
 		"Invalid data size": {
-			Source: stubIndicator(decimal.Zero, nil, 10),
+			CCI: CCI{source: stubIndicator(decimal.Zero, nil, 10), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
-		"Invalid source": {
-			Source: stubIndicator(decimal.Zero, assert.AnError, 1),
+		"Invalid source calc": {
+			CCI: CCI{source: stubIndicator(decimal.Zero, assert.AnError, 1), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: assert.AnError,
 		},
 		"Successful handled division by 0": {
-			Source: stubIndicator(decimal.NewFromInt(3), nil, 1),
+			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 1), valid: true},
 			Data: []decimal.Decimal{
-				decimal.NewFromFloat(3),
-				decimal.NewFromFloat(6),
-				decimal.NewFromFloat(9),
+				decimal.NewFromInt(3),
+				decimal.NewFromInt(6),
+				decimal.NewFromInt(9),
 			},
 			Result: decimal.Zero,
 		},
 		"Successful calculation": {
-			Source: stubIndicator(decimal.NewFromInt(3), nil, 3),
+			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 3), valid: true},
 			Data: []decimal.Decimal{
-				decimal.NewFromFloat(3),
-				decimal.NewFromFloat(6),
-				decimal.NewFromFloat(9),
+				decimal.NewFromInt(3),
+				decimal.NewFromInt(6),
+				decimal.NewFromInt(9),
 			},
 			Result: decimal.NewFromInt(200),
 		},
@@ -330,8 +337,7 @@ func Test_CCI_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			cci := CCI{c.Source}
-			res, err := cci.Calc(c.Data)
+			res, err := c.CCI.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -349,7 +355,7 @@ func Test_CCI_Count(t *testing.T) {
 		},
 	}
 
-	c := CCI{indicator}
+	c := CCI{source: indicator}
 	assert.Equal(t, c.source.Count(), c.Count())
 }
 
@@ -369,7 +375,7 @@ func Test_CCI_UnmarshalJSON(t *testing.T) {
 		},
 		"Successful unmarshal": {
 			JSON:   `{"source":{"name":"sma","length":1}}`,
-			Result: CCI{SMA{length: 1}},
+			Result: CCI{source: SMA{length: 1, valid: true}, valid: true},
 		},
 	}
 
@@ -407,13 +413,13 @@ func Test_CCI_MarshalJSON(t *testing.T) {
 	}{
 		"Error returned during source marshalling": {
 			CCI: CCI{
-				stubIndicator(nil, assert.AnError),
+				source: stubIndicator(nil, assert.AnError),
 			},
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
 			CCI: CCI{
-				stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
+				source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
 			},
 			Result: `{"source":{"name":"indicatormock"}}`,
 		},
@@ -452,13 +458,13 @@ func Test_CCI_namedMarshalJSON(t *testing.T) {
 	}{
 		"Error returned during source marshalling": {
 			CCI: CCI{
-				stubIndicator(nil, assert.AnError),
+				source: stubIndicator(nil, assert.AnError),
 			},
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
 			CCI: CCI{
-				stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
+				source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
 			},
 			Result: `{"name":"cci","source":{"name":"indicatormock"}}`,
 		},
@@ -491,8 +497,8 @@ func Test_NewDEMA(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful creation": {
-			EMA:    EMA{SMA{length: 1}},
-			Result: DEMA{EMA{SMA{length: 1}}},
+			EMA:    EMA{sma: SMA{length: 1, valid: true}, valid: true},
+			Result: DEMA{ema: EMA{sma: SMA{length: 1, valid: true}, valid: true}, valid: true},
 		},
 	}
 
@@ -514,21 +520,24 @@ func Test_NewDEMA(t *testing.T) {
 }
 
 func Test_DEMA_Length(t *testing.T) {
-	dm := DEMA{EMA{SMA{length: 1}}}
+	dm := DEMA{ema: EMA{sma: SMA{length: 1}}}
 	assert.Equal(t, 1, dm.Length())
 }
 
 func Test_DEMA_validate(t *testing.T) {
 	cc := map[string]struct {
-		EMA   EMA
+		DEMA  DEMA
 		Error error
+		Valid bool
 	}{
 		"Invalid EMA": {
-			EMA:   EMA{SMA{length: -1}},
+			DEMA:  DEMA{ema: EMA{sma: SMA{length: -1}}},
 			Error: assert.AnError,
+			Valid: false,
 		},
 		"Successful validation": {
-			EMA: EMA{SMA{length: 1}},
+			DEMA:  DEMA{ema: EMA{sma: SMA{length: 1}}},
+			Valid: true,
 		},
 	}
 
@@ -538,28 +547,32 @@ func Test_DEMA_validate(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			d := DEMA{c.EMA}
-			equalError(t, c.Error, d.validate())
+			equalError(t, c.Error, c.DEMA.validate())
+			assert.Equal(t, c.Valid, c.DEMA.valid)
 		})
 	}
 }
 
 func Test_DEMA_Calc(t *testing.T) {
 	cc := map[string]struct {
-		EMA    EMA
+		DEMA   DEMA
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
+		"Invalid indicator": {
+			DEMA:  DEMA{},
+			Error: ErrInvalidIndicator,
+		},
 		"Invalid data size": {
-			EMA: EMA{SMA{length: 3}},
+			DEMA: DEMA{ema: EMA{sma: SMA{length: 3, valid: true}, valid: true}, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Successful calculation": {
-			EMA: EMA{SMA{length: 3}},
+			DEMA: DEMA{ema: EMA{sma: SMA{length: 3, valid: true}, valid: true}, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -568,7 +581,7 @@ func Test_DEMA_Calc(t *testing.T) {
 				decimal.NewFromInt(2),
 				decimal.NewFromInt(3),
 			},
-			Result: decimal.NewFromFloat(6.75),
+			Result: decimal.RequireFromString("6.75"),
 		},
 	}
 
@@ -578,8 +591,7 @@ func Test_DEMA_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			d := DEMA{c.EMA}
-			res, err := d.Calc(c.Data)
+			res, err := c.DEMA.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -591,7 +603,7 @@ func Test_DEMA_Calc(t *testing.T) {
 }
 
 func Test_DEMA_Count(t *testing.T) {
-	d := DEMA{EMA{SMA{length: 15}}}
+	d := DEMA{ema: EMA{sma: SMA{length: 15}}}
 	assert.Equal(t, 29, d.Count())
 }
 
@@ -610,8 +622,8 @@ func Test_DEMA_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
-			JSON:   `{"ema":{"sma":{"length":1}}}`,
-			Result: DEMA{EMA{SMA{length: 1}}},
+			JSON:   `{"ema":{"length":1}}`,
+			Result: DEMA{ema: EMA{sma: SMA{length: 1, valid: true}, valid: true}, valid: true},
 		},
 	}
 
@@ -634,33 +646,34 @@ func Test_DEMA_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_DEMA_MarshalJSON(t *testing.T) {
-	dm := DEMA{EMA{SMA{length: 1}}}
+	dm := DEMA{ema: EMA{sma: SMA{length: 1}}}
 	d, err := dm.MarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"ema":{"sma":{"length":1}}}`, string(d))
+	assert.JSONEq(t, `{"ema":{"length":1}}`, string(d))
 }
 
 func Test_DEMA_namedMarshalJSON(t *testing.T) {
-	dm := DEMA{EMA{SMA{length: 1}}}
+	dm := DEMA{ema: EMA{sma: SMA{length: 1}}}
 	d, err := dm.namedMarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"name":"dema","ema":{"sma":{"length":1}}}`, string(d))
+	assert.JSONEq(t, `{"name":"dema","ema":{"length":1}}`, string(d))
 }
 
 func Test_NewEMA(t *testing.T) {
 	cc := map[string]struct {
-		SMA    SMA
+		Length int
 		Result EMA
 		Error  error
 	}{
 		"Invalid parameters": {
-			Error: assert.AnError,
+			Length: -1,
+			Error:  assert.AnError,
 		},
 		"Successful creation": {
-			SMA:    SMA{length: 1},
-			Result: EMA{sma: SMA{length: 1}},
+			Length: 1,
+			Result: EMA{sma: SMA{length: 1, valid: true}, valid: true},
 		},
 	}
 
@@ -670,7 +683,7 @@ func Test_NewEMA(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			e, err := NewEMA(c.SMA)
+			e, err := NewEMA(c.Length)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -682,21 +695,24 @@ func Test_NewEMA(t *testing.T) {
 }
 
 func Test_EMA_Length(t *testing.T) {
-	e := EMA{SMA{length: 1}}
+	e := EMA{sma: SMA{length: 1}}
 	assert.Equal(t, 1, e.Length())
 }
 
 func Test_EMA_validate(t *testing.T) {
 	cc := map[string]struct {
-		SMA   SMA
+		EMA   EMA
 		Error error
+		Valid bool
 	}{
 		"Invalid SMA": {
-			SMA:   SMA{length: -1},
+			EMA:   EMA{sma: SMA{length: -1}},
 			Error: assert.AnError,
+			Valid: false,
 		},
 		"Successful validation": {
-			SMA: SMA{length: 1},
+			EMA:   EMA{sma: SMA{length: 1}},
+			Valid: true,
 		},
 	}
 
@@ -706,28 +722,32 @@ func Test_EMA_validate(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			e := EMA{c.SMA}
-			equalError(t, c.Error, e.validate())
+			equalError(t, c.Error, c.EMA.validate())
+			assert.Equal(t, c.Valid, c.EMA.valid)
 		})
 	}
 }
 
 func Test_EMA_Calc(t *testing.T) {
 	cc := map[string]struct {
-		SMA    SMA
+		EMA    EMA
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
+		"Invalid indicator": {
+			EMA:   EMA{},
+			Error: ErrInvalidIndicator,
+		},
 		"Invalid data size": {
-			SMA: SMA{length: 3},
+			EMA: EMA{sma: SMA{length: 3, valid: true}, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Successful calculation": {
-			SMA: SMA{length: 3},
+			EMA: EMA{sma: SMA{length: 3, valid: true}, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(1),
@@ -735,7 +755,7 @@ func Test_EMA_Calc(t *testing.T) {
 				decimal.NewFromInt(2),
 				decimal.NewFromInt(3),
 			},
-			Result: decimal.NewFromFloat(4.75),
+			Result: decimal.RequireFromString("4.75"),
 		},
 	}
 
@@ -745,8 +765,44 @@ func Test_EMA_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			e := EMA{c.SMA}
-			res, err := e.Calc(c.Data)
+			res, err := c.EMA.Calc(c.Data)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
+
+func Test_EMA_CalcNext(t *testing.T) {
+	cc := map[string]struct {
+		EMA    EMA
+		Last   decimal.Decimal
+		Next   decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			EMA:   EMA{},
+			Error: ErrInvalidIndicator,
+		},
+		"Successful calculation": {
+			EMA:    EMA{sma: SMA{length: 3, valid: true}, valid: true},
+			Last:   decimal.NewFromInt(5),
+			Next:   decimal.NewFromInt(5),
+			Result: decimal.NewFromInt(5),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := c.EMA.CalcNext(c.Last, c.Next)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -758,13 +814,13 @@ func Test_EMA_Calc(t *testing.T) {
 }
 
 func Test_EMA_Count(t *testing.T) {
-	e := EMA{SMA{length: 15}}
+	e := EMA{sma: SMA{length: 15}}
 	assert.Equal(t, 29, e.Count())
 }
 
 func Test_EMA_multiplier(t *testing.T) {
-	e := EMA{SMA{length: 3}}
-	assert.Equal(t, decimal.NewFromFloat(0.5).String(), e.multiplier().String())
+	e := EMA{sma: SMA{length: 3}}
+	assert.Equal(t, decimal.RequireFromString("0.5").String(), e.multiplier().String())
 }
 
 func Test_EMA_UnmarshalJSON(t *testing.T) {
@@ -782,8 +838,8 @@ func Test_EMA_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
-			JSON:   `{"sma":{"length":1}}`,
-			Result: EMA{SMA{length: 1}},
+			JSON:   `{"length":1}`,
+			Result: EMA{sma: SMA{length: 1, valid: true}, valid: true},
 		},
 	}
 
@@ -806,19 +862,19 @@ func Test_EMA_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_EMA_MarshalJSON(t *testing.T) {
-	e := EMA{SMA{length: 1}}
+	e := EMA{sma: SMA{length: 1}}
 	d, err := e.MarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"sma":{"length":1}}`, string(d))
+	assert.JSONEq(t, `{"length":1}`, string(d))
 }
 
 func Test_EMA_namedMarshalJSON(t *testing.T) {
-	e := EMA{SMA{length: 1}}
+	e := EMA{sma: SMA{length: 1}}
 	d, err := e.namedMarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"name":"ema","sma":{"length":1}}`, string(d))
+	assert.JSONEq(t, `{"name":"ema", "length":1}`, string(d))
 }
 
 func Test_NewHMA(t *testing.T) {
@@ -831,8 +887,8 @@ func Test_NewHMA(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful creation": {
-			WMA:    WMA{length: 2},
-			Result: HMA{WMA{length: 2}},
+			WMA:    WMA{length: 2, valid: true},
+			Result: HMA{wma: WMA{length: 2, valid: true}, valid: true},
 		},
 	}
 
@@ -854,21 +910,24 @@ func Test_NewHMA(t *testing.T) {
 }
 
 func Test_HMA_WMA(t *testing.T) {
-	h := HMA{WMA{length: 1}}
+	h := HMA{wma: WMA{length: 1}}
 	assert.Equal(t, WMA{length: 1}, h.WMA())
 }
 
 func Test_HMA_validate(t *testing.T) {
 	cc := map[string]struct {
-		WMA   WMA
+		HMA   HMA
 		Error error
+		Valid bool
 	}{
 		"Invalid WMA": {
-			WMA:   WMA{length: -1},
+			HMA:   HMA{wma: WMA{length: -1}},
 			Error: assert.AnError,
+			Valid: false,
 		},
 		"Successful validation": {
-			WMA: WMA{length: 2},
+			HMA:   HMA{wma: WMA{length: 2}},
+			Valid: true,
 		},
 	}
 
@@ -878,28 +937,32 @@ func Test_HMA_validate(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			h := HMA{wma: c.WMA}
-			equalError(t, c.Error, h.validate())
+			equalError(t, c.Error, c.HMA.validate())
+			assert.Equal(t, c.Valid, c.HMA.valid)
 		})
 	}
 }
 
 func Test_HMA_Calc(t *testing.T) {
 	cc := map[string]struct {
-		WMA    WMA
+		HMA    HMA
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
+		"Invalid indicator": {
+			HMA:   HMA{},
+			Error: ErrInvalidIndicator,
+		},
 		"Invalid data size": {
-			WMA: WMA{length: 5},
+			HMA: HMA{wma: WMA{length: 5, valid: true}, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Successful calculation": {
-			WMA: WMA{length: 3},
+			HMA: HMA{wma: WMA{length: 3, valid: true}, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -908,7 +971,7 @@ func Test_HMA_Calc(t *testing.T) {
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
 			},
-			Result: decimal.NewFromFloat(31.5),
+			Result: decimal.RequireFromString("31.5"),
 		},
 	}
 
@@ -918,8 +981,7 @@ func Test_HMA_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			h := HMA{c.WMA}
-			res, err := h.Calc(c.Data)
+			res, err := c.HMA.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -931,7 +993,7 @@ func Test_HMA_Calc(t *testing.T) {
 }
 
 func Test_HMA_Count(t *testing.T) {
-	h := HMA{WMA{length: 15}}
+	h := HMA{wma: WMA{length: 15}}
 	assert.Equal(t, 29, h.Count())
 }
 
@@ -950,8 +1012,8 @@ func Test_HMA_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
-			JSON:   `{"wma":{"length":1}}`,
-			Result: HMA{wma: WMA{length: 1}},
+			JSON:   `{"wma":{"length":3}}`,
+			Result: HMA{wma: WMA{length: 3, valid: true}, valid: true},
 		},
 	}
 
@@ -974,19 +1036,19 @@ func Test_HMA_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_HMA_MarshalJSON(t *testing.T) {
-	h := HMA{WMA{length: 1}}
+	h := HMA{wma: WMA{length: 3}}
 	d, err := h.MarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"wma":{"length":1}}`, string(d))
+	assert.JSONEq(t, `{"wma":{"length":3}}`, string(d))
 }
 
 func Test_HMA_namedMarshalJSON(t *testing.T) {
-	h := HMA{WMA{length: 1}}
+	h := HMA{wma: WMA{length: 3}}
 	d, err := h.namedMarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"name":"hma","wma":{"length":1}}`, string(d))
+	assert.JSONEq(t, `{"name":"hma","wma":{"length":3}}`, string(d))
 }
 
 func Test_NewMACD(t *testing.T) {
@@ -1002,7 +1064,7 @@ func Test_NewMACD(t *testing.T) {
 		"Successful creation": {
 			Source1: &IndicatorMock{},
 			Source2: &IndicatorMock{},
-			Result:  MACD{&IndicatorMock{}, &IndicatorMock{}},
+			Result:  MACD{source1: &IndicatorMock{}, source2: &IndicatorMock{}, valid: true},
 		},
 	}
 
@@ -1024,32 +1086,34 @@ func Test_NewMACD(t *testing.T) {
 }
 
 func Test_MACD_Sub1(t *testing.T) {
-	m := MACD{&IndicatorMock{}, nil}
+	m := MACD{source1: &IndicatorMock{}, source2: nil}
 	assert.Equal(t, &IndicatorMock{}, m.Sub1())
 }
 
 func Test_MACD_Sub2(t *testing.T) {
-	m := MACD{nil, &IndicatorMock{}}
+	m := MACD{source1: nil, source2: &IndicatorMock{}}
 	assert.Equal(t, &IndicatorMock{}, m.Sub2())
 }
 
 func Test_MACD_validate(t *testing.T) {
 	cc := map[string]struct {
-		Source1 Indicator
-		Source2 Indicator
-		Error   error
+		MACD  MACD
+		Error error
+		Valid bool
 	}{
 		"Invalid source1": {
-			Source2: &IndicatorMock{},
-			Error:   ErrInvalidSource,
+			MACD:  MACD{source1: nil, source2: &IndicatorMock{}},
+			Error: ErrInvalidSource,
+			Valid: false,
 		},
 		"Invalid source2": {
-			Source1: &IndicatorMock{},
-			Error:   ErrInvalidSource,
+			MACD:  MACD{source1: &IndicatorMock{}, source2: nil},
+			Error: ErrInvalidSource,
+			Valid: false,
 		},
 		"Successful MACD": {
-			Source1: &IndicatorMock{},
-			Source2: &IndicatorMock{},
+			MACD:  MACD{source1: &IndicatorMock{}, source2: &IndicatorMock{}},
+			Valid: true,
 		},
 	}
 
@@ -1059,8 +1123,8 @@ func Test_MACD_validate(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			m := MACD{c.Source1, c.Source2}
-			equalError(t, c.Error, m.validate())
+			equalError(t, c.Error, c.MACD.validate())
+			assert.Equal(t, c.Valid, c.MACD.valid)
 		})
 	}
 }
@@ -1078,53 +1142,51 @@ func Test_MACD_Calc(t *testing.T) {
 	}
 
 	cc := map[string]struct {
-		Source1 Indicator
-		Source2 Indicator
-		Data    []decimal.Decimal
-		Result  decimal.Decimal
-		Error   error
+		MACD   MACD
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
 	}{
+		"Invalid indicator": {
+			MACD:  MACD{},
+			Error: ErrInvalidIndicator,
+		},
 		"Invalid data size for source1": {
-			Source1: stubIndicator(decimal.Zero, nil, 10),
-			Source2: stubIndicator(decimal.Zero, nil, 1),
+			MACD: MACD{source1: stubIndicator(decimal.Zero, nil, 10), source2: stubIndicator(decimal.Zero, nil, 1), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Invalid data size for source2": {
-			Source1: stubIndicator(decimal.Zero, nil, 1),
-			Source2: stubIndicator(decimal.Zero, nil, 10),
+			MACD: MACD{source1: stubIndicator(decimal.Zero, nil, 1), source2: stubIndicator(decimal.Zero, nil, 10), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Invalid source1": {
-			Source1: stubIndicator(decimal.Zero, assert.AnError, 1),
-			Source2: stubIndicator(decimal.Zero, nil, 1),
+			MACD: MACD{source1: stubIndicator(decimal.Zero, assert.AnError, 1), source2: stubIndicator(decimal.Zero, nil, 1), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: assert.AnError,
 		},
 		"Invalid source2": {
-			Source1: stubIndicator(decimal.Zero, nil, 1),
-			Source2: stubIndicator(decimal.Zero, assert.AnError, 1),
+			MACD: MACD{source1: stubIndicator(decimal.Zero, nil, 1), source2: stubIndicator(decimal.Zero, assert.AnError, 1), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: assert.AnError,
 		},
 		"Successful calculation": {
-			Source1: stubIndicator(decimal.NewFromInt(5), nil, 1),
-			Source2: stubIndicator(decimal.NewFromInt(10), nil, 1),
+			MACD: MACD{source1: stubIndicator(decimal.NewFromInt(5), nil, 1), source2: stubIndicator(decimal.NewFromInt(10), nil, 1), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(32),
 			},
-			Result: decimal.NewFromFloat(-5),
+			Result: decimal.NewFromInt(-5),
 		},
 	}
 
@@ -1134,8 +1196,7 @@ func Test_MACD_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			m := MACD{c.Source1, c.Source2}
-			res, err := m.Calc(c.Data)
+			res, err := c.MACD.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -1155,10 +1216,10 @@ func Test_MACD_Count(t *testing.T) {
 		}
 	}
 
-	m := MACD{stubIndicator(5), stubIndicator(10)}
+	m := MACD{source1: stubIndicator(5), source2: stubIndicator(10)}
 	assert.Equal(t, m.Count(), 10)
 
-	m = MACD{stubIndicator(15), stubIndicator(10)}
+	m = MACD{source1: stubIndicator(15), source2: stubIndicator(10)}
 	assert.Equal(t, m.Count(), 15)
 }
 
@@ -1173,16 +1234,16 @@ func Test_MACD_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Invalid source1": {
-			JSON:  `{"source2":{"name":"indicatormock"}}`,
+			JSON:  `{"source2":{"name":"sma","length":1}}`,
 			Error: assert.AnError,
 		},
 		"Invalid source2": {
-			JSON:  `{"source1":{"name":"indicatormock"}}`,
+			JSON:  `{"source1":{"name":"sma","length":1}}`,
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
 			JSON:   `{"source1":{"name":"sma","length":1},"source2":{"name":"sma","length":2}}`,
-			Result: MACD{SMA{length: 1}, SMA{length: 2}},
+			Result: MACD{source1: SMA{length: 1, valid: true}, source2: SMA{length: 2, valid: true}, valid: true},
 		},
 	}
 
@@ -1220,22 +1281,22 @@ func Test_MACD_MarshalJSON(t *testing.T) {
 	}{
 		"Error returned during source1 marshalling": {
 			MACD: MACD{
-				stubIndicator(nil, assert.AnError),
-				stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
+				source1: stubIndicator(nil, assert.AnError),
+				source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
 			},
 			Error: assert.AnError,
 		},
 		"Error returned during source2 marshalling": {
 			MACD: MACD{
-				stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-				stubIndicator(nil, assert.AnError),
+				source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
+				source2: stubIndicator(nil, assert.AnError),
 			},
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
 			MACD: MACD{
-				stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-				stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
+				source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
+				source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
 			},
 			Result: `{"source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"}}`,
 		},
@@ -1274,22 +1335,22 @@ func Test_MACD_namedMarshalJSON(t *testing.T) {
 	}{
 		"Error returned during source1 marshalling": {
 			MACD: MACD{
-				stubIndicator(nil, assert.AnError),
-				stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
+				source1: stubIndicator(nil, assert.AnError),
+				source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
 			},
 			Error: assert.AnError,
 		},
 		"Error returned during source2 marshalling": {
 			MACD: MACD{
-				stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-				stubIndicator(nil, assert.AnError),
+				source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
+				source2: stubIndicator(nil, assert.AnError),
 			},
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
 			MACD: MACD{
-				stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-				stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
+				source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
+				source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
 			},
 			Result: `{"name":"macd","source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"}}`,
 		},
@@ -1323,7 +1384,7 @@ func Test_NewROC(t *testing.T) {
 		},
 		"Successful creation": {
 			Length: 1,
-			Result: ROC{length: 1},
+			Result: ROC{length: 1, valid: true},
 		},
 	}
 
@@ -1351,15 +1412,18 @@ func Test_ROC_Length(t *testing.T) {
 
 func Test_ROC_validate(t *testing.T) {
 	cc := map[string]struct {
-		Length int
-		Error  error
+		ROC   ROC
+		Error error
+		Valid bool
 	}{
 		"Invalid length": {
-			Length: 0,
-			Error:  ErrInvalidLength,
+			ROC:   ROC{length: -1},
+			Error: ErrInvalidLength,
+			Valid: false,
 		},
 		"Successful validation": {
-			Length: 1,
+			ROC:   ROC{length: 1},
+			Valid: true,
 		},
 	}
 
@@ -1369,28 +1433,32 @@ func Test_ROC_validate(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			r := ROC{length: c.Length}
-			equalError(t, c.Error, r.validate())
+			equalError(t, c.Error, c.ROC.validate())
+			assert.Equal(t, c.Valid, c.ROC.valid)
 		})
 	}
 }
 
 func Test_ROC_Calc(t *testing.T) {
 	cc := map[string]struct {
-		Length int
+		ROC    ROC
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
+		"Invalid indicator": {
+			ROC:   ROC{},
+			Error: ErrInvalidIndicator,
+		},
 		"Invalid data size": {
-			Length: 3,
+			ROC: ROC{length: 3, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Successful handled division by 0": {
-			Length: 5,
+			ROC: ROC{length: 5, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(420),
 				decimal.NewFromInt(0),
@@ -1402,7 +1470,7 @@ func Test_ROC_Calc(t *testing.T) {
 			Result: decimal.Zero,
 		},
 		"Successful calculation": {
-			Length: 5,
+			ROC: ROC{length: 5, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(7),
 				decimal.NewFromInt(420),
@@ -1410,7 +1478,7 @@ func Test_ROC_Calc(t *testing.T) {
 				decimal.NewFromInt(420),
 				decimal.NewFromInt(10),
 			},
-			Result: decimal.NewFromFloat(42.85714285714286),
+			Result: decimal.RequireFromString("42.85714285714286"),
 		},
 	}
 
@@ -1420,8 +1488,7 @@ func Test_ROC_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			r := ROC{length: c.Length}
-			res, err := r.Calc(c.Data)
+			res, err := c.ROC.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -1453,7 +1520,7 @@ func Test_ROC_UnmarshalJSON(t *testing.T) {
 		},
 		"Successful unmarshal": {
 			JSON:   `{"length":1}`,
-			Result: ROC{length: 1},
+			Result: ROC{length: 1, valid: true},
 		},
 	}
 
@@ -1502,7 +1569,7 @@ func Test_NewRSI(t *testing.T) {
 		},
 		"Successful creation": {
 			Length: 1,
-			Result: RSI{length: 1},
+			Result: RSI{length: 1, valid: true},
 		},
 	}
 
@@ -1530,15 +1597,18 @@ func Test_RSI_Length(t *testing.T) {
 
 func Test_RSI_validate(t *testing.T) {
 	cc := map[string]struct {
-		Length int
-		Error  error
+		RSI   RSI
+		Error error
+		Valid bool
 	}{
 		"Invalid length": {
-			Length: 0,
-			Error:  ErrInvalidLength,
+			RSI:   RSI{length: 0},
+			Error: ErrInvalidLength,
+			Valid: false,
 		},
 		"Successful validation": {
-			Length: 1,
+			RSI:   RSI{length: 1},
+			Valid: true,
 		},
 	}
 
@@ -1548,34 +1618,56 @@ func Test_RSI_validate(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			r := RSI{length: c.Length}
-			equalError(t, c.Error, r.validate())
+			equalError(t, c.Error, c.RSI.validate())
+			assert.Equal(t, c.Valid, c.RSI.valid)
 		})
 	}
 }
 
 func Test_RSI_Calc(t *testing.T) {
 	cc := map[string]struct {
-		Length int
+		RSI    RSI
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
+		"Invalid indicator": {
+			RSI:   RSI{},
+			Error: ErrInvalidIndicator,
+		},
 		"Invalid data size": {
-			Length: 3,
+			RSI: RSI{length: 3, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
-		"Successful calculation": {
-			Length: 3,
+		"Successful calculation when average gain 0": {
+			RSI: RSI{length: 3, valid: true},
 			Data: []decimal.Decimal{
-				decimal.NewFromFloat32(8),
-				decimal.NewFromFloat32(12),
-				decimal.NewFromFloat32(8),
+				decimal.NewFromInt(16),
+				decimal.NewFromInt(12),
+				decimal.NewFromInt(8),
 			},
-			Result: decimal.NewFromFloat(50),
+			Result: decimal.NewFromInt(0),
+		},
+		"Successful calculation when average loss 0": {
+			RSI: RSI{length: 3, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(4),
+				decimal.NewFromInt(8),
+			},
+			Result: decimal.NewFromInt(100),
+		},
+		"Successful calculation": {
+			RSI: RSI{length: 3, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(8),
+				decimal.NewFromInt(12),
+				decimal.NewFromInt(8),
+			},
+			Result: decimal.NewFromInt(50),
 		},
 	}
 
@@ -1585,8 +1677,7 @@ func Test_RSI_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			r := RSI{length: c.Length}
-			res, err := r.Calc(c.Data)
+			res, err := c.RSI.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -1618,7 +1709,7 @@ func Test_RSI_UnmarshalJSON(t *testing.T) {
 		},
 		"Successful unmarshal": {
 			JSON:   `{"length":1}`,
-			Result: RSI{length: 1},
+			Result: RSI{length: 1, valid: true},
 		},
 	}
 
@@ -1667,7 +1758,7 @@ func Test_NewSMA(t *testing.T) {
 		},
 		"Successful creation": {
 			Length: 1,
-			Result: SMA{length: 1},
+			Result: SMA{length: 1, valid: true},
 		},
 	}
 
@@ -1695,15 +1786,18 @@ func Test_SMA_Length(t *testing.T) {
 
 func Test_SMA_validate(t *testing.T) {
 	cc := map[string]struct {
-		Length int
-		Error  error
+		SMA   SMA
+		Error error
+		Valid bool
 	}{
 		"Invalid length": {
-			Length: 0,
-			Error:  ErrInvalidLength,
+			SMA:   SMA{length: 0},
+			Error: ErrInvalidLength,
+			Valid: false,
 		},
 		"Successful validation": {
-			Length: 1,
+			SMA:   SMA{length: 1},
+			Valid: true,
 		},
 	}
 
@@ -1713,28 +1807,32 @@ func Test_SMA_validate(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := SMA{length: c.Length}
-			equalError(t, c.Error, s.validate())
+			equalError(t, c.Error, c.SMA.validate())
+			assert.Equal(t, c.Valid, c.SMA.valid)
 		})
 	}
 }
 
 func Test_SMA_Calc(t *testing.T) {
 	cc := map[string]struct {
-		Length int
+		SMA    SMA
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
+		"Invalid indicator": {
+			SMA:   SMA{},
+			Error: ErrInvalidIndicator,
+		},
 		"Invalid data size": {
-			Length: 3,
+			SMA: SMA{length: 3, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Successful calculation": {
-			Length: 3,
+			SMA: SMA{length: 3, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -1750,8 +1848,7 @@ func Test_SMA_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := SMA{length: c.Length}
-			res, err := s.Calc(c.Data)
+			res, err := c.SMA.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -1783,7 +1880,7 @@ func Test_SMA_UnmarshalJSON(t *testing.T) {
 		},
 		"Successful unmarshal": {
 			JSON:   `{"length":1}`,
-			Result: SMA{length: 1},
+			Result: SMA{length: 1, valid: true},
 		},
 	}
 
@@ -1831,8 +1928,8 @@ func Test_NewSRSI(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful creation": {
-			RSI:    RSI{length: 1},
-			Result: SRSI{RSI{length: 1}},
+			RSI:    RSI{length: 1, valid: true},
+			Result: SRSI{rsi: RSI{length: 1, valid: true}, valid: true},
 		},
 	}
 
@@ -1854,24 +1951,29 @@ func Test_NewSRSI(t *testing.T) {
 }
 
 func Test_SRSI_RSI(t *testing.T) {
-	s := SRSI{RSI{length: 1}}
+	s := SRSI{rsi: RSI{length: 1}}
 	assert.Equal(t, RSI{length: 1}, s.RSI())
 }
 
 func Test_SRSI_validate(t *testing.T) {
 	cc := map[string]struct {
-		RSI   RSI
+		SRSI  SRSI
 		Error error
+		Valid bool
 	}{
 		"Invalid RSI": {
+			SRSI:  SRSI{},
 			Error: assert.AnError,
+			Valid: false,
 		},
 		"Invalid RSI length": {
-			RSI:   RSI{length: -1},
+			SRSI:  SRSI{rsi: RSI{length: -1}},
 			Error: assert.AnError,
+			Valid: false,
 		},
 		"Successful validation": {
-			RSI: RSI{length: 1},
+			SRSI:  SRSI{rsi: RSI{length: 1}},
+			Valid: true,
 		},
 	}
 
@@ -1881,47 +1983,51 @@ func Test_SRSI_validate(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := SRSI{rsi: c.RSI}
-			equalError(t, c.Error, s.validate())
+			equalError(t, c.Error, c.SRSI.validate())
+			assert.Equal(t, c.Valid, c.SRSI.valid)
 		})
 	}
 }
 
 func Test_SRSI_Calc(t *testing.T) {
 	cc := map[string]struct {
-		RSI    RSI
+		SRSI   SRSI
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
+		"Invalid indicator": {
+			SRSI:  SRSI{},
+			Error: ErrInvalidIndicator,
+		},
 		"Invalid data size": {
-			RSI: RSI{length: 5},
+			SRSI: SRSI{rsi: RSI{length: 5, valid: true}, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: assert.AnError,
 		},
 		"Successfully handled division by 0": {
-			RSI: RSI{length: 3},
+			SRSI: SRSI{rsi: RSI{length: 3, valid: true}, valid: true},
 			Data: []decimal.Decimal{
-				decimal.NewFromFloat(8),
-				decimal.NewFromFloat(12),
-				decimal.NewFromFloat(8),
-				decimal.NewFromFloat(12),
-				decimal.NewFromFloat(8),
+				decimal.NewFromInt(8),
+				decimal.NewFromInt(12),
+				decimal.NewFromInt(8),
+				decimal.NewFromInt(12),
+				decimal.NewFromInt(8),
 			},
 			Result: decimal.Zero,
 		},
 		"Successful calculation": {
-			RSI: RSI{length: 3},
+			SRSI: SRSI{rsi: RSI{length: 3, valid: true}, valid: true},
 			Data: []decimal.Decimal{
-				decimal.NewFromFloat(8),
-				decimal.NewFromFloat(14),
-				decimal.NewFromFloat(8),
-				decimal.NewFromFloat(12),
-				decimal.NewFromFloat(8),
+				decimal.NewFromInt(4),
+				decimal.NewFromInt(10),
+				decimal.NewFromInt(6),
+				decimal.NewFromInt(8),
+				decimal.NewFromInt(6),
 			},
-			Result: decimal.NewFromFloat(1),
+			Result: decimal.RequireFromString("0.625"),
 		},
 	}
 
@@ -1931,8 +2037,7 @@ func Test_SRSI_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := SRSI{c.RSI}
-			res, err := s.Calc(c.Data)
+			res, err := c.SRSI.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -1944,7 +2049,7 @@ func Test_SRSI_Calc(t *testing.T) {
 }
 
 func Test_SRSI_Count(t *testing.T) {
-	s := SRSI{RSI{length: 15}}
+	s := SRSI{rsi: RSI{length: 15}}
 	assert.Equal(t, 29, s.Count())
 }
 
@@ -1964,7 +2069,7 @@ func Test_SRSI_UnmarshalJSON(t *testing.T) {
 		},
 		"Successful unmarshal": {
 			JSON:   `{"rsi":{"length":1}}`,
-			Result: SRSI{RSI{length: 1}},
+			Result: SRSI{rsi: RSI{length: 1, valid: true}, valid: true},
 		},
 	}
 
@@ -1987,7 +2092,7 @@ func Test_SRSI_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_SRSI_MarshalJSON(t *testing.T) {
-	s := SRSI{RSI{length: 1}}
+	s := SRSI{rsi: RSI{length: 1}}
 	d, err := s.MarshalJSON()
 
 	assert.NoError(t, err)
@@ -1995,7 +2100,7 @@ func Test_SRSI_MarshalJSON(t *testing.T) {
 }
 
 func Test_SRSI_namedMarshalJSON(t *testing.T) {
-	s := SRSI{RSI{length: 1}}
+	s := SRSI{rsi: RSI{length: 1}}
 	d, err := s.namedMarshalJSON()
 
 	assert.NoError(t, err)
@@ -2013,7 +2118,7 @@ func Test_NewStoch(t *testing.T) {
 		},
 		"Successful creation": {
 			Length: 1,
-			Result: Stoch{length: 1},
+			Result: Stoch{length: 1, valid: true},
 		},
 	}
 
@@ -2041,15 +2146,18 @@ func Test_Stoch_Length(t *testing.T) {
 
 func Test_Stoch_validate(t *testing.T) {
 	cc := map[string]struct {
-		Length int
-		Error  error
+		Stoch Stoch
+		Error error
+		Valid bool
 	}{
 		"Invalid length": {
-			Length: 0,
-			Error:  ErrInvalidLength,
+			Stoch: Stoch{length: 0},
+			Error: ErrInvalidLength,
+			Valid: false,
 		},
 		"Successful validation": {
-			Length: 1,
+			Stoch: Stoch{length: 1},
+			Valid: true,
 		},
 	}
 
@@ -2059,28 +2167,32 @@ func Test_Stoch_validate(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := Stoch{length: c.Length}
-			equalError(t, c.Error, s.validate())
+			equalError(t, c.Error, c.Stoch.validate())
+			assert.Equal(t, c.Valid, c.Stoch.valid)
 		})
 	}
 }
 
 func Test_Stoch_Calc(t *testing.T) {
 	cc := map[string]struct {
-		Length int
+		Stoch  Stoch
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
+		"Invalid indicator": {
+			Stoch: Stoch{},
+			Error: ErrInvalidIndicator,
+		},
 		"Invalid data size": {
-			Length: 3,
+			Stoch: Stoch{length: 3, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Successful calculation when new lows are reached": {
-			Length: 3,
+			Stoch: Stoch{length: 3, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(150),
 				decimal.NewFromInt(125),
@@ -2089,7 +2201,7 @@ func Test_Stoch_Calc(t *testing.T) {
 			Result: decimal.NewFromInt(80),
 		},
 		"Successfully handled division by 0": {
-			Length: 3,
+			Stoch: Stoch{length: 3, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(150),
 				decimal.NewFromInt(150),
@@ -2098,7 +2210,7 @@ func Test_Stoch_Calc(t *testing.T) {
 			Result: decimal.Zero,
 		},
 		"Successful calculation when new highs are reached": {
-			Length: 3,
+			Stoch: Stoch{length: 3, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(120),
 				decimal.NewFromInt(145),
@@ -2114,8 +2226,7 @@ func Test_Stoch_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := Stoch{length: c.Length}
-			res, err := s.Calc(c.Data)
+			res, err := c.Stoch.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -2147,7 +2258,7 @@ func Test_Stoch_UnmarshalJSON(t *testing.T) {
 		},
 		"Successful unmarshal": {
 			JSON:   `{"length":1}`,
-			Result: Stoch{length: 1},
+			Result: Stoch{length: 1, valid: true},
 		},
 	}
 
@@ -2196,7 +2307,7 @@ func Test_NewWMA(t *testing.T) {
 		},
 		"Successful creation": {
 			Length: 1,
-			Result: WMA{length: 1},
+			Result: WMA{length: 1, valid: true},
 		},
 	}
 
@@ -2224,15 +2335,18 @@ func Test_WMA_Length(t *testing.T) {
 
 func Test_WMA_validate(t *testing.T) {
 	cc := map[string]struct {
-		Length int
-		Error  error
+		WMA   WMA
+		Error error
+		Valid bool
 	}{
 		"Invalid length": {
-			Length: 0,
-			Error:  ErrInvalidLength,
+			WMA:   WMA{length: 0},
+			Error: ErrInvalidLength,
+			Valid: false,
 		},
 		"Successful validation": {
-			Length: 1,
+			WMA:   WMA{length: 1},
+			Valid: true,
 		},
 	}
 
@@ -2242,28 +2356,32 @@ func Test_WMA_validate(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			w := WMA{length: c.Length}
-			equalError(t, c.Error, w.validate())
+			equalError(t, c.Error, c.WMA.validate())
+			assert.Equal(t, c.Valid, c.WMA.valid)
 		})
 	}
 }
 
 func Test_WMA_Calc(t *testing.T) {
 	cc := map[string]struct {
-		Length int
+		WMA    WMA
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
+		"Invalid indicator": {
+			WMA:   WMA{},
+			Error: ErrInvalidIndicator,
+		},
 		"Invalid data size": {
-			Length: 3,
+			WMA: WMA{length: 3, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Successful calculation": {
-			Length: 3,
+			WMA: WMA{length: 3, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(420),
 				decimal.NewFromInt(420),
@@ -2272,7 +2390,7 @@ func Test_WMA_Calc(t *testing.T) {
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(32),
 			},
-			Result: decimal.NewFromFloat(31),
+			Result: decimal.NewFromInt(31),
 		},
 	}
 
@@ -2282,8 +2400,7 @@ func Test_WMA_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			w := WMA{length: c.Length}
-			res, err := w.Calc(c.Data)
+			res, err := c.WMA.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -2315,7 +2432,7 @@ func Test_WMA_UnmarshalJSON(t *testing.T) {
 		},
 		"Successful unmarshal": {
 			JSON:   `{"length":1}`,
-			Result: WMA{length: 1},
+			Result: WMA{length: 1, valid: true},
 		},
 	}
 

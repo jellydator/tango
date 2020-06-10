@@ -174,14 +174,14 @@ func Test_typicalPrice(t *testing.T) {
 	}{
 		"Successful calculation": {
 			Data: []chartype.Candle{
-				{High: decimal.NewFromFloat(24.2), Low: decimal.NewFromFloat(23.85), Close: decimal.NewFromFloat(23.89)},
-				{High: decimal.NewFromFloat(24.07), Low: decimal.NewFromFloat(23.72), Close: decimal.NewFromFloat(23.95)},
-				{High: decimal.NewFromFloat(24.04), Low: decimal.NewFromFloat(23.64), Close: decimal.NewFromFloat(23.67)},
+				{High: decimal.RequireFromString("24.2"), Low: decimal.RequireFromString("23.85"), Close: decimal.RequireFromString("23.89")},
+				{High: decimal.RequireFromString("24.07"), Low: decimal.RequireFromString("23.72"), Close: decimal.RequireFromString("23.95")},
+				{High: decimal.RequireFromString("24.04"), Low: decimal.RequireFromString("23.64"), Close: decimal.RequireFromString("23.67")},
 			},
 			Result: []decimal.Decimal{
-				decimal.NewFromFloat(23.98),
-				decimal.NewFromFloat(23.91333333),
-				decimal.NewFromFloat(23.78333333),
+				decimal.RequireFromString("23.98"),
+				decimal.RequireFromString("23.91333333"),
+				decimal.RequireFromString("23.78333333"),
 			},
 		},
 	}
@@ -208,13 +208,13 @@ func Test_meanDeviation(t *testing.T) {
 	}{
 		"Successful calculation with no values": {
 			Data:   []decimal.Decimal{},
-			Result: decimal.NewFromFloat(0),
+			Result: decimal.NewFromInt(0),
 		},
 		"Successful calculation with one value": {
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(2),
 			},
-			Result: decimal.NewFromFloat(0),
+			Result: decimal.NewFromInt(0),
 		},
 		"Successful calculation": {
 			Data: []decimal.Decimal{
@@ -222,7 +222,7 @@ func Test_meanDeviation(t *testing.T) {
 				decimal.NewFromInt(5),
 				decimal.NewFromInt(8),
 			},
-			Result: decimal.NewFromFloat(2),
+			Result: decimal.NewFromInt(2),
 		},
 	}
 
@@ -306,9 +306,9 @@ func Test_calcMultiple(t *testing.T) {
 			Amount:    3,
 			Indicator: stubIndicator(decimal.NewFromInt(2), nil, 2),
 			Result: []decimal.Decimal{
-				decimal.NewFromFloat(2),
-				decimal.NewFromFloat(2),
-				decimal.NewFromFloat(2),
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(2),
 			},
 		},
 	}
@@ -348,56 +348,55 @@ func Test_fromJSON(t *testing.T) {
 		},
 		"Successful creation of Aroon": {
 			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1}`),
-			Result:    Aroon{trend: "up", length: 1},
+			Result:    Aroon{trend: "up", length: 1, valid: true},
 		},
 		"Successful creation of CCI": {
 			ByteArray: []byte(`{"name":"cci",
-			"source":{"name":"aroon","trend":"up","length":1}}`),
-			Result: CCI{Aroon{trend: "up", length: 1}},
+			"source":{"name":"sma","length":1}}`),
+			Result: CCI{source: SMA{length: 1, valid: true}, valid: true},
 		},
 		"Successful creation of DEMA": {
-			ByteArray: []byte(`{"name":"dema","ema":{"sma":{"length":1}}}`),
-			Result:    DEMA{ema: EMA{sma: SMA{length: 1}}},
+			ByteArray: []byte(`{"name":"dema","ema":{"length":1}}`),
+			Result:    DEMA{ema: EMA{sma: SMA{length: 1, valid: true}, valid: true}, valid: true},
 		},
 		"Successful creation of EMA": {
-			ByteArray: []byte(`{"name":"ema","sma":{"length":1}}`),
-			Result:    EMA{sma: SMA{length: 1}},
+			ByteArray: []byte(`{"name":"ema","length":1}`),
+			Result:    EMA{sma: SMA{length: 1, valid: true}, valid: true},
 		},
 		"Successful creation of HMA": {
 			ByteArray: []byte(`{"name":"hma", "wma":{"name":"wma","length":2}}`),
-			Result:    HMA{wma: WMA{length: 2}},
+			Result:    HMA{wma: WMA{length: 2, valid: true}, valid: true},
 		},
 		"Successful creation of MACD": {
 			ByteArray: []byte(`{"name":"macd",
-			"source1":{"name":"aroon","trend":"down","length":2},
-			"source2":{"name":"cci","source":{"name":"ema",
-			 "sma":{"length":2}}}}`),
-			Result: MACD{Aroon{trend: "down", length: 2},
-				CCI{EMA{SMA{length: 2}}}},
+			"source1":{"name":"sma","length":2},
+			"source2":{"name":"sma","length":3}}`),
+			Result: MACD{source1: SMA{length: 2, valid: true},
+				source2: SMA{length: 3, valid: true}, valid: true},
 		},
 		"Successful creation of ROC": {
 			ByteArray: []byte(`{"name":"roc","length":1}`),
-			Result:    ROC{length: 1},
+			Result:    ROC{length: 1, valid: true},
 		},
 		"Successful creation of RSI": {
 			ByteArray: []byte(`{"name":"rsi","length":1}`),
-			Result:    RSI{length: 1},
+			Result:    RSI{length: 1, valid: true},
 		},
 		"Successful creation of SMA": {
 			ByteArray: []byte(`{"name":"sma","length":1}`),
-			Result:    SMA{length: 1},
+			Result:    SMA{length: 1, valid: true},
 		},
 		"Successful creation of SRSI": {
 			ByteArray: []byte(`{"name":"srsi", "rsi":{"name":"rsi","length":1}}`),
-			Result:    SRSI{rsi: RSI{length: 1}},
+			Result:    SRSI{rsi: RSI{length: 1, valid: true}, valid: true},
 		},
 		"Successful creation of Stoch": {
 			ByteArray: []byte(`{"name":"stoch","length":1}`),
-			Result:    Stoch{length: 1},
+			Result:    Stoch{length: 1, valid: true},
 		},
 		"Successful creation of WMA": {
 			ByteArray: []byte(`{"name":"wma","length":1}`),
-			Result:    WMA{length: 1},
+			Result:    WMA{length: 1, valid: true},
 		},
 	}
 
