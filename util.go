@@ -10,6 +10,11 @@ import (
 )
 
 var (
+	// Hundred is just plain 100 in decimal format.
+	Hundred = decimal.NewFromInt(100)
+)
+
+var (
 	// ErrInvalidIndicator is returned when indicator is invalid.
 	ErrInvalidIndicator = errors.New("invalid indicator")
 
