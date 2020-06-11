@@ -391,7 +391,23 @@ func Test_CCI_UnmarshalJSON(t *testing.T) {
 			JSON:  `{}`,
 			Error: assert.AnError,
 		},
+		"Invalid factor": {
+			JSON:  `{"source":{"name":"sma","length":1},"factor":"-1"}`,
+			Error: assert.AnError,
+		},
+		"Invalid factor type": {
+			JSON:  `{"source":{"name":"sma","length":1},"factor":"abc"}`,
+			Error: assert.AnError,
+		},
 		"Successful unmarshal": {
+			JSON:   `{"source":{"name":"sma","length":1},"factor":"1"}`,
+			Result: CCI{source: SMA{length: 1, valid: true}, factor: decimal.RequireFromString("1"), valid: true},
+		},
+		"Successful unmarshal with zero factor": {
+			JSON:   `{"source":{"name":"sma","length":1},"factor":"0"}`,
+			Result: CCI{source: SMA{length: 1, valid: true}, factor: decimal.RequireFromString("0.015"), valid: true},
+		},
+		"Successful unmarshal with no factor": {
 			JSON:   `{"source":{"name":"sma","length":1}}`,
 			Result: CCI{source: SMA{length: 1, valid: true}, factor: decimal.RequireFromString("0.015"), valid: true},
 		},
