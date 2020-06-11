@@ -77,8 +77,8 @@ func (a *Aroon) validate() error {
 	return nil
 }
 
-// Calc calculates Aroon from the provided data slice.
-// Formula is based on formula provided in investopedia.
+// Calc calculates Aroon from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
 // https://www.investopedia.com/terms/a/aroon.asp.
 // All credits are due to Tushar Chande who developed Aroon indicator.
 func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
@@ -180,8 +180,8 @@ type CCI struct {
 	factor decimal.Decimal
 }
 
-// NewCCI validates provided configuration options and creates new commodity
-// channel index indicator.
+// NewCCI validates provided configuration options and creates
+// new CCI indicator.
 // If provided factor is zero, default value is going to be used (0.015f).
 func NewCCI(source Indicator, factor decimal.Decimal) (CCI, error) {
 	if factor.Equal(decimal.Zero) {
@@ -222,9 +222,9 @@ func (c *CCI) validate() error {
 	return nil
 }
 
-// Calc calculates CCI from the provided data slice.
-// Formula is based on formula provided in investopedia.
-// https://www.investopedia.com/terms/c/commoditychannelindex.asp
+// Calc calculates CCI from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/c/commoditychannelindex.asp.
 // All credits are due to Donald Lambert who developed CCI indicator.
 func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if !c.valid {
@@ -250,7 +250,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return dd[len(dd)-1].Sub(m).Div(denom), nil
 }
 
-// Count determines the total amount of data needed for CCI
+// Count determines the total amount of data points needed for CCI
 // calculation.
 func (c CCI) Count() int {
 	return c.source.Count()
@@ -333,15 +333,15 @@ const NameDEMA = "dema"
 // double exponential moving average.
 // The zero value is not usable.
 type DEMA struct {
-	// valid determines whether paremeters were validated
+	// valid specifies whether DEMA paremeters were validated.
 	valid bool
 
 	// ema specifies what ema should be used for dema calculations.
 	ema EMA
 }
 
-// NewDEMA validates provided configuration options and creates double
-// exponential moving average indicator.
+// NewDEMA validates provided configuration options and creates
+// new DEMA indicator.
 func NewDEMA(ema EMA) (DEMA, error) {
 	d := DEMA{ema: ema}
 
@@ -352,9 +352,9 @@ func NewDEMA(ema EMA) (DEMA, error) {
 	return d, nil
 }
 
-// Length returns length configuration option.
-func (dm DEMA) Length() int {
-	return dm.ema.sma.Length()
+// EMA returns ema configuration option.
+func (dm DEMA) EMA() EMA {
+	return dm.ema
 }
 
 // validate checks whether DEMA was configured properly or not.
@@ -368,7 +368,10 @@ func (dm *DEMA) validate() error {
 	return nil
 }
 
-// Calc calculates DEMA from the provided data slice.
+// Calc calculates DEMA from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/d/double-exponential-moving-average.asp.
+// All credits are due to Patrick Mulloy who developed DEMA indicator.
 func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if !dm.valid {
 		return decimal.Zero, ErrInvalidIndicator
@@ -379,12 +382,12 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	v := make([]decimal.Decimal, dm.Length())
+	v := make([]decimal.Decimal, dm.ema.Length())
 
-	v[0], _ = dm.ema.sma.Calc(dd[:dm.Length()])
+	v[0], _ = dm.ema.sma.Calc(dd[:dm.ema.Length()])
 
-	for i := dm.Length(); i < len(dd); i++ {
-		v[i-dm.Length()+1], _ = dm.ema.CalcNext(v[i-dm.Length()], dd[i])
+	for i := dm.ema.Length(); i < len(dd); i++ {
+		v[i-dm.ema.Length()+1], _ = dm.ema.CalcNext(v[i-dm.ema.Length()], dd[i])
 	}
 
 	r := v[0]
@@ -396,10 +399,10 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return r, nil
 }
 
-// Count determines the total amount of data needed for DEMA
+// Count determines the total amount of data points needed for DEMA
 // calculation.
 func (dm DEMA) Count() int {
-	return dm.ema.sma.Length()*2 - 1
+	return dm.ema.Count()
 }
 
 // UnmarshalJSON parses JSON into DEMA structure.
@@ -454,7 +457,7 @@ const NameEMA = "ema"
 // moving average.
 // The zero value is not usable.
 type EMA struct {
-	// valid determines whether paremeters were validated
+	// valid specifies whether EMA paremeters were validated.
 	valid bool
 
 	// sma specifies first EMA calculations SMA parameters.
@@ -462,7 +465,7 @@ type EMA struct {
 }
 
 // NewEMA validates provided configuration options and
-// creates exponential moving average indicator.
+// creates new EMA indicator.
 func NewEMA(length int) (EMA, error) {
 	s, err := NewSMA(length)
 	if err != nil {
@@ -490,7 +493,9 @@ func (e *EMA) validate() error {
 	return nil
 }
 
-// Calc calculates EMA from the provided data slice.
+// Calc calculates EMA from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/e/ema.asp.
 func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if !e.valid {
 		return decimal.Zero, ErrInvalidIndicator
@@ -510,7 +515,7 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return r, nil
 }
 
-// CalcNext calculates sequential EMA by using previous ema.
+// CalcNext calculates sequential EMA by using previous EMA.
 func (e EMA) CalcNext(l, n decimal.Decimal) (decimal.Decimal, error) {
 	if !e.valid {
 		return decimal.Zero, ErrInvalidIndicator
@@ -526,7 +531,7 @@ func (e EMA) multiplier() decimal.Decimal {
 	return decimal.NewFromInt(2).Div(decimal.NewFromInt(int64(e.Length()) + 1))
 }
 
-// Count determines the total amount of data needed for EMA
+// Count determines the total amount of data points needed for EMA
 // calculation.
 func (e EMA) Count() int {
 	return e.Length()*2 - 1
@@ -580,7 +585,7 @@ const NameHMA = "hma"
 // hull moving average.
 // The zero value is not usable.
 type HMA struct {
-	// valid determines whether paremeters were validated
+	// valid specifies whether HMA paremeters were validated.
 	valid bool
 
 	// wma specifies the base moving average.
@@ -588,7 +593,7 @@ type HMA struct {
 }
 
 // NewHMA validates provided configuration options and
-// creates hull moving average indicator.
+// creates new HMA indicator.
 func NewHMA(w WMA) (HMA, error) {
 	h := HMA{wma: w}
 
@@ -619,7 +624,10 @@ func (h *HMA) validate() error {
 	return nil
 }
 
-// Calc calculates HMA from the provided data slice.
+// Calc calculates HMA from the provided data points slice.
+// Calculation is based on formula provided by fidelity.
+// https://www.fidelity.com/learning-center/trading-investing/technical-analysis/technical-indicator-guide/hull-moving-average.
+// All credits are due to Alan Hull who developed HMA indicator.
 func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if !h.valid {
 		return decimal.Zero, ErrInvalidIndicator
@@ -651,7 +659,7 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return r, nil
 }
 
-// Count determines the total amount of data needed for HMA
+// Count determines the total amount of data points needed for HMA
 // calculation.
 func (h HMA) Count() int {
 	return h.wma.Count()*2 - 1
@@ -712,18 +720,20 @@ const NameMACD = "macd"
 // difference between two source indicators.
 // The zero value is not usable.
 type MACD struct {
-	// valid determines whether paremeters were validated
+	// valid specifies whether MACD paremeters were validated.
 	valid bool
 
-	// source1 specifies the first base indicator.
+	// source1 specifies which indicator to use as base
+	// during calculation process.
 	source1 Indicator
 
-	// source2 specifies the second base indicator.
+	// source2 specifies which indicator to use as counter
+	// during calculation process.
 	source2 Indicator
 }
 
 // NewMACD validates provided configuration options and
-// creates MACD indicator.
+// creates new MACD indicator.
 func NewMACD(source1, source2 Indicator) (MACD, error) {
 	m := MACD{source1: source1, source2: source2}
 
@@ -755,7 +765,11 @@ func (m *MACD) validate() error {
 	return nil
 }
 
-// Calc calculates MACD from the provided data slice.
+// Calc calculates MACD from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/m/macd.asp.
+// Formula has been improved upon so any indicators can be compared
+// with each other.
 func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if !m.valid {
 		return decimal.Zero, ErrInvalidIndicator
@@ -781,7 +795,7 @@ func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return r, nil
 }
 
-// Count determines the total amount of data needed for MACD
+// Count determines the total amount of data points needed for MACD
 // calculation.
 func (m MACD) Count() int {
 	c1 := m.source1.Count()
@@ -873,7 +887,7 @@ const NameROC = "roc"
 // of change.
 // The zero value is not usable.
 type ROC struct {
-	// valid determines whether paremeters were validated
+	// valid specifies whether ROC paremeters were validated.
 	valid bool
 
 	// length specifies how many data points should be used
@@ -882,7 +896,7 @@ type ROC struct {
 }
 
 // NewROC validates provided configuration options and
-// creates rate of change indicator.
+// creates new ROC indicator.
 func NewROC(length int) (ROC, error) {
 	r := ROC{length: length}
 
@@ -909,7 +923,9 @@ func (r *ROC) validate() error {
 	return nil
 }
 
-// Calc calculates ROC from the provided data slice.
+// Calc calculates ROC from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/p/pricerateofchange.asp.
 func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if !r.valid {
 		return decimal.Zero, ErrInvalidIndicator
@@ -930,7 +946,7 @@ func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return n.Sub(l).Div(l).Mul(Hundred), nil
 }
 
-// Count determines the total amount of data needed for ROC
+// Count determines the total amount of data points needed for ROC
 // calculation.
 func (r ROC) Count() int {
 	return r.length
@@ -984,7 +1000,7 @@ const NameRSI = "rsi"
 // strength index.
 // The zero value is not usable.
 type RSI struct {
-	// valid determines whether paremeters were validated
+	// valid specifies whether RSI paremeters were validated.
 	valid bool
 
 	// length specifies how many data points should be used
@@ -993,7 +1009,7 @@ type RSI struct {
 }
 
 // NewRSI validates provided configuration options and
-// creates relative strength index indicator.
+// creates new RSI indicator.
 func NewRSI(length int) (RSI, error) {
 	r := RSI{length: length}
 
@@ -1020,7 +1036,10 @@ func (r *RSI) validate() error {
 	return nil
 }
 
-// Calc calculates RSI from the provided data slice.
+// Calc calculates RSI from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/r/rsi.asp.
+// All credits are due to J. Welles Wilder Jr. who developed RSI indicator.
 func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if !r.valid {
 		return decimal.Zero, ErrInvalidIndicator
@@ -1058,7 +1077,7 @@ func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return Hundred.Sub(Hundred.Div(decimal.NewFromInt(1).Add(ag.Div(al)))), nil
 }
 
-// Count determines the total amount of data needed for RSI
+// Count determines the total amount of data points needed for RSI
 // calculation.
 func (r RSI) Count() int {
 	return r.length
@@ -1112,7 +1131,7 @@ const NameSMA = "sma"
 // moving average.
 // The zero value is not usable.
 type SMA struct {
-	// valid determines whether paremeters were validated
+	// valid specifies whether SMA paremeters were validated.
 	valid bool
 
 	// length specifies how many data points should be used
@@ -1121,7 +1140,7 @@ type SMA struct {
 }
 
 // NewSMA validates provided configuration options and
-// creates simple moving average indicator.
+// creates new SMA indicator.
 func NewSMA(length int) (SMA, error) {
 	s := SMA{length: length}
 
@@ -1148,7 +1167,9 @@ func (s *SMA) validate() error {
 	return nil
 }
 
-// Calc calculates SMA from the provided data slice.
+// Calc calculates SMA from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/s/sma.asp.
 func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if !s.valid {
 		return decimal.Zero, ErrInvalidIndicator
@@ -1168,7 +1189,7 @@ func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return r.Div(decimal.NewFromInt(int64(s.length))), nil
 }
 
-// Count determines the total amount of data needed for SMA
+// Count determines the total amount of data points needed for SMA
 // calculation.
 func (s SMA) Count() int {
 	return s.length
@@ -1222,7 +1243,7 @@ const NameSRSI = "srsi"
 // relative strength index.
 // The zero value is not usable.
 type SRSI struct {
-	// valid determines whether paremeters were validated
+	// valid specifies whether SRSI paremeters were validated.
 	valid bool
 
 	// rsi specifies the base relative strength index.
@@ -1230,7 +1251,7 @@ type SRSI struct {
 }
 
 // NewSRSI validates provided configuration options and
-// creates stochastic relative strength index indicator.
+// creates new SRSI indicator.
 func NewSRSI(r RSI) (SRSI, error) {
 	s := SRSI{rsi: r}
 
@@ -1258,6 +1279,8 @@ func (s *SRSI) validate() error {
 }
 
 // Calc calculates SRSI from the provided data slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/s/stochrsi.asp.
 func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if !s.valid {
 		return decimal.Zero, ErrInvalidIndicator
@@ -1348,7 +1371,7 @@ const NameStoch = "stoch"
 // oscillator.
 // The zero value is not usable.
 type Stoch struct {
-	// valid determines whether paremeters were validated
+	// valid specifies whether Stoch paremeters were validated.
 	valid bool
 
 	// length specifies how many data points should be used
@@ -1357,7 +1380,7 @@ type Stoch struct {
 }
 
 // NewStoch validates provided configuration options and
-// creates stochastic indicator.
+// creates new Stoch indicator.
 func NewStoch(length int) (Stoch, error) {
 	s := Stoch{length: length}
 
@@ -1384,7 +1407,9 @@ func (s *Stoch) validate() error {
 	return nil
 }
 
-// Calc calculates Stoch from the provided data slice.
+// Calc calculates Stoch from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/s/stochasticoscillator.asp.
 func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if !s.valid {
 		return decimal.Zero, ErrInvalidIndicator
@@ -1416,7 +1441,7 @@ func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return dd[len(dd)-1].Sub(l).Div(denom).Mul(Hundred), nil
 }
 
-// Count determines the total amount of data needed for Stoch
+// Count determines the total amount of data points needed for Stoch
 // calculation.
 func (s Stoch) Count() int {
 	return s.length
@@ -1470,7 +1495,7 @@ const NameWMA = "wma"
 // moving average.
 // The zero value is not usable.
 type WMA struct {
-	// valid determines whether paremeters were validated
+	// valid specifies whether WMA paremeters were validated.
 	valid bool
 
 	// length specifies how many data points should be used
@@ -1479,7 +1504,7 @@ type WMA struct {
 }
 
 // NewWMA validates provided configuration options and
-// creates weighted moving average indicator.
+// creates new WMA indicator.
 func NewWMA(length int) (WMA, error) {
 	w := WMA{length: length}
 
@@ -1506,7 +1531,9 @@ func (w *WMA) validate() error {
 	return nil
 }
 
-// Calc calculates WMA from the provided data slice.
+// Calc calculates WMA from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/articles/technical/060401.asp.
 func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if !w.valid {
 		return decimal.Zero, ErrInvalidIndicator
@@ -1528,7 +1555,7 @@ func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return r, nil
 }
 
-// Count determines the total amount of data needed for WMA
+// Count determines the total amount of data points needed for WMA
 // calculation.
 func (w WMA) Count() int {
 	return w.length
