@@ -539,9 +539,8 @@ func Test_NewDEMA(t *testing.T) {
 	}
 }
 
-func Test_DEMA_Length(t *testing.T) {
-	dm := DEMA{ema: EMA{sma: SMA{length: 1}}}
-	assert.Equal(t, 1, dm.Length())
+func Test_DEMA_EMA(t *testing.T) {
+	assert.Equal(t, EMA{sma: SMA{length: 1}}, DEMA{ema: EMA{sma: SMA{length: 1}}}.EMA())
 }
 
 func Test_DEMA_validate(t *testing.T) {
