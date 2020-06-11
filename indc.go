@@ -64,8 +64,6 @@ func (a Aroon) Trend() String {
 
 // validate checks whether Aroon was configured properly or not.
 func (a *Aroon) validate() error {
-	a.valid = false
-
 	if a.trend != "down" && a.trend != "up" {
 		return errors.New("invalid trend")
 	}
@@ -107,7 +105,7 @@ func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	}
 
 	return decimal.NewFromInt(int64(a.length)).Sub(p).
-		Mul(decimal.NewFromInt(100)).Div(decimal.NewFromInt(int64(a.length))), nil
+		Mul(Hundred).Div(decimal.NewFromInt(int64(a.length))), nil
 }
 
 // Count determines the total amount of data needed for Aroon
@@ -194,8 +192,6 @@ func (c CCI) Sub() Indicator {
 
 // validate checks whether CCI was configured properly or not.
 func (c *CCI) validate() error {
-	c.valid = false
-
 	if c.source == nil {
 		return ErrInvalidSource
 	}
@@ -251,11 +247,7 @@ func (c *CCI) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	cn, err := NewCCI(s)
-	if err != nil {
-		// unlikely to happen
-		return err
-	}
+	cn, _ := NewCCI(s)
 
 	*c = cn
 
@@ -326,8 +318,6 @@ func (dm DEMA) Length() int {
 
 // validate checks whether DEMA was configured properly or not.
 func (dm *DEMA) validate() error {
-	dm.valid = false
-
 	if err := dm.ema.validate(); err != nil {
 		return err
 	}
@@ -388,11 +378,7 @@ func (dm *DEMA) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	ndm, err := NewDEMA(ne)
-	if err != nil {
-		// unlikely to happen
-		return err
-	}
+	ndm, _ := NewDEMA(ne)
 
 	*dm = ndm
 
@@ -442,12 +428,7 @@ func NewEMA(length int) (EMA, error) {
 		return EMA{}, err
 	}
 
-	e := EMA{sma: s}
-
-	if err := e.validate(); err != nil {
-		// unlikely to happen
-		return EMA{}, err
-	}
+	e := EMA{sma: s, valid: true}
 
 	return e, nil
 }
@@ -459,8 +440,6 @@ func (e EMA) Length() int {
 
 // validate checks whether EMA was configured properly or not.
 func (e *EMA) validate() error {
-	e.valid = false
-
 	if err := e.sma.validate(); err != nil {
 		return err
 	}
@@ -586,9 +565,7 @@ func (h HMA) WMA() WMA {
 
 // validate checks whether HMA was configured properly or not.
 func (h *HMA) validate() error {
-	h.valid = false
-
-	if h.wma == (WMA{}) {
+	if err := h.wma.validate(); err != nil {
 		return errors.New("invalid wma")
 	}
 
@@ -658,7 +635,6 @@ func (h *HMA) UnmarshalJSON(d []byte) error {
 
 	nh, err := NewHMA(w)
 	if err != nil {
-		// unlikely to happen
 		return err
 	}
 
@@ -729,8 +705,6 @@ func (m MACD) Sub2() Indicator {
 
 // validate checks whether MACD was configured properly or not.
 func (m *MACD) validate() error {
-	m.valid = false
-
 	if m.source1 == nil || m.source2 == nil {
 		return ErrInvalidSource
 	}
@@ -800,11 +774,7 @@ func (m *MACD) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	nm, err := NewMACD(s1, s2)
-	if err != nil {
-		// unikely to happen
-		return err
-	}
+	nm, _ := NewMACD(s1, s2)
 
 	*m = nm
 
@@ -889,8 +859,6 @@ func (r ROC) Length() int {
 
 // validate checks whether ROC was configured properly or not.
 func (r *ROC) validate() error {
-	r.valid = false
-
 	if r.length < 1 {
 		return ErrInvalidLength
 	}
@@ -918,7 +886,7 @@ func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, nil
 	}
 
-	return n.Sub(l).Div(l).Mul(decimal.NewFromInt(100)), nil
+	return n.Sub(l).Div(l).Mul(Hundred), nil
 }
 
 // Count determines the total amount of data needed for ROC
@@ -1002,8 +970,6 @@ func (r RSI) Length() int {
 
 // validate checks whether RSI was configured properly or not.
 func (r *RSI) validate() error {
-	r.valid = false
-
 	if r.length < 1 {
 		return ErrInvalidLength
 	}
@@ -1041,15 +1007,14 @@ func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	}
 
 	if al == decimal.Zero {
-		return decimal.NewFromInt(100), nil
+		return Hundred, nil
 	}
 
 	ag = ag.Div(length)
 
 	al = al.Div(length)
 
-	return decimal.NewFromInt(100).Sub(decimal.NewFromInt(100).
-		Div(decimal.NewFromInt(1).Add(ag.Div(al)))), nil
+	return Hundred.Sub(Hundred.Div(decimal.NewFromInt(1).Add(ag.Div(al)))), nil
 }
 
 // Count determines the total amount of data needed for RSI
@@ -1133,8 +1098,6 @@ func (s SMA) Length() int {
 
 // validate checks whether SMA was configured properly or not.
 func (s *SMA) validate() error {
-	s.valid = false
-
 	if s.length < 1 {
 		return ErrInvalidLength
 	}
@@ -1244,14 +1207,8 @@ func (s SRSI) RSI() RSI {
 
 // validate checks whether SRSI was configured properly or not.
 func (s *SRSI) validate() error {
-	s.valid = false
-
-	if s.rsi == (RSI{}) {
-		return errors.New("invalid rsi")
-	}
-
-	if s.rsi.length < 1 {
-		return ErrInvalidLength
+	if err := s.rsi.validate(); err != nil {
+		return err
 	}
 
 	s.valid = true
@@ -1315,10 +1272,7 @@ func (s *SRSI) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	ns, err := NewSRSI(r)
-	if err != nil {
-		return err
-	}
+	ns, _ := NewSRSI(r)
 
 	*s = ns
 
@@ -1380,8 +1334,6 @@ func (s Stoch) Length() int {
 
 // validate checks whether Stoch was configured properly or not.
 func (s *Stoch) validate() error {
-	s.valid = false
-
 	if s.length < 1 {
 		return ErrInvalidLength
 	}
@@ -1420,7 +1372,7 @@ func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, nil
 	}
 
-	return dd[len(dd)-1].Sub(l).Div(denom).Mul(decimal.NewFromInt(100)), nil
+	return dd[len(dd)-1].Sub(l).Div(denom).Mul(Hundred), nil
 }
 
 // Count determines the total amount of data needed for Stoch
@@ -1504,8 +1456,6 @@ func (w WMA) Length() int {
 
 // validate checks whether WMA was configured properly or not.
 func (w *WMA) validate() error {
-	w.valid = false
-
 	if w.length < 1 {
 		return ErrInvalidLength
 	}

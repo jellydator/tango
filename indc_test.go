@@ -1,6 +1,7 @@
 package indc
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -15,7 +16,9 @@ func Test_NewAroon(t *testing.T) {
 		Error  error
 	}{
 		"Invalid parameters": {
-			Error: assert.AnError,
+			Trend:  "",
+			Length: 1,
+			Error:  assert.AnError,
 		},
 		"Successful creation": {
 			Trend:  "down",
@@ -41,6 +44,14 @@ func Test_NewAroon(t *testing.T) {
 	}
 }
 
+func Test_Aroon_Length(t *testing.T) {
+	assert.Equal(t, 1, Aroon{length: 1}.Length())
+}
+
+func Test_Aroon_Trend(t *testing.T) {
+	assert.Equal(t, CleanString("up"), Aroon{trend: CleanString("up")}.Trend())
+}
+
 func Test_Aroon_validate(t *testing.T) {
 	cc := map[string]struct {
 		Aroon Aroon
@@ -49,7 +60,7 @@ func Test_Aroon_validate(t *testing.T) {
 	}{
 		"Invalid trend": {
 			Aroon: Aroon{trend: "downn", length: 5},
-			Error: assert.AnError,
+			Error: errors.New("invalid trend"),
 			Valid: false,
 		},
 		"Invalid length": {
@@ -79,16 +90,6 @@ func Test_Aroon_validate(t *testing.T) {
 	}
 }
 
-func Test_Aroon_Length(t *testing.T) {
-	a := Aroon{length: 1}
-	assert.Equal(t, 1, a.Length())
-}
-
-func Test_Aroon_Trend(t *testing.T) {
-	a := Aroon{trend: CleanString("up")}
-	assert.Equal(t, CleanString("up"), a.Trend())
-}
-
 func Test_Aroon_Calc(t *testing.T) {
 	cc := map[string]struct {
 		Aroon  Aroon
@@ -97,7 +98,7 @@ func Test_Aroon_Calc(t *testing.T) {
 		Error  error
 	}{
 		"Invalid indicator": {
-			Aroon: Aroon{},
+			Aroon: Aroon{valid: false},
 			Error: ErrInvalidIndicator,
 		},
 		"Invalid data size": {
@@ -1007,8 +1008,12 @@ func Test_HMA_UnmarshalJSON(t *testing.T) {
 			JSON:  `{\"_"/}`,
 			Error: assert.AnError,
 		},
-		"Invalid length": {
-			JSON:  `{"length":0}`,
+		"Invalid HMA length": {
+			JSON:  `{"wma":{"length":1}}`,
+			Error: assert.AnError,
+		},
+		"Invalid WMA length": {
+			JSON:  `{"wma":{"length":0}}`,
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
