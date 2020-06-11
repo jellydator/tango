@@ -28,10 +28,10 @@ const NameAroon = "aroon"
 // Aroon holds all the necessary information needed to calculate Aroon.
 // The zero value is not usable.
 type Aroon struct {
-	// valid determines whether paremeters were validated
+	// valid specifies whether Aroon paremeters were validated.
 	valid bool
 
-	// trend specifies which aroon trend to use during the
+	// trend specifies which Aroon trend to use during the
 	// calculation process. Allowed values: up, down.
 	trend String
 
@@ -41,7 +41,7 @@ type Aroon struct {
 }
 
 // NewAroon validates provided configuration options and
-// creates Aroon indicator.
+// creates new Aroon indicator.
 func NewAroon(trend String, length int) (Aroon, error) {
 	a := Aroon{trend: trend, length: length}
 
@@ -78,6 +78,9 @@ func (a *Aroon) validate() error {
 }
 
 // Calc calculates Aroon from the provided data slice.
+// Formula is based on formula provided in investopedia.
+// https://www.investopedia.com/terms/a/aroon.asp.
+// All credits are due to Tushar Chande who developed Aroon indicator.
 func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if !a.valid {
 		return decimal.Zero, ErrInvalidIndicator
@@ -108,7 +111,7 @@ func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		Mul(Hundred).Div(decimal.NewFromInt(int64(a.length))), nil
 }
 
-// Count determines the total amount of data needed for Aroon
+// Count determines the total amount of data points needed for Aroon
 // calculation.
 func (a Aroon) Count() int {
 	return a.length
@@ -166,17 +169,26 @@ const NameCCI = "cci"
 // channel index.
 // The zero value is not usable.
 type CCI struct {
-	// valid determines whether paremeters were validated
+	// valid specifies whether CCI paremeters were validated.
 	valid bool
 
-	// source specifies the base indicator to be used by the CCI.
+	// source specifies which indicator to use during calculation process.
 	source Indicator
+
+	// factor is used to scale CCI to provide more readable numbers.
+	// default is 0.015f.
+	factor decimal.Decimal
 }
 
-// NewCCI validates provided configuration options and creates commodity
+// NewCCI validates provided configuration options and creates new commodity
 // channel index indicator.
-func NewCCI(source Indicator) (CCI, error) {
-	c := CCI{source: source}
+// If provided factor is zero, default value is going to be used (0.015f).
+func NewCCI(source Indicator, factor decimal.Decimal) (CCI, error) {
+	if factor.Equal(decimal.Zero) {
+		factor = decimal.RequireFromString("0.015")
+	}
+
+	c := CCI{source: source, factor: factor}
 
 	if err := c.validate(); err != nil {
 		return CCI{}, err
@@ -190,10 +202,19 @@ func (c CCI) Sub() Indicator {
 	return c.source
 }
 
+// Factor returns factor configuration option.
+func (c CCI) Factor() decimal.Decimal {
+	return c.factor
+}
+
 // validate checks whether CCI was configured properly or not.
 func (c *CCI) validate() error {
 	if c.source == nil {
 		return ErrInvalidSource
+	}
+
+	if c.factor.LessThanOrEqual(decimal.Zero) {
+		return errors.New("invalid factor")
 	}
 
 	c.valid = true
@@ -202,6 +223,9 @@ func (c *CCI) validate() error {
 }
 
 // Calc calculates CCI from the provided data slice.
+// Formula is based on formula provided in investopedia.
+// https://www.investopedia.com/terms/c/commoditychannelindex.asp
+// All credits are due to Donald Lambert who developed CCI indicator.
 func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	if !c.valid {
 		return decimal.Zero, ErrInvalidIndicator
@@ -217,7 +241,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	denom := decimal.RequireFromString("0.015").Mul(meanDeviation(dd))
+	denom := c.factor.Mul(meanDeviation(dd))
 
 	if denom.Equal(decimal.Zero) {
 		return decimal.Zero, nil
@@ -236,6 +260,7 @@ func (c CCI) Count() int {
 func (c *CCI) UnmarshalJSON(d []byte) error {
 	var i struct {
 		S json.RawMessage `json:"source"`
+		F string          `json:"factor"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
@@ -247,7 +272,19 @@ func (c *CCI) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	cn, _ := NewCCI(s)
+	if i.F == "" {
+		i.F = "0"
+	}
+
+	f, err := decimal.NewFromString(i.F)
+	if err != nil {
+		return err
+	}
+
+	cn, err := NewCCI(s, f)
+	if err != nil {
+		return err
+	}
 
 	*c = cn
 
@@ -263,8 +300,10 @@ func (c CCI) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(struct {
 		S json.RawMessage `json:"source"`
+		F string          `json:"factor"`
 	}{
 		S: s,
+		F: c.factor.String(),
 	})
 }
 
@@ -279,9 +318,11 @@ func (c CCI) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		N String          `json:"name"`
 		S json.RawMessage `json:"source"`
+		F string          `json:"factor"`
 	}{
 		N: NameCCI,
 		S: s,
+		F: c.factor.String(),
 	})
 }
 
