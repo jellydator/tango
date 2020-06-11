@@ -213,15 +213,24 @@ func Test_Aroon_namedMarshalJSON(t *testing.T) {
 func Test_NewCCI(t *testing.T) {
 	cc := map[string]struct {
 		Source Indicator
+		Factor decimal.Decimal
 		Result CCI
 		Error  error
 	}{
 		"Invalid parameters": {
-			Error: assert.AnError,
+			Source: &IndicatorMock{},
+			Factor: decimal.NewFromInt(-1),
+			Error:  assert.AnError,
+		},
+		"Successful creation (default factor)": {
+			Source: &IndicatorMock{},
+			Factor: decimal.Zero,
+			Result: CCI{source: &IndicatorMock{}, factor: decimal.RequireFromString("0.015"), valid: true},
 		},
 		"Successful creation": {
 			Source: &IndicatorMock{},
-			Result: CCI{source: &IndicatorMock{}, valid: true},
+			Factor: Hundred,
+			Result: CCI{source: &IndicatorMock{}, factor: Hundred, valid: true},
 		},
 	}
 
@@ -231,7 +240,7 @@ func Test_NewCCI(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			cci, err := NewCCI(c.Source)
+			cci, err := NewCCI(c.Source, c.Factor)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -243,8 +252,11 @@ func Test_NewCCI(t *testing.T) {
 }
 
 func Test_CCI_Sub(t *testing.T) {
-	c := CCI{source: &IndicatorMock{}}
-	assert.Equal(t, &IndicatorMock{}, c.Sub())
+	assert.Equal(t, &IndicatorMock{}, CCI{source: &IndicatorMock{}}.Sub())
+}
+
+func Test_CCI_Factor(t *testing.T) {
+	assert.Equal(t, Hundred, CCI{factor: Hundred}.Factor())
 }
 
 func Test_CCI_validate(t *testing.T) {
@@ -258,8 +270,13 @@ func Test_CCI_validate(t *testing.T) {
 			Error: ErrInvalidSource,
 			Valid: false,
 		},
+		"Invalid factor": {
+			CCI:   CCI{source: &IndicatorMock{}, factor: decimal.NewFromInt(-1)},
+			Error: errors.New("invalid factor"),
+			Valid: false,
+		},
 		"Successful validation": {
-			CCI:   CCI{source: &IndicatorMock{}},
+			CCI:   CCI{source: &IndicatorMock{}, factor: decimal.RequireFromString("1")},
 			Valid: true,
 		},
 	}
@@ -299,21 +316,21 @@ func Test_CCI_Calc(t *testing.T) {
 			Error: ErrInvalidIndicator,
 		},
 		"Invalid data size": {
-			CCI: CCI{source: stubIndicator(decimal.Zero, nil, 10), valid: true},
+			CCI: CCI{source: stubIndicator(decimal.Zero, nil, 10), factor: decimal.RequireFromString("0.015"), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Invalid source calc": {
-			CCI: CCI{source: stubIndicator(decimal.Zero, assert.AnError, 1), valid: true},
+			CCI: CCI{source: stubIndicator(decimal.Zero, assert.AnError, 1), factor: decimal.RequireFromString("0.015"), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: assert.AnError,
 		},
 		"Successful handled division by 0": {
-			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 1), valid: true},
+			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 1), factor: decimal.RequireFromString("0.015"), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(3),
 				decimal.NewFromInt(6),
@@ -322,7 +339,7 @@ func Test_CCI_Calc(t *testing.T) {
 			Result: decimal.Zero,
 		},
 		"Successful calculation": {
-			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 3), valid: true},
+			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 3), factor: decimal.RequireFromString("0.015"), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(3),
 				decimal.NewFromInt(6),
@@ -376,7 +393,7 @@ func Test_CCI_UnmarshalJSON(t *testing.T) {
 		},
 		"Successful unmarshal": {
 			JSON:   `{"source":{"name":"sma","length":1}}`,
-			Result: CCI{source: SMA{length: 1, valid: true}, valid: true},
+			Result: CCI{source: SMA{length: 1, valid: true}, factor: decimal.RequireFromString("0.015"), valid: true},
 		},
 	}
 
@@ -421,8 +438,9 @@ func Test_CCI_MarshalJSON(t *testing.T) {
 		"Successful marshal": {
 			CCI: CCI{
 				source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
+				factor: Hundred,
 			},
-			Result: `{"source":{"name":"indicatormock"}}`,
+			Result: `{"source":{"name":"indicatormock"},"factor":"100"}`,
 		},
 	}
 
@@ -466,8 +484,9 @@ func Test_CCI_namedMarshalJSON(t *testing.T) {
 		"Successful marshal": {
 			CCI: CCI{
 				source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
+				factor: Hundred,
 			},
-			Result: `{"name":"cci","source":{"name":"indicatormock"}}`,
+			Result: `{"name":"cci","source":{"name":"indicatormock"},"factor":"100"}`,
 		},
 	}
 

@@ -353,7 +353,7 @@ func Test_fromJSON(t *testing.T) {
 		"Successful creation of CCI": {
 			ByteArray: []byte(`{"name":"cci",
 			"source":{"name":"sma","length":1}}`),
-			Result: CCI{source: SMA{length: 1, valid: true}, valid: true},
+			Result: CCI{source: SMA{length: 1, valid: true}, factor: decimal.RequireFromString("0.015"), valid: true},
 		},
 		"Successful creation of DEMA": {
 			ByteArray: []byte(`{"name":"dema","ema":{"length":1}}`),
