@@ -130,7 +130,7 @@ func Test_Aroon_Calc(t *testing.T) {
 				decimal.NewFromInt(29),
 				decimal.NewFromInt(29),
 			},
-			Result: decimal.NewFromInt(100),
+			Result: Hundred,
 		},
 	}
 
@@ -1697,7 +1697,7 @@ func Test_RSI_Calc(t *testing.T) {
 				decimal.NewFromInt(4),
 				decimal.NewFromInt(8),
 			},
-			Result: decimal.NewFromInt(100),
+			Result: Hundred,
 		},
 		"Successful calculation": {
 			RSI: RSI{length: 3, valid: true},

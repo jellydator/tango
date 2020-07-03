@@ -5,8 +5,8 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/jellydator/chartype"
 	"github.com/shopspring/decimal"
-	"github.com/swithek/chartype"
 )
 
 var (

@@ -1,9 +1,9 @@
-module github.com/davseby/indc
+module indc
 
 go 1.14
 
 require (
-	github.com/shopspring/decimal v0.0.0-20200227202807-02e2044944cc
-	github.com/stretchr/testify v1.5.1
-	github.com/swithek/chartype v0.0.0-20200329121648-fc3e912798a8
+	github.com/jellydator/chartype v0.0.0-20200703155316-5e4e92afdc7b
+	github.com/shopspring/decimal v1.2.0
+	github.com/stretchr/testify v1.6.1
 )
