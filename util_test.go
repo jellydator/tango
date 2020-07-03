@@ -3,9 +3,9 @@ package indc
 import (
 	"testing"
 
+	"github.com/jellydator/chartype"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"github.com/swithek/chartype"
 )
 
 func equalError(t *testing.T, exp, err error) {
