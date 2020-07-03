@@ -1,4 +1,4 @@
-module indc
+module github.com/jellydator/indc
 
 go 1.14
 
