@@ -412,7 +412,7 @@ func (dm *DEMA) validate() error {
 	}
 
 	if dm.offset < 0 {
-		return ErrInvalidLength
+		return ErrInvalidOffset
 	}
 
 	dm.valid = true
@@ -429,7 +429,7 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, dm.Count(), dm.Offset())
+	dd, err := resize(dd, dm.ema.Count(), dm.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -454,29 +454,29 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for DEMA
 // calculation.
 func (dm DEMA) Count() int {
-	return dm.ema.Count()
+	return dm.ema.Count() + dm.offset
 }
 
 // UnmarshalJSON parses JSON into DEMA structure.
 func (dm *DEMA) UnmarshalJSON(d []byte) error {
 	var i struct {
 		EMA struct {
-			L int `json:"length"`
-			O int `json:"offset"`
+			Length int `json:"length"`
+			Offset int `json:"offset"`
 		} `json:"ema"`
-		O int `json:"offset"`
+		Offset int `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	ne, err := NewEMA(i.EMA.L, i.EMA.O)
+	ne, err := NewEMA(i.EMA.Length, i.EMA.Offset)
 	if err != nil {
 		return err
 	}
 
-	ndm, _ := NewDEMA(ne, i.O)
+	ndm, _ := NewDEMA(ne, i.Offset)
 
 	*dm = ndm
 
@@ -486,11 +486,11 @@ func (dm *DEMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts DEMA configuration data into JSON.
 func (dm DEMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		E EMA `json:"ema"`
-		O int `json:"offset"`
+		EMA    EMA `json:"ema"`
+		Offset int `json:"offset"`
 	}{
-		E: dm.ema,
-		O: dm.offset,
+		EMA:    dm.ema,
+		Offset: dm.offset,
 	})
 }
 
@@ -498,13 +498,13 @@ func (dm DEMA) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (dm DEMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		E EMA    `json:"ema"`
-		O int    `json:"offset"`
+		Name   String `json:"name"`
+		EMA    EMA    `json:"ema"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameDEMA,
-		E: dm.ema,
-		O: dm.offset,
+		Name:   NameDEMA,
+		EMA:    dm.ema,
+		Offset: dm.offset,
 	})
 }
 
