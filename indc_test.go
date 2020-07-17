@@ -1934,179 +1934,195 @@ func Test_RSI_namedMarshalJSON(t *testing.T) {
 	assert.JSONEq(t, `{"name":"rsi","length":1,"offset":2}`, string(d))
 }
 
-// func Test_NewSMA(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Offset int
-// 		Result SMA
-// 		Error  error
-// 	}{
-// 		"Invalid parameters": {
-// 			Offset: 0,
-// 			Error:  assert.AnError,
-// 		},
-// 		"Successful creation": {
-// 			Length: 1,
-// 			Offset: 0,
-// 			Result: SMA{length: 1, valid: true},
-// 		},
-// 	}
+func Test_NewSMA(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Offset int
+		Result SMA
+		Error  error
+	}{
+		"Invalid parameters": {
+			Offset: 0,
+			Error:  assert.AnError,
+		},
+		"Successful creation": {
+			Length: 1,
+			Offset: 3,
+			Result: SMA{length: 1, offset: 3, valid: true},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			s, err := NewSMA(c.Length, c.Offset)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			s, err := NewSMA(c.Length, c.Offset)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.Equal(t, c.Result, s)
-// 		})
-// 	}
-// }
+			assert.Equal(t, c.Result, s)
+		})
+	}
+}
 
-// func Test_SMA_Length(t *testing.T) {
-// 	s := SMA{length: 1}
-// 	assert.Equal(t, 1, s.Length())
-// }
+func Test_SMA_Length(t *testing.T) {
+	assert.Equal(t, 1, SMA{length: 1}.Length())
+}
 
-// func Test_SMA_validate(t *testing.T) {
-// 	cc := map[string]struct {
-// 		SMA   SMA
-// 		Error error
-// 		Valid bool
-// 	}{
-// 		"Invalid length": {
-// 			SMA:   SMA{length: 0},
-// 			Error: ErrInvalidLength,
-// 			Valid: false,
-// 		},
-// 		"Successful validation": {
-// 			SMA:   SMA{length: 1},
-// 			Valid: true,
-// 		},
-// 	}
+func Test_SMA_Offset(t *testing.T) {
+	assert.Equal(t, 4, SMA{offset: 4}.Offset())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_SMA_validate(t *testing.T) {
+	cc := map[string]struct {
+		SMA   SMA
+		Error error
+		Valid bool
+	}{
+		"Invalid length": {
+			SMA:   SMA{length: 0, offset: 2},
+			Error: ErrInvalidLength,
+			Valid: false,
+		},
+		"Invalid offset": {
+			SMA:   SMA{length: 2, offset: -2},
+			Error: ErrInvalidOffset,
+			Valid: false,
+		},
+		"Successful validation": {
+			SMA:   SMA{length: 1, offset: 0},
+			Valid: true,
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			equalError(t, c.Error, c.SMA.validate())
-// 			assert.Equal(t, c.Valid, c.SMA.valid)
-// 		})
-// 	}
-// }
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func Test_SMA_Calc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		SMA    SMA
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Invalid indicator": {
-// 			SMA:   SMA{},
-// 			Error: ErrInvalidIndicator,
-// 		},
-// 		"Invalid data size": {
-// 			SMA: SMA{length: 3, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataSize,
-// 		},
-// 		"Successful calculation": {
-// 			SMA: SMA{length: 3, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 			},
-// 			Result: decimal.NewFromInt(31),
-// 		},
-// 	}
+			equalError(t, c.Error, c.SMA.validate())
+			assert.Equal(t, c.Valid, c.SMA.valid)
+		})
+	}
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_SMA_Calc(t *testing.T) {
+	cc := map[string]struct {
+		SMA    SMA
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			SMA:   SMA{},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size": {
+			SMA: SMA{length: 3, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful calculation with offset": {
+			SMA: SMA{length: 3, offset: 2, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(2),
+			},
+			Result: decimal.NewFromInt(31),
+		},
+		"Successful calculation": {
+			SMA: SMA{length: 3, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.NewFromInt(31),
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			res, err := c.SMA.Calc(c.Data)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result.String(), res.String())
-// 		})
-// 	}
-// }
+			res, err := c.SMA.Calc(c.Data)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_SMA_Count(t *testing.T) {
-// 	s := SMA{length: 15}
-// 	assert.Equal(t, 15, s.Count())
-// }
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
 
-// func Test_SMA_UnmarshalJSON(t *testing.T) {
-// 	cc := map[string]struct {
-// 		JSON   string
-// 		Result SMA
-// 		Error  error
-// 	}{
-// 		"Invalid JSON": {
-// 			JSON:  `{\"_"/`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid length": {
-// 			JSON:  `{"length":0}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful unmarshal": {
-// 			JSON:   `{"length":1}`,
-// 			Result: SMA{length: 1, valid: true},
-// 		},
-// 	}
+func Test_SMA_Count(t *testing.T) {
+	assert.Equal(t, 18, SMA{length: 15, offset: 3}.Count())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_SMA_UnmarshalJSON(t *testing.T) {
+	cc := map[string]struct {
+		JSON   string
+		Result SMA
+		Error  error
+	}{
+		"Invalid JSON": {
+			JSON:  `{\"_"/`,
+			Error: assert.AnError,
+		},
+		"Invalid validation": {
+			JSON:  `{"length":0,"offset":0}`,
+			Error: assert.AnError,
+		},
+		"Successful unmarshal": {
+			JSON:   `{"length":1,"offset":4}`,
+			Result: SMA{length: 1, offset: 4, valid: true},
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			s := SMA{}
-// 			err := s.UnmarshalJSON([]byte(c.JSON))
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result, s)
-// 		})
-// 	}
-// }
+			s := SMA{}
+			err := s.UnmarshalJSON([]byte(c.JSON))
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_SMA_MarshalJSON(t *testing.T) {
-// 	s := SMA{length: 1}
-// 	d, err := s.MarshalJSON()
+			assert.Equal(t, c.Result, s)
+		})
+	}
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"length":1}`, string(d))
-// }
+func Test_SMA_MarshalJSON(t *testing.T) {
+	d, err := SMA{length: 1, offset: 3}.MarshalJSON()
 
-// func Test_SMA_namedMarshalJSON(t *testing.T) {
-// 	s := SMA{length: 1}
-// 	d, err := s.namedMarshalJSON()
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"length":1,"offset":3}`, string(d))
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"name":"sma","length":1}`, string(d))
-// }
+func Test_SMA_namedMarshalJSON(t *testing.T) {
+	d, err := SMA{length: 1, offset: 4}.namedMarshalJSON()
+
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"name":"sma","length":1,"offset":4}`, string(d))
+}
 
 // func Test_NewSRSI(t *testing.T) {
 // 	cc := map[string]struct {
