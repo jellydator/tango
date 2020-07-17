@@ -669,8 +669,12 @@ func (h *HMA) validate() error {
 		return errors.New("invalid wma")
 	}
 
-	if h.wma.length < 2 || h.offset < 0 {
+	if h.wma.length < 2 {
 		return ErrInvalidLength
+	}
+
+	if h.offset < 0 {
+		return ErrInvalidOffset
 	}
 
 	h.valid = true
@@ -687,7 +691,7 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, h.Count(), h.Offset())
+	dd, err := resize(dd, h.wma.Count(), h.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -716,29 +720,29 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for HMA
 // calculation.
 func (h HMA) Count() int {
-	return h.wma.Count()*2 - 1
+	return h.wma.Count()*2 + h.offset - 1
 }
 
 // UnmarshalJSON parses JSON into HMA structure.
 func (h *HMA) UnmarshalJSON(d []byte) error {
 	var i struct {
 		WMA struct {
-			L int `json:"length"`
-			O int `json:"offset"`
+			Length int `json:"length"`
+			Offset int `json:"offset"`
 		} `json:"wma"`
-		O int `json:"offset"`
+		Offset int `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	w, err := NewWMA(i.WMA.L, i.WMA.O)
+	w, err := NewWMA(i.WMA.Length, i.WMA.Offset)
 	if err != nil {
 		return err
 	}
 
-	nh, err := NewHMA(w, i.O)
+	nh, err := NewHMA(w, i.Offset)
 	if err != nil {
 		return err
 	}
@@ -751,11 +755,11 @@ func (h *HMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts HMA configuration data into JSON.
 func (h HMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		W WMA `json:"wma"`
-		O int `json:"offset"`
+		WMA    WMA `json:"wma"`
+		Offset int `json:"offset"`
 	}{
-		W: h.wma,
-		O: h.offset,
+		WMA:    h.wma,
+		Offset: h.offset,
 	})
 }
 
@@ -763,13 +767,13 @@ func (h HMA) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (h HMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		W WMA    `json:"wma"`
-		O int    `json:"offset"`
+		Name   String `json:"name"`
+		WMA    WMA    `json:"wma"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameHMA,
-		W: h.wma,
-		O: h.offset,
+		Name:   NameHMA,
+		WMA:    h.wma,
+		Offset: h.offset,
 	})
 }
 

@@ -179,8 +179,7 @@ func Test_Aroon_Calc(t *testing.T) {
 }
 
 func Test_Aroon_Count(t *testing.T) {
-	a := Aroon{length: 5, offset: 3}
-	assert.Equal(t, 8, a.Count())
+	assert.Equal(t, 8, Aroon{length: 5, offset: 3}.Count())
 }
 
 func Test_Aroon_UnmarshalJSON(t *testing.T) {
@@ -222,16 +221,14 @@ func Test_Aroon_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_Aroon_MarshalJSON(t *testing.T) {
-	a := Aroon{trend: "down", length: 1, offset: 4}
-	d, err := a.MarshalJSON()
+	d, err := Aroon{trend: "down", length: 1, offset: 4}.MarshalJSON()
 
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"trend":"down","length":1,"offset":4}`, string(d))
 }
 
 func Test_Aroon_namedMarshalJSON(t *testing.T) {
-	a := Aroon{trend: "down", length: 1, offset: 4}
-	d, err := a.namedMarshalJSON()
+	d, err := Aroon{trend: "down", length: 1, offset: 4}.namedMarshalJSON()
 
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"name":"aroon","trend":"down","length":1,"offset":4}`, string(d))
@@ -424,8 +421,7 @@ func Test_CCI_Count(t *testing.T) {
 		},
 	}
 
-	c := CCI{source: indicator, offset: 4}
-	assert.Equal(t, c.source.Count()+4, c.Count())
+	assert.Equal(t, 14, CCI{source: indicator, offset: 4}.Count())
 }
 
 func Test_CCI_UnmarshalJSON(t *testing.T) {
@@ -701,8 +697,7 @@ func Test_DEMA_Calc(t *testing.T) {
 }
 
 func Test_DEMA_Count(t *testing.T) {
-	d := DEMA{ema: EMA{SMA{length: 15}}, offset: 4}
-	assert.Equal(t, 33, d.Count())
+	assert.Equal(t, 33, DEMA{ema: EMA{SMA{length: 15}}, offset: 4}.Count())
 }
 
 func Test_DEMA_UnmarshalJSON(t *testing.T) {
@@ -744,16 +739,14 @@ func Test_DEMA_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_DEMA_MarshalJSON(t *testing.T) {
-	dm := DEMA{ema: EMA{SMA{length: 1, offset: 3}}, offset: 2}
-	d, err := dm.MarshalJSON()
+	d, err := DEMA{ema: EMA{SMA{length: 1, offset: 3}}, offset: 2}.MarshalJSON()
 
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"ema":{"length":1,"offset":3},"offset":2}`, string(d))
 }
 
 func Test_DEMA_namedMarshalJSON(t *testing.T) {
-	dm := DEMA{ema: EMA{SMA{length: 1, offset: 3}}, offset: 2}
-	d, err := dm.namedMarshalJSON()
+	d, err := DEMA{ema: EMA{SMA{length: 1, offset: 3}}, offset: 2}.namedMarshalJSON()
 
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"name":"dema","ema":{"length":1,"offset":3},"offset":2}`, string(d))
@@ -796,13 +789,11 @@ func Test_NewEMA(t *testing.T) {
 }
 
 func Test_EMA_Length(t *testing.T) {
-	e := EMA{SMA{length: 1}}
-	assert.Equal(t, 1, e.Length())
+	assert.Equal(t, 1, EMA{SMA{length: 1}}.Length())
 }
 
 func Test_EMA_Offset(t *testing.T) {
-	e := EMA{SMA{offset: 1}}
-	assert.Equal(t, 1, e.Offset())
+	assert.Equal(t, 1, EMA{SMA{offset: 1}}.Offset())
 }
 
 func Test_EMA_validate(t *testing.T) {
@@ -944,13 +935,11 @@ func Test_EMA_CalcNext(t *testing.T) {
 }
 
 func Test_EMA_Count(t *testing.T) {
-	e := EMA{SMA{length: 15, offset: 4}}
-	assert.Equal(t, 33, e.Count())
+	assert.Equal(t, 33, EMA{SMA{length: 15, offset: 4}}.Count())
 }
 
 func Test_EMA_multiplier(t *testing.T) {
-	e := EMA{SMA{length: 3}}
-	assert.Equal(t, decimal.RequireFromString("0.5").String(), e.multiplier().String())
+	assert.Equal(t, decimal.RequireFromString("0.5").String(), EMA{SMA{length: 3}}.multiplier().String())
 }
 
 func Test_EMA_UnmarshalJSON(t *testing.T) {
@@ -992,201 +981,214 @@ func Test_EMA_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_EMA_MarshalJSON(t *testing.T) {
-	e := EMA{SMA{length: 1, offset: 2}}
-	d, err := e.MarshalJSON()
+	d, err := EMA{SMA{length: 1, offset: 2}}.MarshalJSON()
 
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"length":1,"offset":2}`, string(d))
 }
 
 func Test_EMA_namedMarshalJSON(t *testing.T) {
-	e := EMA{SMA{length: 1, offset: 2}}
-	d, err := e.namedMarshalJSON()
+	d, err := EMA{SMA{length: 1, offset: 2}}.namedMarshalJSON()
 
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"name":"ema","length":1,"offset":2}`, string(d))
 }
 
-// func Test_NewHMA(t *testing.T) {
-// 	cc := map[string]struct {
-// 		WMA    WMA
-// 		Offset int
-// 		Result HMA
-// 		Error  error
-// 	}{
-// 		"Invalid parameters": {
-// 			Offset: 0,
-// 			Error:  assert.AnError,
-// 		},
-// 		"Successful creation": {
-// 			WMA:    WMA{length: 2, valid: true},
-// 			Offset: 0,
-// 			Result: HMA{wma: WMA{length: 2, valid: true}, valid: true},
-// 		},
-// 	}
+func Test_NewHMA(t *testing.T) {
+	cc := map[string]struct {
+		WMA    WMA
+		Offset int
+		Result HMA
+		Error  error
+	}{
+		"Invalid parameters": {
+			Offset: 0,
+			Error:  assert.AnError,
+		},
+		"Successful creation": {
+			WMA:    WMA{length: 2, offset: 2, valid: true},
+			Offset: 3,
+			Result: HMA{wma: WMA{length: 2, offset: 2, valid: true}, offset: 3, valid: true},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			h, err := NewHMA(c.WMA, c.Offset)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			h, err := NewHMA(c.WMA, c.Offset)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.Equal(t, c.Result, h)
-// 		})
-// 	}
-// }
+			assert.Equal(t, c.Result, h)
+		})
+	}
+}
 
-// func Test_HMA_WMA(t *testing.T) {
-// 	h := HMA{wma: WMA{length: 1}}
-// 	assert.Equal(t, WMA{length: 1}, h.WMA())
-// }
+func Test_HMA_WMA(t *testing.T) {
+	assert.Equal(t, WMA{length: 1, offset: 2}, HMA{wma: WMA{length: 1, offset: 2}}.WMA())
+}
 
-// func Test_HMA_validate(t *testing.T) {
-// 	cc := map[string]struct {
-// 		HMA   HMA
-// 		Error error
-// 		Valid bool
-// 	}{
-// 		"Invalid WMA": {
-// 			HMA:   HMA{wma: WMA{length: -1}},
-// 			Error: assert.AnError,
-// 			Valid: false,
-// 		},
-// 		"Successful validation": {
-// 			HMA:   HMA{wma: WMA{length: 2}},
-// 			Valid: true,
-// 		},
-// 	}
+func Test_HMA_Offset(t *testing.T) {
+	assert.Equal(t, 3, HMA{offset: 3}.Offset())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_HMA_validate(t *testing.T) {
+	cc := map[string]struct {
+		HMA   HMA
+		Error error
+		Valid bool
+	}{
+		"Invalid WMA": {
+			HMA:   HMA{wma: WMA{length: -1, offset: 2}, offset: 3},
+			Error: assert.AnError,
+			Valid: false,
+		},
+		"Invalid offset": {
+			HMA:   HMA{wma: WMA{length: 4, offset: 2}, offset: -3},
+			Error: ErrInvalidOffset,
+			Valid: false,
+		},
+		"Successful validation": {
+			HMA:   HMA{wma: WMA{length: 2, offset: 2}, offset: 3},
+			Valid: true,
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			equalError(t, c.Error, c.HMA.validate())
-// 			assert.Equal(t, c.Valid, c.HMA.valid)
-// 		})
-// 	}
-// }
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func Test_HMA_Calc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		HMA    HMA
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Invalid indicator": {
-// 			HMA:   HMA{},
-// 			Error: ErrInvalidIndicator,
-// 		},
-// 		"Invalid data size": {
-// 			HMA: HMA{wma: WMA{length: 5, valid: true}, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataSize,
-// 		},
-// 		"Successful calculation": {
-// 			HMA: HMA{wma: WMA{length: 3, valid: true}, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 			},
-// 			Result: decimal.RequireFromString("31.5"),
-// 		},
-// 	}
+			equalError(t, c.Error, c.HMA.validate())
+			assert.Equal(t, c.Valid, c.HMA.valid)
+		})
+	}
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_HMA_Calc(t *testing.T) {
+	cc := map[string]struct {
+		HMA    HMA
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			HMA:   HMA{},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size": {
+			HMA: HMA{wma: WMA{length: 5, offset: 0, valid: true}, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful calculation with offset": {
+			HMA: HMA{wma: WMA{length: 3, offset: 0, valid: true}, offset: 2, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(30),
+			},
+			Result: decimal.RequireFromString("31.5"),
+		},
+		"Successful calculation": {
+			HMA: HMA{wma: WMA{length: 3, offset: 0, valid: true}, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+			},
+			Result: decimal.RequireFromString("31.5"),
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			res, err := c.HMA.Calc(c.Data)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result.String(), res.String())
-// 		})
-// 	}
-// }
+			res, err := c.HMA.Calc(c.Data)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_HMA_Count(t *testing.T) {
-// 	h := HMA{wma: WMA{length: 15}}
-// 	assert.Equal(t, 29, h.Count())
-// }
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
 
-// func Test_HMA_UnmarshalJSON(t *testing.T) {
-// 	cc := map[string]struct {
-// 		JSON   string
-// 		Result HMA
-// 		Error  error
-// 	}{
-// 		"Invalid JSON": {
-// 			JSON:  `{\"_"/}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid HMA length": {
-// 			JSON:  `{"wma":{"length":1}}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid WMA length": {
-// 			JSON:  `{"wma":{"length":0}}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful unmarshal": {
-// 			JSON:   `{"wma":{"length":3}}`,
-// 			Result: HMA{wma: WMA{length: 3, valid: true}, valid: true},
-// 		},
-// 	}
+func Test_HMA_Count(t *testing.T) {
+	assert.Equal(t, 31, HMA{wma: WMA{length: 15}, offset: 2}.Count())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_HMA_UnmarshalJSON(t *testing.T) {
+	cc := map[string]struct {
+		JSON   string
+		Result HMA
+		Error  error
+	}{
+		"Invalid JSON": {
+			JSON:  `{\"_"/}`,
+			Error: assert.AnError,
+		},
+		"Invalid validation": {
+			JSON:  `{"wma":{"length":1}}`,
+			Error: assert.AnError,
+		},
+		"Successful unmarshal": {
+			JSON:   `{"wma":{"length":3,"offset":3},"offset":2}`,
+			Result: HMA{wma: WMA{length: 3, offset: 3, valid: true}, offset: 2, valid: true},
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			h := HMA{}
-// 			err := h.UnmarshalJSON([]byte(c.JSON))
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result, h)
-// 		})
-// 	}
-// }
+			h := HMA{}
+			err := h.UnmarshalJSON([]byte(c.JSON))
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_HMA_MarshalJSON(t *testing.T) {
-// 	h := HMA{wma: WMA{length: 3}}
-// 	d, err := h.MarshalJSON()
+			assert.Equal(t, c.Result, h)
+		})
+	}
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"wma":{"length":3}}`, string(d))
-// }
+func Test_HMA_MarshalJSON(t *testing.T) {
+	d, err := HMA{wma: WMA{length: 3, offset: 2}, offset: 4}.MarshalJSON()
 
-// func Test_HMA_namedMarshalJSON(t *testing.T) {
-// 	h := HMA{wma: WMA{length: 3}}
-// 	d, err := h.namedMarshalJSON()
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"wma":{"length":3,"offset":2},"offset":4}`, string(d))
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"name":"hma","wma":{"length":3}}`, string(d))
-// }
+func Test_HMA_namedMarshalJSON(t *testing.T) {
+	d, err := HMA{wma: WMA{length: 3, offset: 1}, offset: 5}.namedMarshalJSON()
+
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"name":"hma","wma":{"length":3,"offset":1},"offset":5}`, string(d))
+}
 
 // func Test_NewMACD(t *testing.T) {
 // 	cc := map[string]struct {
