@@ -738,13 +738,13 @@ func (h HMA) namedMarshalJSON() ([]byte, error) {
 	})
 }
 
-// NameMACD returns MACD indicator name.
-const NameMACD = "macd"
+// NameSCD returns SCD indicator name.
+const NameSCD = "scd"
 
-// MACD holds all the necessary information needed to calculate
+// SCD holds all the necessary information needed to calculate
 // difference between two source indicators.
 // The zero value is not usable.
-type MACD struct {
+type SCD struct {
 	// valid specifies whether MACD paremeters were validated.
 	valid bool
 
@@ -761,69 +761,69 @@ type MACD struct {
 	offset int
 }
 
-// NewMACD validates provided configuration options and
-// creates new MACD indicator.
-func NewMACD(source1, source2 Indicator, offset int) (MACD, error) {
-	m := MACD{source1: source1, source2: source2, offset: offset}
+// NewSCD validates provided configuration options and
+// creates new SCD indicator.
+func NewSCD(source1, source2 Indicator, offset int) (SCD, error) {
+	scd := SCD{source1: source1, source2: source2, offset: offset}
 
-	if err := m.validate(); err != nil {
-		return MACD{}, err
+	if err := scd.validate(); err != nil {
+		return SCD{}, err
 	}
 
-	return m, nil
+	return scd, nil
 }
 
 // Sub1 returns source1 configuration option.
-func (m MACD) Sub1() Indicator {
-	return m.source1
+func (scd SCD) Sub1() Indicator {
+	return scd.source1
 }
 
 // Sub2 returns source2 configuration option.
-func (m MACD) Sub2() Indicator {
-	return m.source2
+func (scd SCD) Sub2() Indicator {
+	return scd.source2
 }
 
 // Offset returns offset configuration option.
-func (m MACD) Offset() int {
-	return m.offset
+func (scd SCD) Offset() int {
+	return scd.offset
 }
 
-// validate checks whether MACD was configured properly or not.
-func (m *MACD) validate() error {
-	if m.source1 == nil || m.source2 == nil {
+// validate checks whether SCD was configured properly or not.
+func (scd *SCD) validate() error {
+	if scd.source1 == nil || scd.source2 == nil {
 		return ErrInvalidSource
 	}
 
-	if m.offset < 0 {
+	if scd.offset < 0 {
 		return ErrInvalidOffset
 	}
 
-	m.valid = true
+	scd.valid = true
 
 	return nil
 }
 
-// Calc calculates MACD from the provided data points slice.
+// Calc calculates SCD from the provided data points slice.
 // Calculation is based on formula provided by investopedia.
 // https://www.investopedia.com/terms/m/macd.asp.
 // Formula has been improved upon so any indicators can be compared
 // with each other.
-func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-	if !m.valid {
+func (scd SCD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !scd.valid {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, m.Count()-m.offset, m.offset)
+	dd, err := resize(dd, scd.Count()-scd.offset, scd.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	r1, err := m.source1.Calc(dd)
+	r1, err := scd.source1.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	r2, err := m.source2.Calc(dd)
+	r2, err := scd.source2.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -833,21 +833,21 @@ func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return r, nil
 }
 
-// Count determines the total amount of data points needed for MACD
+// Count determines the total amount of data points needed for SCD
 // calculation.
-func (m MACD) Count() int {
-	c1 := m.source1.Count()
-	c2 := m.source2.Count()
+func (scd SCD) Count() int {
+	c1 := scd.source1.Count()
+	c2 := scd.source2.Count()
 
 	if c1 > c2 {
-		return c1 + m.offset
+		return c1 + scd.offset
 	}
 
-	return c2 + m.offset
+	return c2 + scd.offset
 }
 
-// UnmarshalJSON parses JSON into MACD structure.
-func (m *MACD) UnmarshalJSON(d []byte) error {
+// UnmarshalJSON parses JSON into SCD structure.
+func (scd *SCD) UnmarshalJSON(d []byte) error {
 	var i struct {
 		Source1 json.RawMessage `json:"source1"`
 		Source2 json.RawMessage `json:"source2"`
@@ -868,24 +868,24 @@ func (m *MACD) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	nm, _ := NewMACD(s1, s2, i.Offset)
+	nm, _ := NewSCD(s1, s2, i.Offset)
 	if err := nm.validate(); err != nil {
 		return err
 	}
 
-	*m = nm
+	*scd = nm
 
 	return nil
 }
 
-// MarshalJSON converts MACD configuration data into JSON.
-func (m MACD) MarshalJSON() ([]byte, error) {
-	s1, err := m.source1.namedMarshalJSON()
+// MarshalJSON converts SCD configuration data into JSON.
+func (scd SCD) MarshalJSON() ([]byte, error) {
+	s1, err := scd.source1.namedMarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	s2, err := m.source2.namedMarshalJSON()
+	s2, err := scd.source2.namedMarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -895,19 +895,19 @@ func (m MACD) MarshalJSON() ([]byte, error) {
 		Source2 json.RawMessage `json:"source2"`
 		Offset  int             `json:"offset"`
 	}{
-		Source1: s1, Source2: s2, Offset: m.offset,
+		Source1: s1, Source2: s2, Offset: scd.offset,
 	})
 }
 
-// namedMarshalJSON converts MACD configuration data with its
+// namedMarshalJSON converts SCD configuration data with its
 // name into JSON.
-func (m MACD) namedMarshalJSON() ([]byte, error) {
-	s1, err := m.source1.namedMarshalJSON()
+func (scd SCD) namedMarshalJSON() ([]byte, error) {
+	s1, err := scd.source1.namedMarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	s2, err := m.source2.namedMarshalJSON()
+	s2, err := scd.source2.namedMarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -918,10 +918,10 @@ func (m MACD) namedMarshalJSON() ([]byte, error) {
 		Source2 json.RawMessage `json:"source2"`
 		Offset  int             `json:"offset"`
 	}{
-		Name:    NameMACD,
+		Name:    NameSCD,
 		Source1: s1,
 		Source2: s2,
-		Offset:  m.offset,
+		Offset:  scd.offset,
 	})
 }
 
