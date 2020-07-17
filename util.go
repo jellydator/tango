@@ -173,8 +173,8 @@ func fromJSON(d []byte) (Indicator, error) {
 		err := json.Unmarshal(d, &h)
 
 		return h, err
-	case NameMACD:
-		m := MACD{}
+	case NameSCD:
+		m := SCD{}
 		err := json.Unmarshal(d, &m)
 
 		return m, err
