@@ -2509,178 +2509,198 @@ func Test_Stoch_namedMarshalJSON(t *testing.T) {
 	assert.JSONEq(t, `{"name":"stoch","length":1,"offset":2}`, string(d))
 }
 
-// func Test_NewWMA(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Offset int
-// 		Result WMA
-// 		Error  error
-// 	}{
-// 		"Invalid parameters": {
-// 			Error:  assert.AnError,
-// 		},
-// 		"Successful creation": {
-// 			Length: 1,
-// 			Offset: 0,
-// 			Result: WMA{length: 1, valid: true},
-// 		},
-// 	}
+func Test_NewWMA(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Offset int
+		Result WMA
+		Error  error
+	}{
+		"Invalid parameters": {
+			Error: assert.AnError,
+		},
+		"Successful creation": {
+			Length: 1,
+			Offset: 3,
+			Result: WMA{length: 1, offset: 3, valid: true},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			w, err := NewWMA(c.Length, c.Offset)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			w, err := NewWMA(c.Length, c.Offset)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.Equal(t, c.Result, w)
-// 		})
-// 	}
-// }
+			assert.Equal(t, c.Result, w)
+		})
+	}
+}
 
-// func Test_WMA_Length(t *testing.T) {
-// 	w := WMA{length: 1}
-// 	assert.Equal(t, 1, w.Length())
-// }
+func Test_WMA_Length(t *testing.T) {
+	assert.Equal(t, 1, WMA{length: 1}.Length())
+}
 
-// func Test_WMA_validate(t *testing.T) {
-// 	cc := map[string]struct {
-// 		WMA   WMA
-// 		Error error
-// 		Valid bool
-// 	}{
-// 		"Invalid length": {
-// 			WMA:   WMA{length: 0},
-// 			Error: ErrInvalidLength,
-// 			Valid: false,
-// 		},
-// 		"Successful validation": {
-// 			WMA:   WMA{length: 1},
-// 			Valid: true,
-// 		},
-// 	}
+func Test_WMA_Offset(t *testing.T) {
+	assert.Equal(t, 2, WMA{offset: 2}.Offset())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_WMA_validate(t *testing.T) {
+	cc := map[string]struct {
+		WMA   WMA
+		Error error
+		Valid bool
+	}{
+		"Invalid length": {
+			WMA:   WMA{length: 0, offset: 0},
+			Error: ErrInvalidLength,
+			Valid: false,
+		},
+		"Invalid offset": {
+			WMA:   WMA{length: 2, offset: -1},
+			Error: ErrInvalidOffset,
+			Valid: false,
+		},
+		"Successful validation": {
+			WMA:   WMA{length: 1, offset: 3},
+			Valid: true,
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			equalError(t, c.Error, c.WMA.validate())
-// 			assert.Equal(t, c.Valid, c.WMA.valid)
-// 		})
-// 	}
-// }
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func Test_WMA_Calc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		WMA    WMA
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Invalid indicator": {
-// 			WMA:   WMA{},
-// 			Error: ErrInvalidIndicator,
-// 		},
-// 		"Invalid data size": {
-// 			WMA: WMA{length: 3, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataSize,
-// 		},
-// 		"Successful calculation": {
-// 			WMA: WMA{length: 3, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(32),
-// 			},
-// 			Result: decimal.NewFromInt(31),
-// 		},
-// 	}
+			equalError(t, c.Error, c.WMA.validate())
+			assert.Equal(t, c.Valid, c.WMA.valid)
+		})
+	}
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_WMA_Calc(t *testing.T) {
+	cc := map[string]struct {
+		WMA    WMA
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			WMA:   WMA{},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size": {
+			WMA: WMA{length: 3, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful calculation with offset": {
+			WMA: WMA{length: 3, offset: 3, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(320),
+				decimal.NewFromInt(33),
+				decimal.NewFromInt(325),
+			},
+			Result: decimal.NewFromInt(31),
+		},
+		"Successful calculation": {
+			WMA: WMA{length: 3, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.NewFromInt(31),
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			res, err := c.WMA.Calc(c.Data)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result.String(), res.String())
-// 		})
-// 	}
-// }
+			res, err := c.WMA.Calc(c.Data)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_WMA_Count(t *testing.T) {
-// 	w := WMA{length: 15}
-// 	assert.Equal(t, 15, w.Count())
-// }
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
 
-// func Test_WMA_UnmarshalJSON(t *testing.T) {
-// 	cc := map[string]struct {
-// 		JSON   string
-// 		Result WMA
-// 		Error  error
-// 	}{
-// 		"Invalid JSON": {
-// 			JSON:  `{\"_"/`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid length": {
-// 			JSON:  `{"length":0}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful unmarshal": {
-// 			JSON:   `{"length":1}`,
-// 			Result: WMA{length: 1, valid: true},
-// 		},
-// 	}
+func Test_WMA_Count(t *testing.T) {
+	assert.Equal(t, 18, WMA{length: 15, offset: 3}.Count())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_WMA_UnmarshalJSON(t *testing.T) {
+	cc := map[string]struct {
+		JSON   string
+		Result WMA
+		Error  error
+	}{
+		"Invalid JSON": {
+			JSON:  `{\"_"/`,
+			Error: assert.AnError,
+		},
+		"Invalid validation": {
+			JSON:  `{"length":0,"offset":0}`,
+			Error: assert.AnError,
+		},
+		"Successful unmarshal": {
+			JSON:   `{"length":1,"offset":2}`,
+			Result: WMA{length: 1, offset: 2, valid: true},
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			w := WMA{}
-// 			err := w.UnmarshalJSON([]byte(c.JSON))
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result, w)
-// 		})
-// 	}
-// }
+			w := WMA{}
+			err := w.UnmarshalJSON([]byte(c.JSON))
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_WMA_MarshalJSON(t *testing.T) {
-// 	w := WMA{length: 1}
-// 	d, err := w.MarshalJSON()
+			assert.Equal(t, c.Result, w)
+		})
+	}
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"length":1}`, string(d))
-// }
+func Test_WMA_MarshalJSON(t *testing.T) {
+	d, err := WMA{length: 1, offset: 3}.MarshalJSON()
 
-// func Test_WMA_namedMarshalJSON(t *testing.T) {
-// 	w := WMA{length: 1}
-// 	d, err := w.namedMarshalJSON()
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"length":1,"offset":3}`, string(d))
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"name":"wma","length":1}`, string(d))
-// }
+func Test_WMA_namedMarshalJSON(t *testing.T) {
+	d, err := WMA{length: 1, offset: 2}.namedMarshalJSON()
+
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"name":"wma","length":1, "offset":2}`, string(d))
+}
