@@ -1117,7 +1117,7 @@ type RSI struct {
 // NewRSI validates provided configuration options and
 // creates new RSI indicator.
 func NewRSI(length, offset int) (RSI, error) {
-	r := RSI{length: length}
+	r := RSI{length: length, offset: offset}
 
 	if err := r.validate(); err != nil {
 		return RSI{}, err
@@ -1138,8 +1138,12 @@ func (r RSI) Offset() int {
 
 // validate checks whether RSI was configured properly or not.
 func (r *RSI) validate() error {
-	if r.length < 1 || r.offset < 0 {
+	if r.length < 1 {
 		return ErrInvalidLength
+	}
+
+	if r.offset < 0 {
+		return ErrInvalidOffset
 	}
 
 	r.valid = true
@@ -1156,7 +1160,7 @@ func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, r.Count(), r.Offset())
+	dd, err := resize(dd, r.Count()-r.offset, r.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -1191,21 +1195,21 @@ func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for RSI
 // calculation.
 func (r RSI) Count() int {
-	return r.length
+	return r.length + r.offset
 }
 
 // UnmarshalJSON parses JSON into RSI structure.
 func (r *RSI) UnmarshalJSON(d []byte) error {
 	var i struct {
-		L int `json:"length"`
-		O int `json:"offset"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	nr, err := NewRSI(i.L, i.O)
+	nr, err := NewRSI(i.Length, i.Offset)
 	if err != nil {
 		return err
 	}
@@ -1218,11 +1222,11 @@ func (r *RSI) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts RSI configuration data into JSON.
 func (r RSI) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
-		O int `json:"offset"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}{
-		L: r.length,
-		O: r.offset,
+		Length: r.length,
+		Offset: r.offset,
 	})
 }
 
@@ -1230,13 +1234,13 @@ func (r RSI) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (r RSI) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		L int    `json:"length"`
-		O int    `json:"offset"`
+		Name   String `json:"name"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameRSI,
-		L: r.length,
-		O: r.offset,
+		Name:   NameRSI,
+		Length: r.length,
+		Offset: r.offset,
 	})
 }
 
