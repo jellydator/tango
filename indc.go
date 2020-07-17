@@ -103,7 +103,7 @@ func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, a.length, a.offset)
+	dd, err := resize(dd, a.Count()-a.offset, a.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -265,7 +265,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, c.source.Count(), c.offset)
+	dd, err := resize(dd, c.Count()-c.offset, c.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -429,7 +429,7 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, dm.ema.Count(), dm.offset)
+	dd, err := resize(dd, dm.Count()-dm.offset, dm.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -540,7 +540,7 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, e.length*2-1, e.offset)
+	dd, err := resize(dd, e.Count()-e.offset, e.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -691,7 +691,7 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, h.wma.Count(), h.offset)
+	dd, err := resize(dd, h.Count()-h.offset, h.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -834,7 +834,7 @@ func (m *MACD) validate() error {
 	}
 
 	if m.offset < 0 {
-		return ErrInvalidLength
+		return ErrInvalidOffset
 	}
 
 	m.valid = true
@@ -852,7 +852,7 @@ func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, m.Count(), m.Offset())
+	dd, err := resize(dd, m.Count()-m.offset, m.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -879,35 +879,38 @@ func (m MACD) Count() int {
 	c2 := m.source2.Count()
 
 	if c1 > c2 {
-		return c1
+		return c1 + m.offset
 	}
 
-	return c2
+	return c2 + m.offset
 }
 
 // UnmarshalJSON parses JSON into MACD structure.
 func (m *MACD) UnmarshalJSON(d []byte) error {
 	var i struct {
-		S1 json.RawMessage `json:"source1"`
-		S2 json.RawMessage `json:"source2"`
-		O  int             `json:"offset"`
+		Source1 json.RawMessage `json:"source1"`
+		Source2 json.RawMessage `json:"source2"`
+		Offset  int             `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	s1, err := fromJSON(i.S1)
+	s1, err := fromJSON(i.Source1)
 	if err != nil {
 		return err
 	}
 
-	s2, err := fromJSON(i.S2)
+	s2, err := fromJSON(i.Source2)
 	if err != nil {
 		return err
 	}
 
-	nm, _ := NewMACD(s1, s2, i.O)
+	nm, _ := NewMACD(s1, s2, i.Offset)
+	if err := nm.validate(); err != nil {
+		return err
+	}
 
 	*m = nm
 
@@ -927,11 +930,11 @@ func (m MACD) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
-		S1 json.RawMessage `json:"source1"`
-		S2 json.RawMessage `json:"source2"`
-		O  int             `json:"offset"`
+		Source1 json.RawMessage `json:"source1"`
+		Source2 json.RawMessage `json:"source2"`
+		Offset  int             `json:"offset"`
 	}{
-		S1: s1, S2: s2, O: m.offset,
+		Source1: s1, Source2: s2, Offset: m.offset,
 	})
 }
 
@@ -949,15 +952,15 @@ func (m MACD) namedMarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
-		N  String          `json:"name"`
-		S1 json.RawMessage `json:"source1"`
-		S2 json.RawMessage `json:"source2"`
-		O  int             `json:"offset"`
+		Name    String          `json:"name"`
+		Source1 json.RawMessage `json:"source1"`
+		Source2 json.RawMessage `json:"source2"`
+		Offset  int             `json:"offset"`
 	}{
-		N:  NameMACD,
-		S1: s1,
-		S2: s2,
-		O:  m.offset,
+		Name:    NameMACD,
+		Source1: s1,
+		Source2: s2,
+		Offset:  m.offset,
 	})
 }
 

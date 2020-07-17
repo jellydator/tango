@@ -438,8 +438,12 @@ func Test_CCI_UnmarshalJSON(t *testing.T) {
 			JSON:  `{}`,
 			Error: assert.AnError,
 		},
-		"Invalid validation": {
+		"Invalid factor": {
 			JSON:  `{"source":{"name":"sma","length":1,"offset":4},"factor":"abc","offset":4}`,
+			Error: assert.AnError,
+		},
+		"Invalid validation": {
+			JSON:  `{"source":{"name":"sma","length":1,"offset":4},"factor":"0.5","offset":-4}`,
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
@@ -1190,330 +1194,330 @@ func Test_HMA_namedMarshalJSON(t *testing.T) {
 	assert.JSONEq(t, `{"name":"hma","wma":{"length":3,"offset":1},"offset":5}`, string(d))
 }
 
-// func Test_NewMACD(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Source1 Indicator
-// 		Source2 Indicator
-// 		Offset  int
-// 		Result  MACD
-// 		Error   error
-// 	}{
-// 		"Invalid parameters": {
-// 			Offset: 0,
-// 			Error:  assert.AnError,
-// 		},
-// 		"Successful creation": {
-// 			Source1: &IndicatorMock{},
-// 			Source2: &IndicatorMock{},
-// 			Offset:  0,
-// 			Result:  MACD{source1: &IndicatorMock{}, source2: &IndicatorMock{}, valid: true},
-// 		},
-// 	}
+func Test_NewMACD(t *testing.T) {
+	cc := map[string]struct {
+		Source1 Indicator
+		Source2 Indicator
+		Offset  int
+		Result  MACD
+		Error   error
+	}{
+		"Invalid parameters": {
+			Offset: 0,
+			Error:  assert.AnError,
+		},
+		"Successful creation": {
+			Source1: &IndicatorMock{},
+			Source2: &IndicatorMock{},
+			Offset:  4,
+			Result:  MACD{source1: &IndicatorMock{}, source2: &IndicatorMock{}, offset: 4, valid: true},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			m, err := NewMACD(c.Source1, c.Source2, c.Offset)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			m, err := NewMACD(c.Source1, c.Source2, c.Offset)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.Equal(t, c.Result, m)
-// 		})
-// 	}
-// }
+			assert.Equal(t, c.Result, m)
+		})
+	}
+}
 
-// func Test_MACD_Sub1(t *testing.T) {
-// 	m := MACD{source1: &IndicatorMock{}, source2: nil}
-// 	assert.Equal(t, &IndicatorMock{}, m.Sub1())
-// }
+func Test_MACD_Sub1(t *testing.T) {
+	assert.Equal(t, &IndicatorMock{}, MACD{source1: &IndicatorMock{}, source2: nil}.Sub1())
+}
 
-// func Test_MACD_Sub2(t *testing.T) {
-// 	m := MACD{source1: nil, source2: &IndicatorMock{}}
-// 	assert.Equal(t, &IndicatorMock{}, m.Sub2())
-// }
+func Test_MACD_Sub2(t *testing.T) {
+	assert.Equal(t, &IndicatorMock{}, MACD{source1: nil, source2: &IndicatorMock{}}.Sub2())
+}
 
-// func Test_MACD_validate(t *testing.T) {
-// 	cc := map[string]struct {
-// 		MACD  MACD
-// 		Error error
-// 		Valid bool
-// 	}{
-// 		"Invalid source1": {
-// 			MACD:  MACD{source1: nil, source2: &IndicatorMock{}},
-// 			Error: ErrInvalidSource,
-// 			Valid: false,
-// 		},
-// 		"Invalid source2": {
-// 			MACD:  MACD{source1: &IndicatorMock{}, source2: nil},
-// 			Error: ErrInvalidSource,
-// 			Valid: false,
-// 		},
-// 		"Successful MACD": {
-// 			MACD:  MACD{source1: &IndicatorMock{}, source2: &IndicatorMock{}},
-// 			Valid: true,
-// 		},
-// 	}
+func Test_MACD_Offset(t *testing.T) {
+	assert.Equal(t, 4, MACD{offset: 4}.Offset())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_MACD_validate(t *testing.T) {
+	cc := map[string]struct {
+		MACD  MACD
+		Error error
+		Valid bool
+	}{
+		"Invalid source1": {
+			MACD:  MACD{source1: nil, source2: &IndicatorMock{}, offset: 4},
+			Error: ErrInvalidSource,
+			Valid: false,
+		},
+		"Invalid source2": {
+			MACD:  MACD{source1: &IndicatorMock{}, source2: nil, offset: 4},
+			Error: ErrInvalidSource,
+			Valid: false,
+		},
+		"Invalid offset": {
+			MACD:  MACD{source1: &IndicatorMock{}, source2: &IndicatorMock{}, offset: -4},
+			Error: ErrInvalidOffset,
+			Valid: false,
+		},
+		"Successful validation": {
+			MACD:  MACD{source1: &IndicatorMock{}, source2: &IndicatorMock{}, offset: 4},
+			Valid: true,
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			equalError(t, c.Error, c.MACD.validate())
-// 			assert.Equal(t, c.Valid, c.MACD.valid)
-// 		})
-// 	}
-// }
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func Test_MACD_Calc(t *testing.T) {
-// 	stubIndicator := func(v decimal.Decimal, e error, a int) *IndicatorMock {
-// 		return &IndicatorMock{
-// 			CalcFunc: func(dd []decimal.Decimal) (decimal.Decimal, error) {
-// 				return v, e
-// 			},
-// 			CountFunc: func() int {
-// 				return a
-// 			},
-// 		}
-// 	}
+			equalError(t, c.Error, c.MACD.validate())
+			assert.Equal(t, c.Valid, c.MACD.valid)
+		})
+	}
+}
 
-// 	cc := map[string]struct {
-// 		MACD   MACD
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Invalid indicator": {
-// 			MACD:  MACD{},
-// 			Error: ErrInvalidIndicator,
-// 		},
-// 		"Invalid data size for source1": {
-// 			MACD: MACD{source1: stubIndicator(decimal.Zero, nil, 10), source2: stubIndicator(decimal.Zero, nil, 1), valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataSize,
-// 		},
-// 		"Invalid data size for source2": {
-// 			MACD: MACD{source1: stubIndicator(decimal.Zero, nil, 1), source2: stubIndicator(decimal.Zero, nil, 10), valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataSize,
-// 		},
-// 		"Invalid source1": {
-// 			MACD: MACD{source1: stubIndicator(decimal.Zero, assert.AnError, 1), source2: stubIndicator(decimal.Zero, nil, 1), valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid source2": {
-// 			MACD: MACD{source1: stubIndicator(decimal.Zero, nil, 1), source2: stubIndicator(decimal.Zero, assert.AnError, 1), valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful calculation": {
-// 			MACD: MACD{source1: stubIndicator(decimal.NewFromInt(5), nil, 1), source2: stubIndicator(decimal.NewFromInt(10), nil, 1), valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(32),
-// 			},
-// 			Result: decimal.NewFromInt(-5),
-// 		},
-// 	}
+func Test_MACD_Calc(t *testing.T) {
+	stubIndicator := func(v decimal.Decimal, e error, a int) *IndicatorMock {
+		return &IndicatorMock{
+			CalcFunc: func(dd []decimal.Decimal) (decimal.Decimal, error) {
+				return v, e
+			},
+			CountFunc: func() int {
+				return a
+			},
+		}
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	cc := map[string]struct {
+		MACD   MACD
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			MACD:  MACD{},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size for source1": {
+			MACD: MACD{source1: stubIndicator(decimal.Zero, nil, 10), source2: stubIndicator(decimal.Zero, nil, 1), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Invalid data size for source2": {
+			MACD: MACD{source1: stubIndicator(decimal.Zero, nil, 1), source2: stubIndicator(decimal.Zero, nil, 10), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Invalid source1": {
+			MACD: MACD{source1: stubIndicator(decimal.Zero, assert.AnError, 1), source2: stubIndicator(decimal.Zero, nil, 1), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: assert.AnError,
+		},
+		"Invalid source2": {
+			MACD: MACD{source1: stubIndicator(decimal.Zero, nil, 1), source2: stubIndicator(decimal.Zero, assert.AnError, 1), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: assert.AnError,
+		},
+		"Successful calculation with offset": {
+			MACD: MACD{source1: stubIndicator(decimal.NewFromInt(5), nil, 1), source2: stubIndicator(decimal.NewFromInt(10), nil, 1), offset: 2, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.NewFromInt(-5),
+		},
+		"Successful calculation": {
+			MACD: MACD{source1: stubIndicator(decimal.NewFromInt(5), nil, 1), source2: stubIndicator(decimal.NewFromInt(10), nil, 1), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.NewFromInt(-5),
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			res, err := c.MACD.Calc(c.Data)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result.String(), res.String())
-// 		})
-// 	}
-// }
+			res, err := c.MACD.Calc(c.Data)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_MACD_Count(t *testing.T) {
-// 	stubIndicator := func(a int) *IndicatorMock {
-// 		return &IndicatorMock{
-// 			CountFunc: func() int {
-// 				return a
-// 			},
-// 		}
-// 	}
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
 
-// 	m := MACD{source1: stubIndicator(5), source2: stubIndicator(10)}
-// 	assert.Equal(t, m.Count(), 10)
+func Test_MACD_Count(t *testing.T) {
+	stubIndicator := func(a int) *IndicatorMock {
+		return &IndicatorMock{
+			CountFunc: func() int {
+				return a
+			},
+		}
+	}
 
-// 	m = MACD{source1: stubIndicator(15), source2: stubIndicator(10)}
-// 	assert.Equal(t, m.Count(), 15)
-// }
+	assert.Equal(t, 15, MACD{source1: stubIndicator(15), source2: stubIndicator(10)}.Count())
+}
 
-// func Test_MACD_UnmarshalJSON(t *testing.T) {
-// 	cc := map[string]struct {
-// 		JSON   string
-// 		Result MACD
-// 		Error  error
-// 	}{
-// 		"Invalid JSON": {
-// 			JSON:  `{\-_-/}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid source1": {
-// 			JSON:  `{"source2":{"name":"sma","length":1}}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid source2": {
-// 			JSON:  `{"source1":{"name":"sma","length":1}}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful unmarshal": {
-// 			JSON:   `{"source1":{"name":"sma","length":1},"source2":{"name":"sma","length":2}}`,
-// 			Result: MACD{source1: SMA{length: 1, valid: true}, source2: SMA{length: 2, valid: true}, valid: true},
-// 		},
-// 	}
+func Test_MACD_UnmarshalJSON(t *testing.T) {
+	cc := map[string]struct {
+		JSON   string
+		Result MACD
+		Error  error
+	}{
+		"Invalid JSON": {
+			JSON:  `{\-_-/}`,
+			Error: assert.AnError,
+		},
+		"Invalid validation": {
+			JSON:  `{"source1":{"name":"sma","length":1},"source2":{"name":"sma","length":1},"offset":-2}`,
+			Error: assert.AnError,
+		},
+		"Invalid source1": {
+			JSON:  `{"source2":{"name":"sma","length":1}}`,
+			Error: assert.AnError,
+		},
+		"Invalid source2": {
+			JSON:  `{"source1":{"name":"sma","length":1}}`,
+			Error: assert.AnError,
+		},
+		"Successful unmarshal": {
+			JSON:   `{"source1":{"name":"sma","length":1,"offset":4},"source2":{"name":"sma","length":2,"offset":6},"offset":5}`,
+			Result: MACD{source1: SMA{length: 1, offset: 4, valid: true}, source2: SMA{length: 2, offset: 6, valid: true}, offset: 5, valid: true},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			m := MACD{}
-// 			err := m.UnmarshalJSON([]byte(c.JSON))
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			m := MACD{}
+			err := m.UnmarshalJSON([]byte(c.JSON))
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.Equal(t, c.Result, m)
-// 		})
-// 	}
-// }
+			assert.Equal(t, c.Result, m)
+		})
+	}
+}
 
-// func Test_MACD_MarshalJSON(t *testing.T) {
-// 	stubIndicator := func(d []byte, e error) *IndicatorMock {
-// 		return &IndicatorMock{
-// 			namedMarshalJSONFunc: func() ([]byte, error) {
-// 				return d, e
-// 			},
-// 		}
-// 	}
+func Test_MACD_MarshalJSON(t *testing.T) {
+	stubIndicator := func(d []byte, e error) *IndicatorMock {
+		return &IndicatorMock{
+			namedMarshalJSONFunc: func() ([]byte, error) {
+				return d, e
+			},
+		}
+	}
 
-// 	cc := map[string]struct {
-// 		MACD   MACD
-// 		Result string
-// 		Error  error
-// 	}{
-// 		"Error returned during source1 marshalling": {
-// 			MACD: MACD{
-// 				source1: stubIndicator(nil, assert.AnError),
-// 				source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-// 			},
-// 			Error: assert.AnError,
-// 		},
-// 		"Error returned during source2 marshalling": {
-// 			MACD: MACD{
-// 				source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-// 				source2: stubIndicator(nil, assert.AnError),
-// 			},
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful marshal": {
-// 			MACD: MACD{
-// 				source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-// 				source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-// 			},
-// 			Result: `{"source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"}}`,
-// 		},
-// 	}
+	cc := map[string]struct {
+		MACD   MACD
+		Result string
+		Error  error
+	}{
+		"Error returned during source1 marshalling": {
+			MACD:  MACD{source1: stubIndicator(nil, assert.AnError), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil)},
+			Error: assert.AnError,
+		},
+		"Error returned during source2 marshalling": {
+			MACD:  MACD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator(nil, assert.AnError)},
+			Error: assert.AnError,
+		},
+		"Successful marshal": {
+			MACD:   MACD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
+			Result: `{"source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"},"offset":4}`,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			d, err := c.MACD.MarshalJSON()
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			d, err := c.MACD.MarshalJSON()
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.JSONEq(t, c.Result, string(d))
-// 		})
-// 	}
-// }
+			assert.JSONEq(t, c.Result, string(d))
+		})
+	}
+}
 
-// func Test_MACD_namedMarshalJSON(t *testing.T) {
-// 	stubIndicator := func(d []byte, e error) *IndicatorMock {
-// 		return &IndicatorMock{
-// 			namedMarshalJSONFunc: func() ([]byte, error) {
-// 				return d, e
-// 			},
-// 		}
-// 	}
+func Test_MACD_namedMarshalJSON(t *testing.T) {
+	stubIndicator := func(d []byte, e error) *IndicatorMock {
+		return &IndicatorMock{
+			namedMarshalJSONFunc: func() ([]byte, error) {
+				return d, e
+			},
+		}
+	}
 
-// 	cc := map[string]struct {
-// 		MACD   MACD
-// 		Result string
-// 		Error  error
-// 	}{
-// 		"Error returned during source1 marshalling": {
-// 			MACD: MACD{
-// 				source1: stubIndicator(nil, assert.AnError),
-// 				source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-// 			},
-// 			Error: assert.AnError,
-// 		},
-// 		"Error returned during source2 marshalling": {
-// 			MACD: MACD{
-// 				source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-// 				source2: stubIndicator(nil, assert.AnError),
-// 			},
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful marshal": {
-// 			MACD: MACD{
-// 				source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-// 				source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-// 			},
-// 			Result: `{"name":"macd","source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"}}`,
-// 		},
-// 	}
+	cc := map[string]struct {
+		MACD   MACD
+		Result string
+		Error  error
+	}{
+		"Error returned during source1 marshalling": {
+			MACD:  MACD{source1: stubIndicator(nil, assert.AnError), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil)},
+			Error: assert.AnError,
+		},
+		"Error returned during source2 marshalling": {
+			MACD:  MACD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator(nil, assert.AnError)},
+			Error: assert.AnError,
+		},
+		"Successful marshal": {
+			MACD:   MACD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
+			Result: `{"name":"macd","source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"},"offset":4}`,
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			d, err := c.MACD.namedMarshalJSON()
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			d, err := c.MACD.namedMarshalJSON()
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.JSONEq(t, c.Result, string(d))
-// 		})
-// 	}
-// }
+			assert.JSONEq(t, c.Result, string(d))
+		})
+	}
+}
 
 // func Test_NewROC(t *testing.T) {
 // 	cc := map[string]struct {
