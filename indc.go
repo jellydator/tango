@@ -1680,8 +1680,12 @@ func (w WMA) Offset() int {
 
 // validate checks whether WMA was configured properly or not.
 func (w *WMA) validate() error {
-	if w.length < 1 || w.offset < 0 {
+	if w.length < 1 {
 		return ErrInvalidLength
+	}
+
+	if w.offset < 0 {
+		return ErrInvalidOffset
 	}
 
 	w.valid = true
@@ -1697,7 +1701,7 @@ func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, w.Count(), w.Offset())
+	dd, err := resize(dd, w.Count()-w.offset, w.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -1716,21 +1720,21 @@ func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for WMA
 // calculation.
 func (w WMA) Count() int {
-	return w.length
+	return w.length + w.offset
 }
 
 // UnmarshalJSON parses JSON into WMA structure.
 func (w *WMA) UnmarshalJSON(d []byte) error {
 	var i struct {
-		L int `json:"length"`
-		O int `json:"offset"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	nw, err := NewWMA(i.L, i.O)
+	nw, err := NewWMA(i.Length, i.Offset)
 	if err != nil {
 		return err
 	}
@@ -1743,11 +1747,11 @@ func (w *WMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts WMA configuration data into JSON.
 func (w WMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
-		O int `json:"offset"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}{
-		L: w.length,
-		O: w.offset,
+		Length: w.length,
+		Offset: w.offset,
 	})
 }
 
@@ -1755,12 +1759,12 @@ func (w WMA) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (w WMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		L int    `json:"length"`
-		O int    `json:"offset"`
+		Name   String `json:"name"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameWMA,
-		L: w.length,
-		O: w.offset,
+		Name:   NameWMA,
+		Length: w.length,
+		Offset: w.offset,
 	})
 }
