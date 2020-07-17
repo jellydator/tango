@@ -248,7 +248,7 @@ func (c *CCI) validate() error {
 	}
 
 	if c.offset < 0 {
-		return ErrInvalidLength
+		return ErrInvalidOffset
 	}
 
 	c.valid = true
@@ -265,7 +265,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, c.Count(), c.Offset())
+	dd, err := resize(dd, c.source.Count(), c.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -287,36 +287,36 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for CCI
 // calculation.
 func (c CCI) Count() int {
-	return c.source.Count()
+	return c.source.Count() + c.offset
 }
 
 // UnmarshalJSON parses JSON into CCI structure.
 func (c *CCI) UnmarshalJSON(d []byte) error {
 	var i struct {
-		S json.RawMessage `json:"source"`
-		F string          `json:"factor"`
-		O int             `json:"offset"`
+		Source json.RawMessage `json:"source"`
+		Factor string          `json:"factor"`
+		Offset int             `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	s, err := fromJSON(i.S)
+	s, err := fromJSON(i.Source)
 	if err != nil {
 		return err
 	}
 
-	if i.F == "" {
-		i.F = "0"
+	if i.Factor == "" {
+		i.Factor = "0"
 	}
 
-	f, err := decimal.NewFromString(i.F)
+	f, err := decimal.NewFromString(i.Factor)
 	if err != nil {
 		return err
 	}
 
-	cn, err := NewCCI(s, f, i.O)
+	cn, err := NewCCI(s, f, i.Offset)
 	if err != nil {
 		return err
 	}
@@ -334,13 +334,13 @@ func (c CCI) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
-		S json.RawMessage `json:"source"`
-		F string          `json:"factor"`
-		O int             `json:"offset"`
+		Source json.RawMessage `json:"source"`
+		Factor string          `json:"factor"`
+		Offset int             `json:"offset"`
 	}{
-		S: s,
-		F: c.factor.String(),
-		O: c.offset,
+		Source: s,
+		Factor: c.factor.String(),
+		Offset: c.offset,
 	})
 }
 
@@ -353,15 +353,15 @@ func (c CCI) namedMarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
-		N String          `json:"name"`
-		S json.RawMessage `json:"source"`
-		F string          `json:"factor"`
-		O int             `json:"offset"`
+		Name   String          `json:"name"`
+		Source json.RawMessage `json:"source"`
+		Factor string          `json:"factor"`
+		Offset int             `json:"offset"`
 	}{
-		N: NameCCI,
-		S: s,
-		F: c.factor.String(),
-		O: c.offset,
+		Name:   NameCCI,
+		Source: s,
+		Factor: c.factor.String(),
+		Offset: c.offset,
 	})
 }
 
