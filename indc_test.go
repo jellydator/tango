@@ -17,10 +17,7 @@ func Test_NewAroon(t *testing.T) {
 		Error  error
 	}{
 		"Invalid parameters": {
-			Trend:  "",
-			Length: 1,
-			Offset: 0,
-			Error:  assert.AnError,
+			Error: assert.AnError,
 		},
 		"Successful creation": {
 			Trend:  "down",
@@ -243,10 +240,7 @@ func Test_NewCCI(t *testing.T) {
 		Error  error
 	}{
 		"Invalid parameters": {
-			Source: &IndicatorMock{},
-			Factor: decimal.NewFromInt(-1),
-			Offset: 0,
-			Error:  assert.AnError,
+			Error: assert.AnError,
 		},
 		"Successful creation (default factor)": {
 			Source: &IndicatorMock{},
@@ -756,9 +750,7 @@ func Test_NewEMA(t *testing.T) {
 		Error  error
 	}{
 		"Invalid parameters": {
-			Length: -1,
-			Offset: 0,
-			Error:  assert.AnError,
+			Error: assert.AnError,
 		},
 		"Successful creation": {
 			Length: 1,
@@ -998,8 +990,7 @@ func Test_NewHMA(t *testing.T) {
 		Error  error
 	}{
 		"Invalid parameters": {
-			Offset: 0,
-			Error:  assert.AnError,
+			Error: assert.AnError,
 		},
 		"Successful creation": {
 			WMA:    WMA{length: 2, offset: 2, valid: true},
@@ -1195,8 +1186,7 @@ func Test_NewMACD(t *testing.T) {
 		Error   error
 	}{
 		"Invalid parameters": {
-			Offset: 0,
-			Error:  assert.AnError,
+			Error: assert.AnError,
 		},
 		"Successful creation": {
 			Source1: &IndicatorMock{},
@@ -1519,8 +1509,7 @@ func Test_NewROC(t *testing.T) {
 		Error  error
 	}{
 		"Invalid parameters": {
-			Offset: 0,
-			Error:  assert.AnError,
+			Error: assert.AnError,
 		},
 		"Successful creation": {
 			Length: 1,
@@ -1726,8 +1715,7 @@ func Test_NewRSI(t *testing.T) {
 		Error  error
 	}{
 		"Invalid parameters": {
-			Offset: 0,
-			Error:  assert.AnError,
+			Error: assert.AnError,
 		},
 		"Successful creation": {
 			Length: 1,
@@ -1934,8 +1922,7 @@ func Test_NewSMA(t *testing.T) {
 		Error  error
 	}{
 		"Invalid parameters": {
-			Offset: 0,
-			Error:  assert.AnError,
+			Error: assert.AnError,
 		},
 		"Successful creation": {
 			Length: 1,
@@ -2314,197 +2301,213 @@ func Test_SRSI_namedMarshalJSON(t *testing.T) {
 	assert.Equal(t, `{"name":"srsi","rsi":{"length":1,"offset":2}}`, string(d))
 }
 
-// func Test_NewStoch(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Offset int
-// 		Result Stoch
-// 		Error  error
-// 	}{
-// 		"Invalid parameters": {
-// 			Offset: 0,
-// 			Error:  assert.AnError,
-// 		},
-// 		"Successful creation": {
-// 			Length: 1,
-// 			Offset: 0,
-// 			Result: Stoch{length: 1, valid: true},
-// 		},
-// 	}
+func Test_NewStoch(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Offset int
+		Result Stoch
+		Error  error
+	}{
+		"Invalid parameters": {
+			Error: assert.AnError,
+		},
+		"Successful creation": {
+			Length: 1,
+			Offset: 4,
+			Result: Stoch{length: 1, offset: 4, valid: true},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			s, err := NewStoch(c.Length, c.Offset)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			s, err := NewStoch(c.Length, c.Offset)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.Equal(t, c.Result, s)
-// 		})
-// 	}
-// }
+			assert.Equal(t, c.Result, s)
+		})
+	}
+}
 
-// func Test_Stoch_Length(t *testing.T) {
-// 	s := Stoch{length: 1}
-// 	assert.Equal(t, 1, s.Length())
-// }
+func Test_Stoch_Length(t *testing.T) {
+	assert.Equal(t, 1, Stoch{length: 1}.Length())
+}
 
-// func Test_Stoch_validate(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Stoch Stoch
-// 		Error error
-// 		Valid bool
-// 	}{
-// 		"Invalid length": {
-// 			Stoch: Stoch{length: 0},
-// 			Error: ErrInvalidLength,
-// 			Valid: false,
-// 		},
-// 		"Successful validation": {
-// 			Stoch: Stoch{length: 1},
-// 			Valid: true,
-// 		},
-// 	}
+func Test_Stoch_Offset(t *testing.T) {
+	assert.Equal(t, 3, Stoch{offset: 3}.Offset())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_Stoch_validate(t *testing.T) {
+	cc := map[string]struct {
+		Stoch Stoch
+		Error error
+		Valid bool
+	}{
+		"Invalid length": {
+			Stoch: Stoch{length: 0, offset: 0},
+			Error: ErrInvalidLength,
+			Valid: false,
+		},
+		"Invalid offset": {
+			Stoch: Stoch{length: 2, offset: -1},
+			Error: ErrInvalidOffset,
+			Valid: false,
+		},
+		"Successful validation": {
+			Stoch: Stoch{length: 1, offset: 2},
+			Valid: true,
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			equalError(t, c.Error, c.Stoch.validate())
-// 			assert.Equal(t, c.Valid, c.Stoch.valid)
-// 		})
-// 	}
-// }
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func Test_Stoch_Calc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Stoch  Stoch
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Invalid indicator": {
-// 			Stoch: Stoch{},
-// 			Error: ErrInvalidIndicator,
-// 		},
-// 		"Invalid data size": {
-// 			Stoch: Stoch{length: 3, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataSize,
-// 		},
-// 		"Successful calculation when new lows are reached": {
-// 			Stoch: Stoch{length: 3, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(150),
-// 				decimal.NewFromInt(125),
-// 				decimal.NewFromInt(145),
-// 			},
-// 			Result: decimal.NewFromInt(80),
-// 		},
-// 		"Successfully handled division by 0": {
-// 			Stoch: Stoch{length: 3, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(150),
-// 				decimal.NewFromInt(150),
-// 				decimal.NewFromInt(150),
-// 			},
-// 			Result: decimal.Zero,
-// 		},
-// 		"Successful calculation when new highs are reached": {
-// 			Stoch: Stoch{length: 3, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(120),
-// 				decimal.NewFromInt(145),
-// 				decimal.NewFromInt(135),
-// 			},
-// 			Result: decimal.NewFromInt(60),
-// 		},
-// 	}
+			equalError(t, c.Error, c.Stoch.validate())
+			assert.Equal(t, c.Valid, c.Stoch.valid)
+		})
+	}
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_Stoch_Calc(t *testing.T) {
+	cc := map[string]struct {
+		Stoch  Stoch
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			Stoch: Stoch{},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size": {
+			Stoch: Stoch{length: 3, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful calculation when new lows are reached": {
+			Stoch: Stoch{length: 3, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(150),
+				decimal.NewFromInt(125),
+				decimal.NewFromInt(145),
+			},
+			Result: decimal.NewFromInt(80),
+		},
+		"Successfully handled division by 0": {
+			Stoch: Stoch{length: 3, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(150),
+				decimal.NewFromInt(150),
+				decimal.NewFromInt(150),
+			},
+			Result: decimal.Zero,
+		},
+		"Successful calculation when new highs are reached": {
+			Stoch: Stoch{length: 3, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(120),
+				decimal.NewFromInt(145),
+				decimal.NewFromInt(135),
+			},
+			Result: decimal.NewFromInt(60),
+		},
+		"Successful calculation with offset": {
+			Stoch: Stoch{length: 3, offset: 3, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(120),
+				decimal.NewFromInt(145),
+				decimal.NewFromInt(135),
+				decimal.NewFromInt(350),
+				decimal.NewFromInt(300),
+				decimal.NewFromInt(420),
+			},
+			Result: decimal.NewFromInt(60),
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			res, err := c.Stoch.Calc(c.Data)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result.String(), res.String())
-// 		})
-// 	}
-// }
+			res, err := c.Stoch.Calc(c.Data)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_Stoch_Count(t *testing.T) {
-// 	s := Stoch{length: 15}
-// 	assert.Equal(t, 15, s.Count())
-// }
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
 
-// func Test_Stoch_UnmarshalJSON(t *testing.T) {
-// 	cc := map[string]struct {
-// 		JSON   string
-// 		Result Stoch
-// 		Error  error
-// 	}{
-// 		"Invalid JSON": {
-// 			JSON:  `{"length": "down"}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid length": {
-// 			JSON:  `{"length":0}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful unmarshal": {
-// 			JSON:   `{"length":1}`,
-// 			Result: Stoch{length: 1, valid: true},
-// 		},
-// 	}
+func Test_Stoch_Count(t *testing.T) {
+	assert.Equal(t, 18, Stoch{length: 15, offset: 3}.Count())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_Stoch_UnmarshalJSON(t *testing.T) {
+	cc := map[string]struct {
+		JSON   string
+		Result Stoch
+		Error  error
+	}{
+		"Invalid JSON": {
+			JSON:  `{"length": "down"}`,
+			Error: assert.AnError,
+		},
+		"Invalid validation": {
+			JSON:  `{"length":0,"offset":3}`,
+			Error: assert.AnError,
+		},
+		"Successful unmarshal": {
+			JSON:   `{"length":1,"offset":3}`,
+			Result: Stoch{length: 1, offset: 3, valid: true},
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			s := Stoch{}
-// 			err := s.UnmarshalJSON([]byte(c.JSON))
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result, s)
-// 		})
-// 	}
-// }
+			s := Stoch{}
+			err := s.UnmarshalJSON([]byte(c.JSON))
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_Stoch_MarshalJSON(t *testing.T) {
-// 	s := Stoch{length: 1}
-// 	d, err := s.MarshalJSON()
+			assert.Equal(t, c.Result, s)
+		})
+	}
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"length":1}`, string(d))
-// }
+func Test_Stoch_MarshalJSON(t *testing.T) {
+	d, err := Stoch{length: 1, offset: 3}.MarshalJSON()
 
-// func Test_Stoch_namedMarshalJSON(t *testing.T) {
-// 	s := Stoch{length: 1}
-// 	d, err := s.namedMarshalJSON()
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"length":1,"offset":3}`, string(d))
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"name":"stoch","length":1}`, string(d))
-// }
+func Test_Stoch_namedMarshalJSON(t *testing.T) {
+	d, err := Stoch{length: 1, offset: 2}.namedMarshalJSON()
+
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"name":"stoch","length":1,"offset":2}`, string(d))
+}
 
 // func Test_NewWMA(t *testing.T) {
 // 	cc := map[string]struct {
@@ -2514,7 +2517,6 @@ func Test_SRSI_namedMarshalJSON(t *testing.T) {
 // 		Error  error
 // 	}{
 // 		"Invalid parameters": {
-// 			Offset: 0,
 // 			Error:  assert.AnError,
 // 		},
 // 		"Successful creation": {
