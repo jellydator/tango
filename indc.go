@@ -1007,8 +1007,12 @@ func (r ROC) Offset() int {
 
 // validate checks whether ROC was configured properly or not.
 func (r *ROC) validate() error {
-	if r.length < 1 || r.offset < 0 {
+	if r.length < 1 {
 		return ErrInvalidLength
+	}
+
+	if r.offset < 0 {
+		return ErrInvalidOffset
 	}
 
 	r.valid = true
@@ -1024,13 +1028,13 @@ func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, r.Count(), r.Offset())
+	dd, err := resize(dd, r.Count()-r.offset, r.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
 	n := dd[len(dd)-1]
-	l := dd[len(dd)-r.Count()]
+	l := dd[len(dd)-r.length]
 
 	if l.Equal(decimal.Zero) {
 		return decimal.Zero, nil
@@ -1042,21 +1046,21 @@ func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for ROC
 // calculation.
 func (r ROC) Count() int {
-	return r.length
+	return r.length + r.offset
 }
 
 // UnmarshalJSON parses JSON into ROC structure.
 func (r *ROC) UnmarshalJSON(d []byte) error {
 	var i struct {
-		L int `json:"length"`
-		O int `json:"offset"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	nr, err := NewROC(i.L, i.O)
+	nr, err := NewROC(i.Length, i.Offset)
 	if err != nil {
 		return err
 	}
@@ -1069,11 +1073,11 @@ func (r *ROC) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts ROC configuration data into JSON.
 func (r ROC) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
-		O int `json:"offset"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}{
-		L: r.length,
-		O: r.offset,
+		Length: r.length,
+		Offset: r.offset,
 	})
 }
 
@@ -1081,13 +1085,13 @@ func (r ROC) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (r ROC) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		L int    `json:"length"`
-		O int    `json:"offset"`
+		Name   String `json:"name"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameROC,
-		L: r.length,
-		O: r.offset,
+		Name:   NameROC,
+		Length: r.length,
+		Offset: r.offset,
 	})
 }
 
