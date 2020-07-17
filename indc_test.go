@@ -235,7 +235,6 @@ func Test_NewCCI(t *testing.T) {
 	cc := map[string]struct {
 		Source Indicator
 		Factor decimal.Decimal
-		Offset int
 		Result CCI
 		Error  error
 	}{
@@ -245,14 +244,12 @@ func Test_NewCCI(t *testing.T) {
 		"Successful creation (default factor)": {
 			Source: &IndicatorMock{},
 			Factor: decimal.Zero,
-			Offset: 0,
-			Result: CCI{source: &IndicatorMock{}, factor: decimal.RequireFromString("0.015"), offset: 0, valid: true},
+			Result: CCI{source: &IndicatorMock{}, factor: decimal.RequireFromString("0.015"), valid: true},
 		},
 		"Successful creation": {
 			Source: &IndicatorMock{},
 			Factor: Hundred,
-			Offset: 4,
-			Result: CCI{source: &IndicatorMock{}, factor: Hundred, offset: 4, valid: true},
+			Result: CCI{source: &IndicatorMock{}, factor: Hundred, valid: true},
 		},
 	}
 
@@ -262,7 +259,7 @@ func Test_NewCCI(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			cci, err := NewCCI(c.Source, c.Factor, c.Offset)
+			cci, err := NewCCI(c.Source, c.Factor)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -282,7 +279,7 @@ func Test_CCI_Factor(t *testing.T) {
 }
 
 func Test_CCI_Offset(t *testing.T) {
-	assert.Equal(t, 4, CCI{offset: 4}.Offset())
+	assert.Equal(t, 4, CCI{source: SMA{offset: 4}}.Offset())
 }
 
 func Test_CCI_validate(t *testing.T) {
@@ -299,11 +296,6 @@ func Test_CCI_validate(t *testing.T) {
 		"Invalid factor": {
 			CCI:   CCI{source: &IndicatorMock{}, factor: decimal.NewFromInt(-1)},
 			Error: errors.New("invalid factor"),
-			Valid: false,
-		},
-		"Invalid offset": {
-			CCI:   CCI{source: &IndicatorMock{}, factor: decimal.NewFromInt(1), offset: -1},
-			Error: ErrInvalidOffset,
 			Valid: false,
 		},
 		"Successful validation": {
@@ -347,38 +339,27 @@ func Test_CCI_Calc(t *testing.T) {
 			Error: ErrInvalidIndicator,
 		},
 		"Invalid data size": {
-			CCI: CCI{source: stubIndicator(decimal.Zero, nil, 10), factor: decimal.RequireFromString("0.015"), offset: 0, valid: true},
+			CCI: CCI{source: stubIndicator(decimal.Zero, nil, 10), factor: decimal.RequireFromString("0.015"), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Invalid source calc": {
-			CCI: CCI{source: stubIndicator(decimal.Zero, assert.AnError, 1), factor: decimal.RequireFromString("0.015"), offset: 0, valid: true},
+			CCI: CCI{source: stubIndicator(decimal.Zero, assert.AnError, 1), factor: decimal.RequireFromString("0.015"), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: assert.AnError,
 		},
 		"Successful handled division by 0": {
-			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 1), factor: decimal.RequireFromString("0.015"), offset: 0, valid: true},
+			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 1), factor: decimal.RequireFromString("0.015"), valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(3),
 				decimal.NewFromInt(6),
 				decimal.NewFromInt(9),
 			},
 			Result: decimal.Zero,
-		},
-		"Successful calculation with offset": {
-			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 3), factor: decimal.RequireFromString("0.015"), offset: 2, valid: true},
-			Data: []decimal.Decimal{
-				decimal.NewFromInt(3),
-				decimal.NewFromInt(6),
-				decimal.NewFromInt(9),
-				decimal.NewFromInt(200),
-				decimal.NewFromInt(400),
-			},
-			Result: decimal.NewFromInt(200),
 		},
 		"Successful calculation": {
 			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 3), factor: decimal.RequireFromString("0.015"), valid: true},
@@ -415,7 +396,7 @@ func Test_CCI_Count(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, 14, CCI{source: indicator, offset: 4}.Count())
+	assert.Equal(t, 10, CCI{source: indicator}.Count())
 }
 
 func Test_CCI_UnmarshalJSON(t *testing.T) {
@@ -433,24 +414,20 @@ func Test_CCI_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Invalid factor": {
-			JSON:  `{"source":{"name":"sma","length":1,"offset":4},"factor":"abc","offset":4}`,
-			Error: assert.AnError,
-		},
-		"Invalid validation": {
-			JSON:  `{"source":{"name":"sma","length":1,"offset":4},"factor":"0.5","offset":-4}`,
+			JSON:  `{"source":{"name":"sma","length":1,"offset":4},"factor":"abc"}`,
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
-			JSON:   `{"source":{"name":"sma","length":1,"offset":2},"factor":"1","offset":4}`,
-			Result: CCI{source: SMA{length: 1, valid: true, offset: 2}, factor: decimal.RequireFromString("1"), offset: 4, valid: true},
+			JSON:   `{"source":{"name":"sma","length":1,"offset":2},"factor":"1"}`,
+			Result: CCI{source: SMA{length: 1, valid: true, offset: 2}, factor: decimal.RequireFromString("1"), valid: true},
 		},
 		"Successful unmarshal with zero factor": {
-			JSON:   `{"source":{"name":"sma","length":1,"offset":4},"factor":"0","offset":3}`,
-			Result: CCI{source: SMA{length: 1, valid: true, offset: 4}, factor: decimal.RequireFromString("0.015"), offset: 3, valid: true},
+			JSON:   `{"source":{"name":"sma","length":1,"offset":4},"factor":"0"}`,
+			Result: CCI{source: SMA{length: 1, valid: true, offset: 4}, factor: decimal.RequireFromString("0.015"), valid: true},
 		},
 		"Successful unmarshal with no factor": {
-			JSON:   `{"source":{"name":"sma","length":1,"offset":1},"offset":5}`,
-			Result: CCI{source: SMA{length: 1, valid: true, offset: 1}, factor: decimal.RequireFromString("0.015"), offset: 5, valid: true},
+			JSON:   `{"source":{"name":"sma","length":1,"offset":1}}`,
+			Result: CCI{source: SMA{length: 1, valid: true, offset: 1}, factor: decimal.RequireFromString("0.015"), valid: true},
 		},
 	}
 
@@ -491,8 +468,8 @@ func Test_CCI_MarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			CCI:    CCI{source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), factor: Hundred, offset: 4},
-			Result: `{"source":{"name":"indicatormock"},"factor":"100","offset":4}`,
+			CCI:    CCI{source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), factor: Hundred},
+			Result: `{"source":{"name":"indicatormock"},"factor":"100"}`,
 		},
 	}
 
@@ -532,8 +509,8 @@ func Test_CCI_namedMarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			CCI:    CCI{source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), factor: Hundred, offset: 2},
-			Result: `{"name":"cci","source":{"name":"indicatormock"},"factor":"100","offset":2}`,
+			CCI:    CCI{source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), factor: Hundred},
+			Result: `{"name":"cci","source":{"name":"indicatormock"},"factor":"100"}`,
 		},
 	}
 
@@ -985,7 +962,6 @@ func Test_EMA_namedMarshalJSON(t *testing.T) {
 func Test_NewHMA(t *testing.T) {
 	cc := map[string]struct {
 		WMA    WMA
-		Offset int
 		Result HMA
 		Error  error
 	}{
@@ -994,8 +970,7 @@ func Test_NewHMA(t *testing.T) {
 		},
 		"Successful creation": {
 			WMA:    WMA{length: 2, offset: 2, valid: true},
-			Offset: 3,
-			Result: HMA{wma: WMA{length: 2, offset: 2, valid: true}, offset: 3, valid: true},
+			Result: HMA{wma: WMA{length: 2, offset: 2, valid: true}, valid: true},
 		},
 	}
 
@@ -1005,7 +980,7 @@ func Test_NewHMA(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			h, err := NewHMA(c.WMA, c.Offset)
+			h, err := NewHMA(c.WMA)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -1021,7 +996,7 @@ func Test_HMA_WMA(t *testing.T) {
 }
 
 func Test_HMA_Offset(t *testing.T) {
-	assert.Equal(t, 3, HMA{offset: 3}.Offset())
+	assert.Equal(t, 3, HMA{wma: WMA{offset: 3}}.Offset())
 }
 
 func Test_HMA_validate(t *testing.T) {
@@ -1031,17 +1006,12 @@ func Test_HMA_validate(t *testing.T) {
 		Valid bool
 	}{
 		"Invalid WMA": {
-			HMA:   HMA{wma: WMA{length: -1, offset: 2}, offset: 3},
+			HMA:   HMA{wma: WMA{length: -1, offset: 2}},
 			Error: assert.AnError,
 			Valid: false,
 		},
-		"Invalid offset": {
-			HMA:   HMA{wma: WMA{length: 4, offset: 2}, offset: -3},
-			Error: ErrInvalidOffset,
-			Valid: false,
-		},
 		"Successful validation": {
-			HMA:   HMA{wma: WMA{length: 2, offset: 2}, offset: 3},
+			HMA:   HMA{wma: WMA{length: 2, offset: 2}},
 			Valid: true,
 		},
 	}
@@ -1070,28 +1040,14 @@ func Test_HMA_Calc(t *testing.T) {
 			Error: ErrInvalidIndicator,
 		},
 		"Invalid data size": {
-			HMA: HMA{wma: WMA{length: 5, offset: 0, valid: true}, offset: 0, valid: true},
+			HMA: HMA{wma: WMA{length: 5, offset: 0, valid: true}, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
-		"Successful calculation with offset": {
-			HMA: HMA{wma: WMA{length: 3, offset: 0, valid: true}, offset: 2, valid: true},
-			Data: []decimal.Decimal{
-				decimal.NewFromInt(30),
-				decimal.NewFromInt(31),
-				decimal.NewFromInt(32),
-				decimal.NewFromInt(30),
-				decimal.NewFromInt(30),
-				decimal.NewFromInt(31),
-				decimal.NewFromInt(30),
-				decimal.NewFromInt(30),
-			},
-			Result: decimal.RequireFromString("31.5"),
-		},
 		"Successful calculation": {
-			HMA: HMA{wma: WMA{length: 3, offset: 0, valid: true}, offset: 0, valid: true},
+			HMA: HMA{wma: WMA{length: 3, offset: 0, valid: true}, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -1122,7 +1078,7 @@ func Test_HMA_Calc(t *testing.T) {
 }
 
 func Test_HMA_Count(t *testing.T) {
-	assert.Equal(t, 31, HMA{wma: WMA{length: 15}, offset: 2}.Count())
+	assert.Equal(t, 31, HMA{wma: WMA{length: 15, offset: 2}}.Count())
 }
 
 func Test_HMA_UnmarshalJSON(t *testing.T) {
@@ -1140,8 +1096,8 @@ func Test_HMA_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
-			JSON:   `{"wma":{"length":3,"offset":3},"offset":2}`,
-			Result: HMA{wma: WMA{length: 3, offset: 3, valid: true}, offset: 2, valid: true},
+			JSON:   `{"wma":{"length":3,"offset":3}}`,
+			Result: HMA{wma: WMA{length: 3, offset: 3, valid: true}, valid: true},
 		},
 	}
 
@@ -1164,17 +1120,17 @@ func Test_HMA_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_HMA_MarshalJSON(t *testing.T) {
-	d, err := HMA{wma: WMA{length: 3, offset: 2}, offset: 4}.MarshalJSON()
+	d, err := HMA{wma: WMA{length: 3, offset: 2}}.MarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"wma":{"length":3,"offset":2},"offset":4}`, string(d))
+	assert.JSONEq(t, `{"wma":{"length":3,"offset":2}}`, string(d))
 }
 
 func Test_HMA_namedMarshalJSON(t *testing.T) {
-	d, err := HMA{wma: WMA{length: 3, offset: 1}, offset: 5}.namedMarshalJSON()
+	d, err := HMA{wma: WMA{length: 3, offset: 1}}.namedMarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"name":"hma","wma":{"length":3,"offset":1},"offset":5}`, string(d))
+	assert.JSONEq(t, `{"name":"hma","wma":{"length":3,"offset":1}}`, string(d))
 }
 
 func Test_NewMACD(t *testing.T) {

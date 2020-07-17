@@ -199,21 +199,17 @@ type CCI struct {
 	// factor is used to scale CCI to provide more readable numbers.
 	// default is 0.015f.
 	factor decimal.Decimal
-
-	// offset specifies how many data points should be skipped from the start
-	// during the calculations.
-	offset int
 }
 
 // NewCCI validates provided configuration options and creates
 // new CCI indicator.
 // If provided factor is zero, default value is going to be used (0.015f).
-func NewCCI(source Indicator, factor decimal.Decimal, offset int) (CCI, error) {
+func NewCCI(source Indicator, factor decimal.Decimal) (CCI, error) {
 	if factor.Equal(decimal.Zero) {
 		factor = decimal.RequireFromString("0.015")
 	}
 
-	c := CCI{source: source, factor: factor, offset: offset}
+	c := CCI{source: source, factor: factor}
 
 	if err := c.validate(); err != nil {
 		return CCI{}, err
@@ -234,7 +230,7 @@ func (c CCI) Factor() decimal.Decimal {
 
 // Offset returns Offset configuration option.
 func (c CCI) Offset() int {
-	return c.offset
+	return c.source.Offset()
 }
 
 // validate checks whether CCI was configured properly or not.
@@ -245,10 +241,6 @@ func (c *CCI) validate() error {
 
 	if c.factor.LessThanOrEqual(decimal.Zero) {
 		return errors.New("invalid factor")
-	}
-
-	if c.offset < 0 {
-		return ErrInvalidOffset
 	}
 
 	c.valid = true
@@ -265,7 +257,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, c.Count()-c.offset, c.offset)
+	dd, err := resize(dd, c.Count(), 0)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -287,7 +279,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for CCI
 // calculation.
 func (c CCI) Count() int {
-	return c.source.Count() + c.offset
+	return c.source.Count()
 }
 
 // UnmarshalJSON parses JSON into CCI structure.
@@ -295,7 +287,6 @@ func (c *CCI) UnmarshalJSON(d []byte) error {
 	var i struct {
 		Source json.RawMessage `json:"source"`
 		Factor string          `json:"factor"`
-		Offset int             `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
@@ -316,7 +307,7 @@ func (c *CCI) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	cn, err := NewCCI(s, f, i.Offset)
+	cn, err := NewCCI(s, f)
 	if err != nil {
 		return err
 	}
@@ -336,11 +327,9 @@ func (c CCI) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Source json.RawMessage `json:"source"`
 		Factor string          `json:"factor"`
-		Offset int             `json:"offset"`
 	}{
 		Source: s,
 		Factor: c.factor.String(),
-		Offset: c.offset,
 	})
 }
 
@@ -356,12 +345,10 @@ func (c CCI) namedMarshalJSON() ([]byte, error) {
 		Name   String          `json:"name"`
 		Source json.RawMessage `json:"source"`
 		Factor string          `json:"factor"`
-		Offset int             `json:"offset"`
 	}{
 		Name:   NameCCI,
 		Source: s,
 		Factor: c.factor.String(),
-		Offset: c.offset,
 	})
 }
 
@@ -622,16 +609,12 @@ type HMA struct {
 
 	// wma specifies the base moving average.
 	wma WMA
-
-	// offset specifies how many data points should be skipped from the start
-	// during the calculations.
-	offset int
 }
 
 // NewHMA validates provided configuration options and
 // creates new HMA indicator.
-func NewHMA(w WMA, offset int) (HMA, error) {
-	h := HMA{wma: w, offset: offset}
+func NewHMA(w WMA) (HMA, error) {
+	h := HMA{wma: w}
 
 	if err := h.validate(); err != nil {
 		return HMA{}, err
@@ -647,7 +630,7 @@ func (h HMA) WMA() WMA {
 
 // Offset returns offset configuration option.
 func (h HMA) Offset() int {
-	return h.offset
+	return h.wma.offset
 }
 
 // validate checks whether HMA was configured properly or not.
@@ -658,10 +641,6 @@ func (h *HMA) validate() error {
 
 	if h.wma.length < 2 {
 		return ErrInvalidLength
-	}
-
-	if h.offset < 0 {
-		return ErrInvalidOffset
 	}
 
 	h.valid = true
@@ -678,7 +657,7 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, h.Count()-h.offset, h.offset)
+	dd, err := resize(dd, h.Count(), 0)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -707,7 +686,7 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for HMA
 // calculation.
 func (h HMA) Count() int {
-	return h.wma.Count()*2 + h.offset - 1
+	return h.wma.Count()*2 - h.wma.offset - 1
 }
 
 // UnmarshalJSON parses JSON into HMA structure.
@@ -717,7 +696,6 @@ func (h *HMA) UnmarshalJSON(d []byte) error {
 			Length int `json:"length"`
 			Offset int `json:"offset"`
 		} `json:"wma"`
-		Offset int `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
@@ -729,7 +707,7 @@ func (h *HMA) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	nh, err := NewHMA(w, i.Offset)
+	nh, err := NewHMA(w)
 	if err != nil {
 		return err
 	}
@@ -742,11 +720,9 @@ func (h *HMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts HMA configuration data into JSON.
 func (h HMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		WMA    WMA `json:"wma"`
-		Offset int `json:"offset"`
+		WMA WMA `json:"wma"`
 	}{
-		WMA:    h.wma,
-		Offset: h.offset,
+		WMA: h.wma,
 	})
 }
 
@@ -754,13 +730,11 @@ func (h HMA) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (h HMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Name   String `json:"name"`
-		WMA    WMA    `json:"wma"`
-		Offset int    `json:"offset"`
+		Name String `json:"name"`
+		WMA  WMA    `json:"wma"`
 	}{
-		Name:   NameHMA,
-		WMA:    h.wma,
-		Offset: h.offset,
+		Name: NameHMA,
+		WMA:  h.wma,
 	})
 }
 
