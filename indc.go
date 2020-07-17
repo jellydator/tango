@@ -436,7 +436,8 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	v := make([]decimal.Decimal, dm.ema.Length())
 
-	v[0], _ = dm.ema.sma.Calc(dd[:dm.ema.Length()])
+	s, _ := NewSMA(dm.ema.length, 0)
+	v[0], _ = s.Calc(dd[:dm.ema.Length()])
 
 	for i := dm.ema.Length(); i < len(dd); i++ {
 		v[i-dm.ema.Length()+1], _ = dm.ema.CalcNext(v[i-dm.ema.Length()], dd[i])
@@ -515,11 +516,7 @@ const NameEMA = "ema"
 // moving average.
 // The zero value is not usable.
 type EMA struct {
-	// valid specifies whether EMA paremeters were validated.
-	valid bool
-
-	// sma specifies first EMA calculations SMA parameters.
-	sma SMA
+	SMA
 }
 
 // NewEMA validates provided configuration options and
@@ -530,30 +527,9 @@ func NewEMA(length, offset int) (EMA, error) {
 		return EMA{}, err
 	}
 
-	e := EMA{sma: s, valid: true}
+	e := EMA{SMA: s}
 
 	return e, nil
-}
-
-// Length returns length configuration option.
-func (e EMA) Length() int {
-	return e.sma.Count()
-}
-
-// Offset returns offset configuration option.
-func (e EMA) Offset() int {
-	return e.sma.Offset()
-}
-
-// validate checks whether EMA was configured properly or not.
-func (e *EMA) validate() error {
-	if err := e.sma.validate(); err != nil {
-		return err
-	}
-
-	e.valid = true
-
-	return nil
 }
 
 // Calc calculates EMA from the provided data points slice.
@@ -564,14 +540,15 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, e.Count(), e.Offset())
+	dd, err := resize(dd, e.length*2-1, e.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	r, _ := e.sma.Calc(dd[:e.Length()])
+	s, _ := NewSMA(e.length, 0)
+	r, _ := s.Calc(dd[:e.length])
 
-	for i := e.Length(); i < len(dd); i++ {
+	for i := e.length; i < len(dd); i++ {
 		r, _ = e.CalcNext(r, dd[i])
 	}
 
@@ -597,21 +574,21 @@ func (e EMA) multiplier() decimal.Decimal {
 // Count determines the total amount of data points needed for EMA
 // calculation.
 func (e EMA) Count() int {
-	return e.Length()*2 - 1
+	return e.length*2 + e.offset - 1
 }
 
 // UnmarshalJSON parses JSON into EMA structure.
 func (e *EMA) UnmarshalJSON(d []byte) error {
 	var i struct {
-		L int `json:"length"`
-		O int `json:"offset"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	ne, err := NewEMA(i.L, i.O)
+	ne, err := NewEMA(i.Length, i.Offset)
 	if err != nil {
 		return err
 	}
@@ -624,11 +601,11 @@ func (e *EMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts EMA configuration data into JSON.
 func (e EMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
-		O int `json:"offset"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}{
-		L: e.sma.length,
-		O: e.sma.offset,
+		Length: e.length,
+		Offset: e.offset,
 	})
 }
 
@@ -636,13 +613,13 @@ func (e EMA) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (e EMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		L int    `json:"length"`
-		O int    `json:"offset"`
+		Name   String `json:"name"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameEMA,
-		L: e.sma.length,
-		O: e.sma.offset,
+		Name:   NameEMA,
+		Length: e.length,
+		Offset: e.offset,
 	})
 }
 
@@ -1295,8 +1272,12 @@ func (s SMA) Offset() int {
 
 // validate checks whether SMA was configured properly or not.
 func (s *SMA) validate() error {
-	if s.length < 1 || s.offset < 0 {
+	if s.length < 1 {
 		return ErrInvalidLength
+	}
+
+	if s.offset < 0 {
+		return ErrInvalidOffset
 	}
 
 	s.valid = true

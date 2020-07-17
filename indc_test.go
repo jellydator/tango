@@ -572,9 +572,9 @@ func Test_NewDEMA(t *testing.T) {
 			Error:  assert.AnError,
 		},
 		"Successful creation": {
-			EMA:    EMA{sma: SMA{length: 1, valid: true, offset: 4}, valid: true},
+			EMA:    EMA{SMA{length: 1, valid: true, offset: 4}},
 			Offset: 2,
-			Result: DEMA{ema: EMA{sma: SMA{length: 1, offset: 4, valid: true}, valid: true}, offset: 2, valid: true},
+			Result: DEMA{ema: EMA{SMA{length: 1, offset: 4, valid: true}}, offset: 2, valid: true},
 		},
 	}
 
@@ -596,7 +596,7 @@ func Test_NewDEMA(t *testing.T) {
 }
 
 func Test_DEMA_EMA(t *testing.T) {
-	assert.Equal(t, EMA{sma: SMA{length: 1, offset: 2}}, DEMA{ema: EMA{sma: SMA{length: 1, offset: 2}}}.EMA())
+	assert.Equal(t, EMA{SMA{length: 1, offset: 2}}, DEMA{ema: EMA{SMA{length: 1, offset: 2}}}.EMA())
 }
 
 func Test_DEMA_Offset(t *testing.T) {
@@ -610,17 +610,17 @@ func Test_DEMA_validate(t *testing.T) {
 		Valid bool
 	}{
 		"Invalid EMA": {
-			DEMA:  DEMA{ema: EMA{sma: SMA{length: -1, offset: 2}}},
+			DEMA:  DEMA{ema: EMA{SMA{length: -1, offset: 2}}},
 			Error: assert.AnError,
 			Valid: false,
 		},
 		"Invalid offset": {
-			DEMA:  DEMA{ema: EMA{sma: SMA{length: -1, offset: 2}}, offset: -1},
+			DEMA:  DEMA{ema: EMA{SMA{length: -1, offset: 2}}, offset: -1},
 			Error: assert.AnError,
 			Valid: false,
 		},
 		"Successful validation": {
-			DEMA:  DEMA{ema: EMA{sma: SMA{length: 1}}, offset: 2},
+			DEMA:  DEMA{ema: EMA{SMA{length: 1}}, offset: 2},
 			Valid: true,
 		},
 	}
@@ -649,14 +649,14 @@ func Test_DEMA_Calc(t *testing.T) {
 			Error: ErrInvalidIndicator,
 		},
 		"Invalid data size": {
-			DEMA: DEMA{ema: EMA{sma: SMA{length: 3, valid: true, offset: 2}, valid: true}, offset: 2, valid: true},
+			DEMA: DEMA{ema: EMA{SMA{length: 3, valid: true, offset: 2}}, offset: 2, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Successful calculation with offset": {
-			DEMA: DEMA{ema: EMA{sma: SMA{length: 3, valid: true, offset: 0}, valid: true}, offset: 2, valid: true},
+			DEMA: DEMA{ema: EMA{SMA{length: 3, valid: true, offset: 0}}, offset: 2, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -670,7 +670,7 @@ func Test_DEMA_Calc(t *testing.T) {
 			Result: decimal.RequireFromString("6.75"),
 		},
 		"Successful calculation": {
-			DEMA: DEMA{ema: EMA{sma: SMA{length: 3, valid: true, offset: 0}, valid: true}, offset: 0, valid: true},
+			DEMA: DEMA{ema: EMA{SMA{length: 3, valid: true, offset: 0}}, offset: 0, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -701,7 +701,7 @@ func Test_DEMA_Calc(t *testing.T) {
 }
 
 func Test_DEMA_Count(t *testing.T) {
-	d := DEMA{ema: EMA{sma: SMA{length: 15}}, offset: 4}
+	d := DEMA{ema: EMA{SMA{length: 15}}, offset: 4}
 	assert.Equal(t, 33, d.Count())
 }
 
@@ -721,7 +721,7 @@ func Test_DEMA_UnmarshalJSON(t *testing.T) {
 		},
 		"Successful unmarshal": {
 			JSON:   `{"ema":{"length":1,"offset":2},"offset":4}`,
-			Result: DEMA{ema: EMA{sma: SMA{length: 1, offset: 2, valid: true}, valid: true}, offset: 4, valid: true},
+			Result: DEMA{ema: EMA{SMA{length: 1, offset: 2, valid: true}}, offset: 4, valid: true},
 		},
 	}
 
@@ -744,7 +744,7 @@ func Test_DEMA_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_DEMA_MarshalJSON(t *testing.T) {
-	dm := DEMA{ema: EMA{sma: SMA{length: 1, offset: 3}}, offset: 2}
+	dm := DEMA{ema: EMA{SMA{length: 1, offset: 3}}, offset: 2}
 	d, err := dm.MarshalJSON()
 
 	assert.NoError(t, err)
@@ -752,231 +752,260 @@ func Test_DEMA_MarshalJSON(t *testing.T) {
 }
 
 func Test_DEMA_namedMarshalJSON(t *testing.T) {
-	dm := DEMA{ema: EMA{sma: SMA{length: 1, offset: 3}}, offset: 2}
+	dm := DEMA{ema: EMA{SMA{length: 1, offset: 3}}, offset: 2}
 	d, err := dm.namedMarshalJSON()
 
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"name":"dema","ema":{"length":1,"offset":3},"offset":2}`, string(d))
 }
 
-// func Test_NewEMA(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Offset int
-// 		Result EMA
-// 		Error  error
-// 	}{
-// 		"Invalid parameters": {
-// 			Length: -1,
-// 			Offset: 0,
-// 			Error:  assert.AnError,
-// 		},
-// 		"Successful creation": {
-// 			Length: 1,
-// 			Offset: 0,
-// 			Result: EMA{sma: SMA{length: 1, valid: true}, valid: true},
-// 		},
-// 	}
+func Test_NewEMA(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Offset int
+		Result EMA
+		Error  error
+	}{
+		"Invalid parameters": {
+			Length: -1,
+			Offset: 0,
+			Error:  assert.AnError,
+		},
+		"Successful creation": {
+			Length: 1,
+			Offset: 4,
+			Result: EMA{SMA{length: 1, offset: 4, valid: true}},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			e, err := NewEMA(c.Length, c.Offset)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			e, err := NewEMA(c.Length, c.Offset)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.Equal(t, c.Result, e)
-// 		})
-// 	}
-// }
+			assert.Equal(t, c.Result, e)
+		})
+	}
+}
 
-// func Test_EMA_Length(t *testing.T) {
-// 	e := EMA{sma: SMA{length: 1}}
-// 	assert.Equal(t, 1, e.Length())
-// }
+func Test_EMA_Length(t *testing.T) {
+	e := EMA{SMA{length: 1}}
+	assert.Equal(t, 1, e.Length())
+}
 
-// func Test_EMA_validate(t *testing.T) {
-// 	cc := map[string]struct {
-// 		EMA   EMA
-// 		Error error
-// 		Valid bool
-// 	}{
-// 		"Invalid SMA": {
-// 			EMA:   EMA{sma: SMA{length: -1}},
-// 			Error: assert.AnError,
-// 			Valid: false,
-// 		},
-// 		"Successful validation": {
-// 			EMA:   EMA{sma: SMA{length: 1}},
-// 			Valid: true,
-// 		},
-// 	}
+func Test_EMA_Offset(t *testing.T) {
+	e := EMA{SMA{offset: 1}}
+	assert.Equal(t, 1, e.Offset())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_EMA_validate(t *testing.T) {
+	cc := map[string]struct {
+		EMA   EMA
+		Error error
+		Valid bool
+	}{
+		"Invalid SMA": {
+			EMA:   EMA{SMA{length: -1, offset: 2}},
+			Error: assert.AnError,
+			Valid: false,
+		},
+		"Invalid offset": {
+			EMA:   EMA{SMA{length: 1, offset: -2}},
+			Error: ErrInvalidOffset,
+			Valid: false,
+		},
+		"Successful validation": {
+			EMA:   EMA{SMA{length: 1, offset: 2}},
+			Valid: true,
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			equalError(t, c.Error, c.EMA.validate())
-// 			assert.Equal(t, c.Valid, c.EMA.valid)
-// 		})
-// 	}
-// }
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func Test_EMA_Calc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		EMA    EMA
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Invalid indicator": {
-// 			EMA:   EMA{},
-// 			Error: ErrInvalidIndicator,
-// 		},
-// 		"Invalid data size": {
-// 			EMA: EMA{sma: SMA{length: 3, valid: true}, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataSize,
-// 		},
-// 		"Successful calculation": {
-// 			EMA: EMA{sma: SMA{length: 3, valid: true}, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(31),
-// 				decimal.NewFromInt(1),
-// 				decimal.NewFromInt(1),
-// 				decimal.NewFromInt(2),
-// 				decimal.NewFromInt(3),
-// 			},
-// 			Result: decimal.RequireFromString("4.75"),
-// 		},
-// 	}
+			equalError(t, c.Error, c.EMA.validate())
+			assert.Equal(t, c.Valid, c.EMA.valid)
+		})
+	}
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_EMA_Calc(t *testing.T) {
+	cc := map[string]struct {
+		EMA    EMA
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			EMA:   EMA{},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size": {
+			EMA: EMA{SMA{length: 3, offset: 2, valid: true}},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful calculation with offset": {
+			EMA: EMA{SMA{length: 3, offset: 2, valid: true}},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(1),
+				decimal.NewFromInt(1),
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(3),
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(3),
+			},
+			Result: decimal.RequireFromString("4.75"),
+		},
+		"Successful calculation": {
+			EMA: EMA{SMA{length: 3, offset: 0, valid: true}},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(1),
+				decimal.NewFromInt(1),
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(3),
+			},
+			Result: decimal.RequireFromString("4.75"),
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			res, err := c.EMA.Calc(c.Data)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result.String(), res.String())
-// 		})
-// 	}
-// }
+			res, err := c.EMA.Calc(c.Data)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_EMA_CalcNext(t *testing.T) {
-// 	cc := map[string]struct {
-// 		EMA    EMA
-// 		Last   decimal.Decimal
-// 		Next   decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Invalid indicator": {
-// 			EMA:   EMA{},
-// 			Error: ErrInvalidIndicator,
-// 		},
-// 		"Successful calculation": {
-// 			EMA:    EMA{sma: SMA{length: 3, valid: true}, valid: true},
-// 			Last:   decimal.NewFromInt(5),
-// 			Next:   decimal.NewFromInt(5),
-// 			Result: decimal.NewFromInt(5),
-// 		},
-// 	}
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_EMA_CalcNext(t *testing.T) {
+	cc := map[string]struct {
+		EMA    EMA
+		Last   decimal.Decimal
+		Next   decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			EMA:   EMA{},
+			Error: ErrInvalidIndicator,
+		},
+		"Successful calculation with offset": {
+			EMA:    EMA{SMA{length: 3, offset: 1, valid: true}},
+			Last:   decimal.NewFromInt(5),
+			Next:   decimal.NewFromInt(5),
+			Result: decimal.NewFromInt(5),
+		},
+		"Successful calculation": {
+			EMA:    EMA{SMA{length: 3, offset: 0, valid: true}},
+			Last:   decimal.NewFromInt(5),
+			Next:   decimal.NewFromInt(5),
+			Result: decimal.NewFromInt(5),
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			res, err := c.EMA.CalcNext(c.Last, c.Next)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result.String(), res.String())
-// 		})
-// 	}
-// }
+			res, err := c.EMA.CalcNext(c.Last, c.Next)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_EMA_Count(t *testing.T) {
-// 	e := EMA{sma: SMA{length: 15}}
-// 	assert.Equal(t, 29, e.Count())
-// }
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
 
-// func Test_EMA_multiplier(t *testing.T) {
-// 	e := EMA{sma: SMA{length: 3}}
-// 	assert.Equal(t, decimal.RequireFromString("0.5").String(), e.multiplier().String())
-// }
+func Test_EMA_Count(t *testing.T) {
+	e := EMA{SMA{length: 15, offset: 4}}
+	assert.Equal(t, 33, e.Count())
+}
 
-// func Test_EMA_UnmarshalJSON(t *testing.T) {
-// 	cc := map[string]struct {
-// 		JSON   string
-// 		Result EMA
-// 		Error  error
-// 	}{
-// 		"Invalid JSON": {
-// 			JSON:  `{\"_"/`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid length": {
-// 			JSON:  `{"length":0}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful unmarshal": {
-// 			JSON:   `{"length":1}`,
-// 			Result: EMA{sma: SMA{length: 1, valid: true}, valid: true},
-// 		},
-// 	}
+func Test_EMA_multiplier(t *testing.T) {
+	e := EMA{SMA{length: 3}}
+	assert.Equal(t, decimal.RequireFromString("0.5").String(), e.multiplier().String())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_EMA_UnmarshalJSON(t *testing.T) {
+	cc := map[string]struct {
+		JSON   string
+		Result EMA
+		Error  error
+	}{
+		"Invalid JSON": {
+			JSON:  `{\"_"/`,
+			Error: assert.AnError,
+		},
+		"Invalid validation": {
+			JSON:  `{"length":0}`,
+			Error: assert.AnError,
+		},
+		"Successful unmarshal": {
+			JSON:   `{"length":1,"offset":4}`,
+			Result: EMA{SMA{length: 1, offset: 4, valid: true}},
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			e := EMA{}
-// 			err := e.UnmarshalJSON([]byte(c.JSON))
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result, e)
-// 		})
-// 	}
-// }
+			e := EMA{}
+			err := e.UnmarshalJSON([]byte(c.JSON))
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_EMA_MarshalJSON(t *testing.T) {
-// 	e := EMA{sma: SMA{length: 1}}
-// 	d, err := e.MarshalJSON()
+			assert.Equal(t, c.Result, e)
+		})
+	}
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"length":1}`, string(d))
-// }
+func Test_EMA_MarshalJSON(t *testing.T) {
+	e := EMA{SMA{length: 1, offset: 2}}
+	d, err := e.MarshalJSON()
 
-// func Test_EMA_namedMarshalJSON(t *testing.T) {
-// 	e := EMA{sma: SMA{length: 1}}
-// 	d, err := e.namedMarshalJSON()
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"length":1,"offset":2}`, string(d))
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"name":"ema", "length":1}`, string(d))
-// }
+func Test_EMA_namedMarshalJSON(t *testing.T) {
+	e := EMA{SMA{length: 1, offset: 2}}
+	d, err := e.namedMarshalJSON()
+
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"name":"ema","length":1,"offset":2}`, string(d))
+}
 
 // func Test_NewHMA(t *testing.T) {
 // 	cc := map[string]struct {
