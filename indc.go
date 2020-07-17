@@ -377,16 +377,12 @@ type DEMA struct {
 
 	// ema specifies what ema should be used for dema calculations.
 	ema EMA
-
-	// offset specifies how many data points should be skipped from the start
-	// during the calculations.
-	offset int
 }
 
 // NewDEMA validates provided configuration options and creates
 // new DEMA indicator.
-func NewDEMA(ema EMA, offset int) (DEMA, error) {
-	d := DEMA{ema: ema, offset: offset}
+func NewDEMA(ema EMA) (DEMA, error) {
+	d := DEMA{ema: ema}
 
 	if err := d.validate(); err != nil {
 		return DEMA{}, err
@@ -402,17 +398,13 @@ func (dm DEMA) EMA() EMA {
 
 // Offset returns offset configuration option.
 func (dm DEMA) Offset() int {
-	return dm.offset
+	return dm.ema.offset
 }
 
 // validate checks whether DEMA was configured properly or not.
 func (dm *DEMA) validate() error {
 	if err := dm.ema.validate(); err != nil {
 		return err
-	}
-
-	if dm.offset < 0 {
-		return ErrInvalidOffset
 	}
 
 	dm.valid = true
@@ -429,7 +421,7 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, dm.Count()-dm.offset, dm.offset)
+	dd, err := resize(dd, dm.Count()-dm.ema.offset, dm.ema.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -455,7 +447,7 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for DEMA
 // calculation.
 func (dm DEMA) Count() int {
-	return dm.ema.Count() + dm.offset
+	return dm.ema.Count()
 }
 
 // UnmarshalJSON parses JSON into DEMA structure.
@@ -465,7 +457,6 @@ func (dm *DEMA) UnmarshalJSON(d []byte) error {
 			Length int `json:"length"`
 			Offset int `json:"offset"`
 		} `json:"ema"`
-		Offset int `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
@@ -477,7 +468,7 @@ func (dm *DEMA) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	ndm, _ := NewDEMA(ne, i.Offset)
+	ndm, _ := NewDEMA(ne)
 
 	*dm = ndm
 
@@ -487,11 +478,9 @@ func (dm *DEMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts DEMA configuration data into JSON.
 func (dm DEMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		EMA    EMA `json:"ema"`
-		Offset int `json:"offset"`
+		EMA EMA `json:"ema"`
 	}{
-		EMA:    dm.ema,
-		Offset: dm.offset,
+		EMA: dm.ema,
 	})
 }
 
@@ -499,13 +488,11 @@ func (dm DEMA) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (dm DEMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Name   String `json:"name"`
-		EMA    EMA    `json:"ema"`
-		Offset int    `json:"offset"`
+		Name String `json:"name"`
+		EMA  EMA    `json:"ema"`
 	}{
-		Name:   NameDEMA,
-		EMA:    dm.ema,
-		Offset: dm.offset,
+		Name: NameDEMA,
+		EMA:  dm.ema,
 	})
 }
 
@@ -1386,16 +1373,12 @@ type SRSI struct {
 
 	// rsi specifies the base relative strength index.
 	rsi RSI
-
-	// offset specifies how many data points should be skipped from the start
-	// during the calculations.
-	offset int
 }
 
 // NewSRSI validates provided configuration options and
 // creates new SRSI indicator.
-func NewSRSI(r RSI, offset int) (SRSI, error) {
-	s := SRSI{rsi: r, offset: offset}
+func NewSRSI(r RSI) (SRSI, error) {
+	s := SRSI{rsi: r}
 
 	if err := s.validate(); err != nil {
 		return SRSI{}, err
@@ -1411,17 +1394,13 @@ func (s SRSI) RSI() RSI {
 
 // Offset returns offset configuration option.
 func (s SRSI) Offset() int {
-	return s.offset
+	return s.rsi.offset
 }
 
 // validate checks whether SRSI was configured properly or not.
 func (s *SRSI) validate() error {
 	if err := s.rsi.validate(); err != nil {
 		return err
-	}
-
-	if s.offset < 0 {
-		return ErrInvalidLength
 	}
 
 	s.valid = true
@@ -1437,7 +1416,7 @@ func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	v, err := calcMultiple(dd, s.rsi.length, s.rsi)
+	v, err := calcMultiple(s.rsi, dd, s.rsi.length)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -1467,29 +1446,28 @@ func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data needed for SRSI
 // calculation.
 func (s SRSI) Count() int {
-	return s.rsi.Count()*2 - 1
+	return s.rsi.length*2 + s.rsi.offset - 1
 }
 
 // UnmarshalJSON parses JSON into SRSI structure.
 func (s *SRSI) UnmarshalJSON(d []byte) error {
 	var i struct {
 		RSI struct {
-			L int `json:"length"`
-			O int `json:"offset"`
+			Length int `json:"length"`
+			Offset int `json:"offset"`
 		} `json:"rsi"`
-		O int `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	r, err := NewRSI(i.RSI.L, i.RSI.O)
+	r, err := NewRSI(i.RSI.Length, i.RSI.Offset)
 	if err != nil {
 		return err
 	}
 
-	ns, _ := NewSRSI(r, i.O)
+	ns, _ := NewSRSI(r)
 
 	*s = ns
 
@@ -1499,10 +1477,9 @@ func (s *SRSI) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts SRSI configuration data into JSON.
 func (s SRSI) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		R RSI `json:"rsi"`
-		O int `json:"offset"`
+		RSI RSI `json:"rsi"`
 	}{
-		R: s.rsi, O: s.offset,
+		RSI: s.rsi,
 	})
 }
 
@@ -1510,13 +1487,11 @@ func (s SRSI) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (s SRSI) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		R RSI    `json:"rsi"`
-		O int    `json:"offset"`
+		Name String `json:"name"`
+		RSI  RSI    `json:"rsi"`
 	}{
-		N: NameSRSI,
-		R: s.rsi,
-		O: s.offset,
+		Name: NameSRSI,
+		RSI:  s.rsi,
 	})
 }
 
@@ -1563,8 +1538,12 @@ func (s Stoch) Offset() int {
 
 // validate checks whether Stoch was configured properly or not.
 func (s *Stoch) validate() error {
-	if s.length < 1 || s.offset < 0 {
+	if s.length < 1 {
 		return ErrInvalidLength
+	}
+
+	if s.offset < 0 {
+		return ErrInvalidOffset
 	}
 
 	s.valid = true
@@ -1580,7 +1559,7 @@ func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, s.Count(), s.Offset())
+	dd, err := resize(dd, s.Count()-s.offset, s.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -1609,21 +1588,21 @@ func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for Stoch
 // calculation.
 func (s Stoch) Count() int {
-	return s.length
+	return s.length + s.offset
 }
 
 // UnmarshalJSON parses JSON into Stoch structure.
 func (s *Stoch) UnmarshalJSON(d []byte) error {
 	var i struct {
-		L int `json:"length"`
-		O int `json:"offset"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	ns, err := NewStoch(i.L, i.O)
+	ns, err := NewStoch(i.Length, i.Offset)
 	if err != nil {
 		return err
 	}
@@ -1636,11 +1615,11 @@ func (s *Stoch) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts Stoch configuration data into JSON.
 func (s Stoch) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
-		O int `json:"offset"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}{
-		L: s.length,
-		O: s.offset,
+		Length: s.length,
+		Offset: s.offset,
 	})
 }
 
@@ -1648,13 +1627,13 @@ func (s Stoch) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (s Stoch) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		L int    `json:"length"`
-		O int    `json:"offset"`
+		Name   String `json:"name"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameStoch,
-		L: s.length,
-		O: s.offset,
+		Name:   NameStoch,
+		Length: s.length,
+		Offset: s.offset,
 	})
 }
 

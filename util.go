@@ -115,20 +115,20 @@ func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 }
 
 // calcMultiple calculates specified amount of indicator within given list.
-func calcMultiple(dd []decimal.Decimal, a int, s Indicator) ([]decimal.Decimal, error) {
-	if a < 1 {
+func calcMultiple(src Indicator, dd []decimal.Decimal, count int) ([]decimal.Decimal, error) {
+	if count < 1 {
 		return []decimal.Decimal{}, nil
 	}
 
-	dd, err := resize(dd, s.Count()+a-1, s.Offset())
+	dd, err := resize(dd, src.Count()+count-1, 0)
 	if err != nil {
 		return nil, ErrInvalidDataSize
 	}
 
-	v := make([]decimal.Decimal, a)
+	v := make([]decimal.Decimal, count)
 
-	for i := 0; i < a; i++ {
-		v[i], err = s.Calc(dd[:len(dd)-i])
+	for i := 0; i < count; i++ {
+		v[i], err = src.Calc(dd[:len(dd)-i])
 		if err != nil {
 			return nil, err
 		}
