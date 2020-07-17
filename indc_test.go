@@ -563,18 +563,15 @@ func Test_CCI_namedMarshalJSON(t *testing.T) {
 func Test_NewDEMA(t *testing.T) {
 	cc := map[string]struct {
 		EMA    EMA
-		Offset int
 		Result DEMA
 		Error  error
 	}{
 		"Invalid parameters": {
-			Offset: 0,
-			Error:  assert.AnError,
+			Error: assert.AnError,
 		},
 		"Successful creation": {
 			EMA:    EMA{SMA{length: 1, valid: true, offset: 4}},
-			Offset: 2,
-			Result: DEMA{ema: EMA{SMA{length: 1, offset: 4, valid: true}}, offset: 2, valid: true},
+			Result: DEMA{ema: EMA{SMA{length: 1, offset: 4, valid: true}}, valid: true},
 		},
 	}
 
@@ -584,7 +581,7 @@ func Test_NewDEMA(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			dm, err := NewDEMA(c.EMA, c.Offset)
+			dm, err := NewDEMA(c.EMA)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -600,7 +597,7 @@ func Test_DEMA_EMA(t *testing.T) {
 }
 
 func Test_DEMA_Offset(t *testing.T) {
-	assert.Equal(t, 2, DEMA{offset: 2}.Offset())
+	assert.Equal(t, 2, DEMA{ema: EMA{SMA{offset: 2}}}.Offset())
 }
 
 func Test_DEMA_validate(t *testing.T) {
@@ -614,13 +611,8 @@ func Test_DEMA_validate(t *testing.T) {
 			Error: assert.AnError,
 			Valid: false,
 		},
-		"Invalid offset": {
-			DEMA:  DEMA{ema: EMA{SMA{length: -1, offset: 2}}, offset: -1},
-			Error: assert.AnError,
-			Valid: false,
-		},
 		"Successful validation": {
-			DEMA:  DEMA{ema: EMA{SMA{length: 1}}, offset: 2},
+			DEMA:  DEMA{ema: EMA{SMA{length: 1, offset: 2}}},
 			Valid: true,
 		},
 	}
@@ -649,14 +641,14 @@ func Test_DEMA_Calc(t *testing.T) {
 			Error: ErrInvalidIndicator,
 		},
 		"Invalid data size": {
-			DEMA: DEMA{ema: EMA{SMA{length: 3, valid: true, offset: 2}}, offset: 2, valid: true},
+			DEMA: DEMA{ema: EMA{SMA{length: 3, valid: true, offset: 2}}, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Successful calculation with offset": {
-			DEMA: DEMA{ema: EMA{SMA{length: 3, valid: true, offset: 0}}, offset: 2, valid: true},
+			DEMA: DEMA{ema: EMA{SMA{length: 3, valid: true, offset: 2}}, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -670,7 +662,7 @@ func Test_DEMA_Calc(t *testing.T) {
 			Result: decimal.RequireFromString("6.75"),
 		},
 		"Successful calculation": {
-			DEMA: DEMA{ema: EMA{SMA{length: 3, valid: true, offset: 0}}, offset: 0, valid: true},
+			DEMA: DEMA{ema: EMA{SMA{length: 3, valid: true, offset: 0}}, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -701,7 +693,7 @@ func Test_DEMA_Calc(t *testing.T) {
 }
 
 func Test_DEMA_Count(t *testing.T) {
-	assert.Equal(t, 33, DEMA{ema: EMA{SMA{length: 15}}, offset: 4}.Count())
+	assert.Equal(t, 33, DEMA{ema: EMA{SMA{length: 15, offset: 4}}}.Count())
 }
 
 func Test_DEMA_UnmarshalJSON(t *testing.T) {
@@ -719,8 +711,8 @@ func Test_DEMA_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
-			JSON:   `{"ema":{"length":1,"offset":2},"offset":4}`,
-			Result: DEMA{ema: EMA{SMA{length: 1, offset: 2, valid: true}}, offset: 4, valid: true},
+			JSON:   `{"ema":{"length":1,"offset":2}}`,
+			Result: DEMA{ema: EMA{SMA{length: 1, offset: 2, valid: true}}, valid: true},
 		},
 	}
 
@@ -743,17 +735,17 @@ func Test_DEMA_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_DEMA_MarshalJSON(t *testing.T) {
-	d, err := DEMA{ema: EMA{SMA{length: 1, offset: 3}}, offset: 2}.MarshalJSON()
+	d, err := DEMA{ema: EMA{SMA{length: 1, offset: 3}}}.MarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"ema":{"length":1,"offset":3},"offset":2}`, string(d))
+	assert.JSONEq(t, `{"ema":{"length":1,"offset":3}}`, string(d))
 }
 
 func Test_DEMA_namedMarshalJSON(t *testing.T) {
-	d, err := DEMA{ema: EMA{SMA{length: 1, offset: 3}}, offset: 2}.namedMarshalJSON()
+	d, err := DEMA{ema: EMA{SMA{length: 1, offset: 3}}}.namedMarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"name":"dema","ema":{"length":1,"offset":3},"offset":2}`, string(d))
+	assert.JSONEq(t, `{"name":"dema","ema":{"length":1,"offset":3}}`, string(d))
 }
 
 func Test_NewEMA(t *testing.T) {
@@ -2124,197 +2116,203 @@ func Test_SMA_namedMarshalJSON(t *testing.T) {
 	assert.JSONEq(t, `{"name":"sma","length":1,"offset":4}`, string(d))
 }
 
-// func Test_NewSRSI(t *testing.T) {
-// 	cc := map[string]struct {
-// 		RSI    RSI
-// 		Offset int
-// 		Result SRSI
-// 		Error  error
-// 	}{
-// 		"Invalid parameters": {
-// 			Offset: 0,
-// 			Error:  assert.AnError,
-// 		},
-// 		"Successful creation": {
-// 			RSI:    RSI{length: 1, valid: true},
-// 			Offset: 0,
-// 			Result: SRSI{rsi: RSI{length: 1, valid: true}, valid: true},
-// 		},
-// 	}
+func Test_NewSRSI(t *testing.T) {
+	cc := map[string]struct {
+		RSI    RSI
+		Result SRSI
+		Error  error
+	}{
+		"Invalid parameters": {
+			Error: assert.AnError,
+		},
+		"Successful creation": {
+			RSI:    RSI{length: 1, offset: 3, valid: true},
+			Result: SRSI{rsi: RSI{length: 1, offset: 3, valid: true}, valid: true},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			s, err := NewSRSI(c.RSI, c.Offset)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			s, err := NewSRSI(c.RSI)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.Equal(t, c.Result, s)
-// 		})
-// 	}
-// }
+			assert.Equal(t, c.Result, s)
+		})
+	}
+}
 
-// func Test_SRSI_RSI(t *testing.T) {
-// 	s := SRSI{rsi: RSI{length: 1}}
-// 	assert.Equal(t, RSI{length: 1}, s.RSI())
-// }
+func Test_SRSI_RSI(t *testing.T) {
+	assert.Equal(t, RSI{length: 1}, SRSI{rsi: RSI{length: 1}}.RSI())
+}
 
-// func Test_SRSI_validate(t *testing.T) {
-// 	cc := map[string]struct {
-// 		SRSI  SRSI
-// 		Error error
-// 		Valid bool
-// 	}{
-// 		"Invalid RSI": {
-// 			SRSI:  SRSI{},
-// 			Error: assert.AnError,
-// 			Valid: false,
-// 		},
-// 		"Invalid RSI length": {
-// 			SRSI:  SRSI{rsi: RSI{length: -1}},
-// 			Error: assert.AnError,
-// 			Valid: false,
-// 		},
-// 		"Successful validation": {
-// 			SRSI:  SRSI{rsi: RSI{length: 1}},
-// 			Valid: true,
-// 		},
-// 	}
+func Test_SRSI_Offset(t *testing.T) {
+	assert.Equal(t, 3, SRSI{rsi: RSI{offset: 3}}.Offset())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_SRSI_validate(t *testing.T) {
+	cc := map[string]struct {
+		SRSI  SRSI
+		Error error
+		Valid bool
+	}{
+		"Invalid RSI": {
+			SRSI:  SRSI{},
+			Error: assert.AnError,
+			Valid: false,
+		},
+		"Successful validation": {
+			SRSI:  SRSI{rsi: RSI{length: 1}},
+			Valid: true,
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			equalError(t, c.Error, c.SRSI.validate())
-// 			assert.Equal(t, c.Valid, c.SRSI.valid)
-// 		})
-// 	}
-// }
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func Test_SRSI_Calc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		SRSI   SRSI
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Invalid indicator": {
-// 			SRSI:  SRSI{},
-// 			Error: ErrInvalidIndicator,
-// 		},
-// 		"Invalid data size": {
-// 			SRSI: SRSI{rsi: RSI{length: 5, valid: true}, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: assert.AnError,
-// 		},
-// 		"Successfully handled division by 0": {
-// 			SRSI: SRSI{rsi: RSI{length: 3, valid: true}, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(8),
-// 				decimal.NewFromInt(12),
-// 				decimal.NewFromInt(8),
-// 				decimal.NewFromInt(12),
-// 				decimal.NewFromInt(8),
-// 			},
-// 			Result: decimal.Zero,
-// 		},
-// 		"Successful calculation": {
-// 			SRSI: SRSI{rsi: RSI{length: 3, valid: true}, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(4),
-// 				decimal.NewFromInt(10),
-// 				decimal.NewFromInt(6),
-// 				decimal.NewFromInt(8),
-// 				decimal.NewFromInt(6),
-// 			},
-// 			Result: decimal.RequireFromString("0.625"),
-// 		},
-// 	}
+			equalError(t, c.Error, c.SRSI.validate())
+			assert.Equal(t, c.Valid, c.SRSI.valid)
+		})
+	}
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_SRSI_Calc(t *testing.T) {
+	cc := map[string]struct {
+		SRSI   SRSI
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			SRSI:  SRSI{},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size": {
+			SRSI: SRSI{rsi: RSI{length: 5, offset: 0, valid: true}, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: assert.AnError,
+		},
+		"Successfully handled division by 0": {
+			SRSI: SRSI{rsi: RSI{length: 3, offset: 0, valid: true}, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(8),
+				decimal.NewFromInt(12),
+				decimal.NewFromInt(8),
+				decimal.NewFromInt(12),
+				decimal.NewFromInt(8),
+			},
+			Result: decimal.Zero,
+		},
+		"Successful calculation with offset": {
+			SRSI: SRSI{rsi: RSI{length: 3, offset: 3, valid: true}, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(4),
+				decimal.NewFromInt(10),
+				decimal.NewFromInt(6),
+				decimal.NewFromInt(8),
+				decimal.NewFromInt(6),
+				decimal.NewFromInt(64),
+				decimal.NewFromInt(84),
+				decimal.NewFromInt(64),
+			},
+			Result: decimal.RequireFromString("0.625"),
+		},
+		"Successful calculation": {
+			SRSI: SRSI{rsi: RSI{length: 3, offset: 0, valid: true}, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(4),
+				decimal.NewFromInt(10),
+				decimal.NewFromInt(6),
+				decimal.NewFromInt(8),
+				decimal.NewFromInt(6),
+			},
+			Result: decimal.RequireFromString("0.625"),
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			res, err := c.SRSI.Calc(c.Data)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result.String(), res.String())
-// 		})
-// 	}
-// }
+			res, err := c.SRSI.Calc(c.Data)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_SRSI_Count(t *testing.T) {
-// 	s := SRSI{rsi: RSI{length: 15}}
-// 	assert.Equal(t, 29, s.Count())
-// }
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
 
-// func Test_SRSI_UnmarshalJSON(t *testing.T) {
-// 	cc := map[string]struct {
-// 		JSON   string
-// 		Result SRSI
-// 		Error  error
-// 	}{
-// 		"Invalid JSON": {
-// 			JSON:  `{\"_"/`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid length": {
-// 			JSON:  `{"length":0}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful unmarshal": {
-// 			JSON:   `{"rsi":{"length":1}}`,
-// 			Result: SRSI{rsi: RSI{length: 1, valid: true}, valid: true},
-// 		},
-// 	}
+func Test_SRSI_Count(t *testing.T) {
+	assert.Equal(t, 32, SRSI{rsi: RSI{length: 15, offset: 3}}.Count())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_SRSI_UnmarshalJSON(t *testing.T) {
+	cc := map[string]struct {
+		JSON   string
+		Result SRSI
+		Error  error
+	}{
+		"Invalid JSON": {
+			JSON:  `{\"_"/`,
+			Error: assert.AnError,
+		},
+		"Invalid validation": {
+			JSON:  `{"length":0}`,
+			Error: assert.AnError,
+		},
+		"Successful unmarshal": {
+			JSON:   `{"rsi":{"length":1,"offset":2}}`,
+			Result: SRSI{rsi: RSI{length: 1, offset: 2, valid: true}, valid: true},
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			s := SRSI{}
-// 			err := s.UnmarshalJSON([]byte(c.JSON))
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result, s)
-// 		})
-// 	}
-// }
+			s := SRSI{}
+			err := s.UnmarshalJSON([]byte(c.JSON))
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_SRSI_MarshalJSON(t *testing.T) {
-// 	s := SRSI{rsi: RSI{length: 1}}
-// 	d, err := s.MarshalJSON()
+			assert.Equal(t, c.Result, s)
+		})
+	}
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"rsi":{"length":1}}`, string(d))
-// }
+func Test_SRSI_MarshalJSON(t *testing.T) {
+	d, err := SRSI{rsi: RSI{length: 1, offset: 2}}.MarshalJSON()
 
-// func Test_SRSI_namedMarshalJSON(t *testing.T) {
-// 	s := SRSI{rsi: RSI{length: 1}}
-// 	d, err := s.namedMarshalJSON()
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"rsi":{"length":1,"offset":2}}`, string(d))
+}
 
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, `{"name":"srsi","rsi":{"length":1}}`, string(d))
-// }
+func Test_SRSI_namedMarshalJSON(t *testing.T) {
+	d, err := SRSI{rsi: RSI{length: 1, offset: 2}}.namedMarshalJSON()
+
+	assert.NoError(t, err)
+	assert.Equal(t, `{"name":"srsi","rsi":{"length":1,"offset":2}}`, string(d))
+}
 
 // func Test_NewStoch(t *testing.T) {
 // 	cc := map[string]struct {
