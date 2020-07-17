@@ -247,180 +247,180 @@ func Test_meanDeviation(t *testing.T) {
 	}
 }
 
-// func Test_calcMultiple(t *testing.T) {
-// 	stubIndicator := func(v decimal.Decimal, e error, a int) *IndicatorMock {
-// 		return &IndicatorMock{
-// 			CalcFunc: func(dd []decimal.Decimal) (decimal.Decimal, error) {
-// 				return v, e
-// 			},
-// 			CountFunc: func() int {
-// 				return a
-// 			},
-// 		}
-// 	}
+func Test_calcMultiple(t *testing.T) {
+	stubIndicator := func(ddv decimal.Decimal, count int, e error) *IndicatorMock {
+		return &IndicatorMock{
+			CalcFunc: func(dd []decimal.Decimal) (decimal.Decimal, error) {
+				return ddv, e
+			},
+			CountFunc: func() int {
+				return count
+			},
+		}
+	}
 
-// 	cc := map[string]struct {
-// 		Data      []decimal.Decimal
-// 		Amount    int
-// 		Indicator Indicator
-// 		Result    []decimal.Decimal
-// 		Error     error
-// 	}{
-// 		"Invalid data size": {
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Indicator: stubIndicator(decimal.Zero, nil, 2),
-// 			Amount:    1,
-// 			Error:     ErrInvalidDataSize,
-// 		},
-// 		"Invalid Indicator": {
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Indicator: &IndicatorMock{
-// 				CalcFunc: func(dd []decimal.Decimal) (decimal.Decimal, error) {
-// 					return decimal.Zero, assert.AnError
-// 				},
-// 				CountFunc: func() int {
-// 					return 1
-// 				},
-// 			},
-// 			Amount: 1,
-// 			Error:  assert.AnError,
-// 		},
-// 		"Successful calculation with amount less than 1": {
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(2),
-// 				decimal.NewFromInt(3),
-// 				decimal.NewFromInt(4),
-// 				decimal.NewFromInt(5),
-// 				decimal.NewFromInt(6),
-// 				decimal.NewFromInt(7),
-// 			},
-// 			Amount:    0,
-// 			Indicator: stubIndicator(decimal.Zero, nil, 2),
-// 			Result:    []decimal.Decimal{},
-// 		},
-// 		"Successful calculation with amount more than 1": {
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(2),
-// 				decimal.NewFromInt(3),
-// 				decimal.NewFromInt(4),
-// 				decimal.NewFromInt(5),
-// 				decimal.NewFromInt(6),
-// 				decimal.NewFromInt(7),
-// 			},
-// 			Amount:    3,
-// 			Indicator: stubIndicator(decimal.NewFromInt(2), nil, 2),
-// 			Result: []decimal.Decimal{
-// 				decimal.NewFromInt(2),
-// 				decimal.NewFromInt(2),
-// 				decimal.NewFromInt(2),
-// 			},
-// 		},
-// 	}
+	cc := map[string]struct {
+		Data      []decimal.Decimal
+		Amount    int
+		Indicator Indicator
+		Result    []decimal.Decimal
+		Error     error
+	}{
+		"Invalid data size": {
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Indicator: stubIndicator(decimal.Zero, 2, nil),
+			Amount:    1,
+			Error:     ErrInvalidDataSize,
+		},
+		"Invalid Indicator": {
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Indicator: &IndicatorMock{
+				CalcFunc: func(dd []decimal.Decimal) (decimal.Decimal, error) {
+					return decimal.Zero, assert.AnError
+				},
+				CountFunc: func() int {
+					return 1
+				},
+			},
+			Amount: 1,
+			Error:  assert.AnError,
+		},
+		"Successful calculation with amount less than 1": {
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(3),
+				decimal.NewFromInt(4),
+				decimal.NewFromInt(5),
+				decimal.NewFromInt(6),
+				decimal.NewFromInt(7),
+			},
+			Amount:    0,
+			Indicator: stubIndicator(decimal.Zero, 2, nil),
+			Result:    []decimal.Decimal{},
+		},
+		"Successful calculation with amount more than 1": {
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(3),
+				decimal.NewFromInt(4),
+				decimal.NewFromInt(5),
+				decimal.NewFromInt(6),
+				decimal.NewFromInt(7),
+			},
+			Amount:    3,
+			Indicator: stubIndicator(decimal.NewFromInt(2), 2, nil),
+			Result: []decimal.Decimal{
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(2),
+			},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			res, err := calcMultiple(c.Data, c.Amount, c.Indicator)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			res, err := calcMultiple(c.Indicator, c.Data, c.Amount)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			for i := 0; i < len(c.Result); i++ {
-// 				assert.Equal(t, c.Result[i].Round(8), res[i].Round(8))
-// 			}
-// 		})
-// 	}
-// }
+			for i := 0; i < len(c.Result); i++ {
+				assert.Equal(t, c.Result[i].Round(8), res[i].Round(8))
+			}
+		})
+	}
+}
 
-// func Test_fromJSON(t *testing.T) {
-// 	cc := map[string]struct {
-// 		ByteArray []byte
-// 		Result    Indicator
-// 		Error     error
-// 	}{
-// 		"Invalid JSON": {
-// 			ByteArray: []byte(`{\"_"/`),
-// 			Error:     assert.AnError,
-// 		},
-// 		"Invalid source name": {
-// 			ByteArray: []byte(`{"name":"aa"}`),
-// 			Error:     ErrInvalidSource,
-// 		},
-// 		"Successful creation of Aroon": {
-// 			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1}`),
-// 			Result:    Aroon{trend: "up", length: 1, valid: true},
-// 		},
-// 		"Successful creation of CCI": {
-// 			ByteArray: []byte(`{"name":"cci",
-// 			"source":{"name":"sma","length":1}}`),
-// 			Result: CCI{source: SMA{length: 1, valid: true}, factor: decimal.RequireFromString("0.015"), valid: true},
-// 		},
-// 		"Successful creation of DEMA": {
-// 			ByteArray: []byte(`{"name":"dema","ema":{"length":1}}`),
-// 			Result:    DEMA{ema: EMA{sma: SMA{length: 1, valid: true}, valid: true}, valid: true},
-// 		},
-// 		"Successful creation of EMA": {
-// 			ByteArray: []byte(`{"name":"ema","length":1}`),
-// 			Result:    EMA{sma: SMA{length: 1, valid: true}, valid: true},
-// 		},
-// 		"Successful creation of HMA": {
-// 			ByteArray: []byte(`{"name":"hma", "wma":{"name":"wma","length":2}}`),
-// 			Result:    HMA{wma: WMA{length: 2, valid: true}, valid: true},
-// 		},
-// 		"Successful creation of MACD": {
-// 			ByteArray: []byte(`{"name":"macd",
-// 			"source1":{"name":"sma","length":2},
-// 			"source2":{"name":"sma","length":3}}`),
-// 			Result: MACD{source1: SMA{length: 2, valid: true},
-// 				source2: SMA{length: 3, valid: true}, valid: true},
-// 		},
-// 		"Successful creation of ROC": {
-// 			ByteArray: []byte(`{"name":"roc","length":1}`),
-// 			Result:    ROC{length: 1, valid: true},
-// 		},
-// 		"Successful creation of RSI": {
-// 			ByteArray: []byte(`{"name":"rsi","length":1}`),
-// 			Result:    RSI{length: 1, valid: true},
-// 		},
-// 		"Successful creation of SMA": {
-// 			ByteArray: []byte(`{"name":"sma","length":1}`),
-// 			Result:    SMA{length: 1, valid: true},
-// 		},
-// 		"Successful creation of SRSI": {
-// 			ByteArray: []byte(`{"name":"srsi", "rsi":{"name":"rsi","length":1}}`),
-// 			Result:    SRSI{rsi: RSI{length: 1, valid: true}, valid: true},
-// 		},
-// 		"Successful creation of Stoch": {
-// 			ByteArray: []byte(`{"name":"stoch","length":1}`),
-// 			Result:    Stoch{length: 1, valid: true},
-// 		},
-// 		"Successful creation of WMA": {
-// 			ByteArray: []byte(`{"name":"wma","length":1}`),
-// 			Result:    WMA{length: 1, valid: true},
-// 		},
-// 	}
+func Test_fromJSON(t *testing.T) {
+	cc := map[string]struct {
+		ByteArray []byte
+		Result    Indicator
+		Error     error
+	}{
+		"Invalid JSON": {
+			ByteArray: []byte(`{\"_"/`),
+			Error:     assert.AnError,
+		},
+		"Invalid source name": {
+			ByteArray: []byte(`{"name":"aa"}`),
+			Error:     ErrInvalidSource,
+		},
+		"Successful creation of Aroon": {
+			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1,"offset":2}`),
+			Result:    Aroon{trend: "up", length: 1, offset: 2, valid: true},
+		},
+		"Successful creation of CCI": {
+			ByteArray: []byte(`{"name":"cci","source":{"name":"sma","length":1,"offset":3}}`),
+			Result:    CCI{source: SMA{length: 1, offset: 3, valid: true}, factor: decimal.RequireFromString("0.015"), valid: true},
+		},
+		"Successful creation of DEMA": {
+			ByteArray: []byte(`{"name":"dema","ema":{"length":1,"offset":1}}`),
+			Result:    DEMA{ema: EMA{SMA{length: 1, offset: 1, valid: true}}, valid: true},
+		},
+		"Successful creation of EMA": {
+			ByteArray: []byte(`{"name":"ema","length":1,"offset":3}`),
+			Result:    EMA{SMA{length: 1, offset: 3, valid: true}},
+		},
+		"Successful creation of HMA": {
+			ByteArray: []byte(`{"name":"hma", "wma":{"name":"wma","length":2, "offset":3}}`),
+			Result:    HMA{wma: WMA{length: 2, offset: 3, valid: true}, valid: true},
+		},
+		"Successful creation of MACD": {
+			ByteArray: []byte(`{"name":"macd",
+			"source1":{"name":"sma","length":2,"offset":2},
+			"source2":{"name":"sma","length":3,"offset":4},
+			"offset":3}`),
+			Result: MACD{source1: SMA{length: 2, offset: 2, valid: true},
+				source2: SMA{length: 3, offset: 4, valid: true}, offset: 3, valid: true},
+		},
+		"Successful creation of ROC": {
+			ByteArray: []byte(`{"name":"roc","length":1,"offset":3}`),
+			Result:    ROC{length: 1, offset: 3, valid: true},
+		},
+		"Successful creation of RSI": {
+			ByteArray: []byte(`{"name":"rsi","length":1,"offset":2}`),
+			Result:    RSI{length: 1, offset: 2, valid: true},
+		},
+		"Successful creation of SMA": {
+			ByteArray: []byte(`{"name":"sma","length":1,"offset":3}`),
+			Result:    SMA{length: 1, offset: 3, valid: true},
+		},
+		"Successful creation of SRSI": {
+			ByteArray: []byte(`{"name":"srsi", "rsi":{"name":"rsi","length":1,"offset":1}}`),
+			Result:    SRSI{rsi: RSI{length: 1, offset: 1, valid: true}, valid: true},
+		},
+		"Successful creation of Stoch": {
+			ByteArray: []byte(`{"name":"stoch","length":1,"offset":4}`),
+			Result:    Stoch{length: 1, offset: 4, valid: true},
+		},
+		"Successful creation of WMA": {
+			ByteArray: []byte(`{"name":"wma","length":1,"offset":5}`),
+			Result:    WMA{length: 1, offset: 5, valid: true},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			res, err := fromJSON(c.ByteArray)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			res, err := fromJSON(c.ByteArray)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.Equal(t, c.Result, res)
-// 		})
-// 	}
-// }
+			assert.Equal(t, c.Result, res)
+		})
+	}
+}
