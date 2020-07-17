@@ -1519,193 +1519,212 @@ func Test_MACD_namedMarshalJSON(t *testing.T) {
 	}
 }
 
-// func Test_NewROC(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Offset int
-// 		Result ROC
-// 		Error  error
-// 	}{
-// 		"Invalid parameters": {
-// 			Offset: 0,
-// 			Error:  assert.AnError,
-// 		},
-// 		"Successful creation": {
-// 			Length: 1,
-// 			Offset: 0,
-// 			Result: ROC{length: 1, valid: true},
-// 		},
-// 	}
+func Test_NewROC(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Offset int
+		Result ROC
+		Error  error
+	}{
+		"Invalid parameters": {
+			Offset: 0,
+			Error:  assert.AnError,
+		},
+		"Successful creation": {
+			Length: 1,
+			Offset: 4,
+			Result: ROC{length: 1, offset: 4, valid: true},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			r, err := NewROC(c.Length, c.Offset)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			r, err := NewROC(c.Length, c.Offset)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.Equal(t, c.Result, r)
-// 		})
-// 	}
-// }
+			assert.Equal(t, c.Result, r)
+		})
+	}
+}
 
-// func Test_ROC_Length(t *testing.T) {
-// 	r := ROC{length: 1}
-// 	assert.Equal(t, 1, r.Length())
-// }
+func Test_ROC_Length(t *testing.T) {
+	assert.Equal(t, 1, ROC{length: 1}.Length())
+}
 
-// func Test_ROC_validate(t *testing.T) {
-// 	cc := map[string]struct {
-// 		ROC   ROC
-// 		Error error
-// 		Valid bool
-// 	}{
-// 		"Invalid length": {
-// 			ROC:   ROC{length: -1},
-// 			Error: ErrInvalidLength,
-// 			Valid: false,
-// 		},
-// 		"Successful validation": {
-// 			ROC:   ROC{length: 1},
-// 			Valid: true,
-// 		},
-// 	}
+func Test_ROC_Offset(t *testing.T) {
+	assert.Equal(t, 1, ROC{offset: 1}.Offset())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_ROC_validate(t *testing.T) {
+	cc := map[string]struct {
+		ROC   ROC
+		Error error
+		Valid bool
+	}{
+		"Invalid length": {
+			ROC:   ROC{length: -1, offset: 2},
+			Error: ErrInvalidLength,
+			Valid: false,
+		},
+		"Invalid offset": {
+			ROC:   ROC{length: 2, offset: -1},
+			Error: ErrInvalidOffset,
+			Valid: false,
+		},
+		"Successful validation": {
+			ROC:   ROC{length: 1, offset: 1},
+			Valid: true,
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			equalError(t, c.Error, c.ROC.validate())
-// 			assert.Equal(t, c.Valid, c.ROC.valid)
-// 		})
-// 	}
-// }
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func Test_ROC_Calc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		ROC    ROC
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Invalid indicator": {
-// 			ROC:   ROC{},
-// 			Error: ErrInvalidIndicator,
-// 		},
-// 		"Invalid data size": {
-// 			ROC: ROC{length: 3, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataSize,
-// 		},
-// 		"Successful handled division by 0": {
-// 			ROC: ROC{length: 5, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(0),
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(420),
-// 			},
-// 			Result: decimal.Zero,
-// 		},
-// 		"Successful calculation": {
-// 			ROC: ROC{length: 5, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(7),
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(420),
-// 				decimal.NewFromInt(10),
-// 			},
-// 			Result: decimal.RequireFromString("42.85714285714286"),
-// 		},
-// 	}
+			equalError(t, c.Error, c.ROC.validate())
+			assert.Equal(t, c.Valid, c.ROC.valid)
+		})
+	}
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_ROC_Calc(t *testing.T) {
+	cc := map[string]struct {
+		ROC    ROC
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			ROC:   ROC{},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size": {
+			ROC: ROC{length: 3, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful handled division by 0": {
+			ROC: ROC{length: 5, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(0),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+			},
+			Result: decimal.Zero,
+		},
+		"Successful calculation with offset": {
+			ROC: ROC{length: 5, offset: 3, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(7),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(10),
+				decimal.NewFromInt(11),
+				decimal.NewFromInt(12),
+				decimal.NewFromInt(10),
+			},
+			Result: decimal.RequireFromString("42.85714285714286"),
+		},
+		"Successful calculation": {
+			ROC: ROC{length: 5, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(7),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(420),
+				decimal.NewFromInt(10),
+			},
+			Result: decimal.RequireFromString("42.85714285714286"),
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			res, err := c.ROC.Calc(c.Data)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result.String(), res.String())
-// 		})
-// 	}
-// }
+			res, err := c.ROC.Calc(c.Data)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_ROC_Count(t *testing.T) {
-// 	r := ROC{length: 15}
-// 	assert.Equal(t, 15, r.Count())
-// }
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
 
-// func Test_ROC_UnmarshalJSON(t *testing.T) {
-// 	cc := map[string]struct {
-// 		JSON   string
-// 		Result ROC
-// 		Error  error
-// 	}{
-// 		"Invalid JSON": {
-// 			JSON:  `{\"_"/`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid length": {
-// 			JSON:  `{"length":0}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful unmarshal": {
-// 			JSON:   `{"length":1}`,
-// 			Result: ROC{length: 1, valid: true},
-// 		},
-// 	}
+func Test_ROC_Count(t *testing.T) {
+	assert.Equal(t, 17, ROC{length: 15, offset: 2}.Count())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_ROC_UnmarshalJSON(t *testing.T) {
+	cc := map[string]struct {
+		JSON   string
+		Result ROC
+		Error  error
+	}{
+		"Invalid JSON": {
+			JSON:  `{\"_"/`,
+			Error: assert.AnError,
+		},
+		"Invalid validation": {
+			JSON:  `{"length":0,"offset":0}`,
+			Error: assert.AnError,
+		},
+		"Successful unmarshal": {
+			JSON:   `{"length":1,"offset":2}`,
+			Result: ROC{length: 1, offset: 2, valid: true},
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			r := ROC{}
-// 			err := r.UnmarshalJSON([]byte(c.JSON))
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result, r)
-// 		})
-// 	}
-// }
+			r := ROC{}
+			err := r.UnmarshalJSON([]byte(c.JSON))
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_ROC_MarshalJSON(t *testing.T) {
-// 	rc := ROC{length: 1}
-// 	d, err := rc.MarshalJSON()
+			assert.Equal(t, c.Result, r)
+		})
+	}
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"length":1}`, string(d))
-// }
+func Test_ROC_MarshalJSON(t *testing.T) {
+	d, err := ROC{length: 1, offset: 2}.MarshalJSON()
 
-// func Test_ROC_namedMarshalJSON(t *testing.T) {
-// 	rc := ROC{length: 1}
-// 	d, err := rc.namedMarshalJSON()
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"length":1,"offset":2}`, string(d))
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"name":"roc","length":1}`, string(d))
-// }
+func Test_ROC_namedMarshalJSON(t *testing.T) {
+	d, err := ROC{length: 1, offset: 3}.namedMarshalJSON()
+
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"name":"roc","length":1,"offset":3}`, string(d))
+}
 
 // func Test_NewRSI(t *testing.T) {
 // 	cc := map[string]struct {
