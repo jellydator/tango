@@ -25,8 +25,8 @@ func Test_NewAroon(t *testing.T) {
 		"Successful creation": {
 			Trend:  "down",
 			Length: 5,
-			Offset: 0,
-			Result: Aroon{trend: "down", length: 5, offset: 0, valid: true},
+			Offset: 2,
+			Result: Aroon{trend: "down", length: 5, offset: 2, valid: true},
 		},
 	}
 
@@ -179,10 +179,7 @@ func Test_Aroon_Calc(t *testing.T) {
 }
 
 func Test_Aroon_Count(t *testing.T) {
-	a := Aroon{length: 5, offset: 0}
-	assert.Equal(t, 5, a.Count())
-
-	a = Aroon{length: 5, offset: 3}
+	a := Aroon{length: 5, offset: 3}
 	assert.Equal(t, 8, a.Count())
 }
 
@@ -240,321 +237,328 @@ func Test_Aroon_namedMarshalJSON(t *testing.T) {
 	assert.JSONEq(t, `{"name":"aroon","trend":"down","length":1,"offset":4}`, string(d))
 }
 
-// func Test_NewCCI(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Source Indicator
-// 		Factor decimal.Decimal
-// 		Offset int
-// 		Result CCI
-// 		Error  error
-// 	}{
-// 		"Invalid parameters": {
-// 			Source: &IndicatorMock{},
-// 			Factor: decimal.NewFromInt(-1),
-// 			Offset: 0,
-// 			Error:  assert.AnError,
-// 		},
-// 		"Successful creation (default factor)": {
-// 			Source: &IndicatorMock{},
-// 			Factor: decimal.Zero,
-// 			Offset: 0,
-// 			Result: CCI{source: &IndicatorMock{}, factor: decimal.RequireFromString("0.015"), valid: true},
-// 		},
-// 		"Successful creation": {
-// 			Source: &IndicatorMock{},
-// 			Factor: Hundred,
-// 			Result: CCI{source: &IndicatorMock{}, factor: Hundred, valid: true},
-// 		},
-// 	}
+func Test_NewCCI(t *testing.T) {
+	cc := map[string]struct {
+		Source Indicator
+		Factor decimal.Decimal
+		Offset int
+		Result CCI
+		Error  error
+	}{
+		"Invalid parameters": {
+			Source: &IndicatorMock{},
+			Factor: decimal.NewFromInt(-1),
+			Offset: 0,
+			Error:  assert.AnError,
+		},
+		"Successful creation (default factor)": {
+			Source: &IndicatorMock{},
+			Factor: decimal.Zero,
+			Offset: 0,
+			Result: CCI{source: &IndicatorMock{}, factor: decimal.RequireFromString("0.015"), offset: 0, valid: true},
+		},
+		"Successful creation": {
+			Source: &IndicatorMock{},
+			Factor: Hundred,
+			Offset: 4,
+			Result: CCI{source: &IndicatorMock{}, factor: Hundred, offset: 4, valid: true},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			cci, err := NewCCI(c.Source, c.Factor, c.Offset)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			cci, err := NewCCI(c.Source, c.Factor, c.Offset)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.Equal(t, c.Result, cci)
-// 		})
-// 	}
-// }
+			assert.Equal(t, c.Result, cci)
+		})
+	}
+}
 
-// func Test_CCI_Sub(t *testing.T) {
-// 	assert.Equal(t, &IndicatorMock{}, CCI{source: &IndicatorMock{}}.Sub())
-// }
+func Test_CCI_Sub(t *testing.T) {
+	assert.Equal(t, &IndicatorMock{}, CCI{source: &IndicatorMock{}}.Sub())
+}
 
-// func Test_CCI_Factor(t *testing.T) {
-// 	assert.Equal(t, Hundred, CCI{factor: Hundred}.Factor())
-// }
+func Test_CCI_Factor(t *testing.T) {
+	assert.Equal(t, Hundred, CCI{factor: Hundred}.Factor())
+}
 
-// func Test_CCI_validate(t *testing.T) {
-// 	cc := map[string]struct {
-// 		CCI   CCI
-// 		Error error
-// 		Valid bool
-// 	}{
-// 		"Invalid source": {
-// 			CCI:   CCI{source: nil},
-// 			Error: ErrInvalidSource,
-// 			Valid: false,
-// 		},
-// 		"Invalid factor": {
-// 			CCI:   CCI{source: &IndicatorMock{}, factor: decimal.NewFromInt(-1)},
-// 			Error: errors.New("invalid factor"),
-// 			Valid: false,
-// 		},
-// 		"Successful validation": {
-// 			CCI:   CCI{source: &IndicatorMock{}, factor: decimal.RequireFromString("1")},
-// 			Valid: true,
-// 		},
-// 	}
+func Test_CCI_Offset(t *testing.T) {
+	assert.Equal(t, 4, CCI{offset: 4}.Offset())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_CCI_validate(t *testing.T) {
+	cc := map[string]struct {
+		CCI   CCI
+		Error error
+		Valid bool
+	}{
+		"Invalid source": {
+			CCI:   CCI{source: nil},
+			Error: ErrInvalidSource,
+			Valid: false,
+		},
+		"Invalid factor": {
+			CCI:   CCI{source: &IndicatorMock{}, factor: decimal.NewFromInt(-1)},
+			Error: errors.New("invalid factor"),
+			Valid: false,
+		},
+		"Invalid offset": {
+			CCI:   CCI{source: &IndicatorMock{}, factor: decimal.NewFromInt(1), offset: -1},
+			Error: ErrInvalidOffset,
+			Valid: false,
+		},
+		"Successful validation": {
+			CCI:   CCI{source: &IndicatorMock{}, factor: decimal.RequireFromString("1")},
+			Valid: true,
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			equalError(t, c.Error, c.CCI.validate())
-// 			assert.Equal(t, c.Valid, c.CCI.valid)
-// 		})
-// 	}
-// }
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func Test_CCI_Calc(t *testing.T) {
-// 	stubIndicator := func(v decimal.Decimal, e error, a int) *IndicatorMock {
-// 		return &IndicatorMock{
-// 			CalcFunc: func(dd []decimal.Decimal) (decimal.Decimal, error) {
-// 				return v, e
-// 			},
-// 			CountFunc: func() int {
-// 				return a
-// 			},
-// 		}
-// 	}
+			equalError(t, c.Error, c.CCI.validate())
+			assert.Equal(t, c.Valid, c.CCI.valid)
+		})
+	}
+}
 
-// 	cc := map[string]struct {
-// 		CCI    CCI
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Invalid indicator": {
-// 			CCI:   CCI{},
-// 			Error: ErrInvalidIndicator,
-// 		},
-// 		"Invalid data size": {
-// 			CCI: CCI{source: stubIndicator(decimal.Zero, nil, 10), factor: decimal.RequireFromString("0.015"), valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataSize,
-// 		},
-// 		"Invalid source calc": {
-// 			CCI: CCI{source: stubIndicator(decimal.Zero, assert.AnError, 1), factor: decimal.RequireFromString("0.015"), valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful handled division by 0": {
-// 			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 1), factor: decimal.RequireFromString("0.015"), valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(3),
-// 				decimal.NewFromInt(6),
-// 				decimal.NewFromInt(9),
-// 			},
-// 			Result: decimal.Zero,
-// 		},
-// 		"Successful calculation": {
-// 			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 3), factor: decimal.RequireFromString("0.015"), valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(3),
-// 				decimal.NewFromInt(6),
-// 				decimal.NewFromInt(9),
-// 			},
-// 			Result: decimal.NewFromInt(200),
-// 		},
-// 	}
+func Test_CCI_Calc(t *testing.T) {
+	stubIndicator := func(v decimal.Decimal, e error, a int) *IndicatorMock {
+		return &IndicatorMock{
+			CalcFunc: func(dd []decimal.Decimal) (decimal.Decimal, error) {
+				return v, e
+			},
+			CountFunc: func() int {
+				return a
+			},
+		}
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	cc := map[string]struct {
+		CCI    CCI
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			CCI:   CCI{},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size": {
+			CCI: CCI{source: stubIndicator(decimal.Zero, nil, 10), factor: decimal.RequireFromString("0.015"), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Invalid source calc": {
+			CCI: CCI{source: stubIndicator(decimal.Zero, assert.AnError, 1), factor: decimal.RequireFromString("0.015"), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: assert.AnError,
+		},
+		"Successful handled division by 0": {
+			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 1), factor: decimal.RequireFromString("0.015"), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(3),
+				decimal.NewFromInt(6),
+				decimal.NewFromInt(9),
+			},
+			Result: decimal.Zero,
+		},
+		"Successful calculation with offset": {
+			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 3), factor: decimal.RequireFromString("0.015"), offset: 2, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(3),
+				decimal.NewFromInt(6),
+				decimal.NewFromInt(9),
+				decimal.NewFromInt(200),
+				decimal.NewFromInt(400),
+			},
+			Result: decimal.NewFromInt(200),
+		},
+		"Successful calculation": {
+			CCI: CCI{source: stubIndicator(decimal.NewFromInt(3), nil, 3), factor: decimal.RequireFromString("0.015"), valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(3),
+				decimal.NewFromInt(6),
+				decimal.NewFromInt(9),
+			},
+			Result: decimal.NewFromInt(200),
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			res, err := c.CCI.Calc(c.Data)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result.String(), res.String())
-// 		})
-// 	}
-// }
+			res, err := c.CCI.Calc(c.Data)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_CCI_Count(t *testing.T) {
-// 	indicator := &IndicatorMock{
-// 		CountFunc: func() int {
-// 			return 10
-// 		},
-// 	}
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
 
-// 	c := CCI{source: indicator}
-// 	assert.Equal(t, c.source.Count(), c.Count())
-// }
+func Test_CCI_Count(t *testing.T) {
+	indicator := &IndicatorMock{
+		CountFunc: func() int {
+			return 10
+		},
+	}
 
-// func Test_CCI_UnmarshalJSON(t *testing.T) {
-// 	cc := map[string]struct {
-// 		JSON   string
-// 		Result CCI
-// 		Error  error
-// 	}{
-// 		"Invalid JSON": {
-// 			JSON:  `{\-_-/}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid source": {
-// 			JSON:  `{}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid factor": {
-// 			JSON:  `{"source":{"name":"sma","length":1},"factor":"-1"}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid factor type": {
-// 			JSON:  `{"source":{"name":"sma","length":1},"factor":"abc"}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful unmarshal": {
-// 			JSON:   `{"source":{"name":"sma","length":1},"factor":"1"}`,
-// 			Result: CCI{source: SMA{length: 1, valid: true}, factor: decimal.RequireFromString("1"), valid: true},
-// 		},
-// 		"Successful unmarshal with zero factor": {
-// 			JSON:   `{"source":{"name":"sma","length":1},"factor":"0"}`,
-// 			Result: CCI{source: SMA{length: 1, valid: true}, factor: decimal.RequireFromString("0.015"), valid: true},
-// 		},
-// 		"Successful unmarshal with no factor": {
-// 			JSON:   `{"source":{"name":"sma","length":1}}`,
-// 			Result: CCI{source: SMA{length: 1, valid: true}, factor: decimal.RequireFromString("0.015"), valid: true},
-// 		},
-// 	}
+	c := CCI{source: indicator, offset: 4}
+	assert.Equal(t, c.source.Count()+4, c.Count())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_CCI_UnmarshalJSON(t *testing.T) {
+	cc := map[string]struct {
+		JSON   string
+		Result CCI
+		Error  error
+	}{
+		"Invalid JSON": {
+			JSON:  `{\-_-/}`,
+			Error: assert.AnError,
+		},
+		"Invalid source": {
+			JSON:  `{}`,
+			Error: assert.AnError,
+		},
+		"Invalid validation": {
+			JSON:  `{"source":{"name":"sma","length":1,"offset":4},"factor":"abc","offset":4}`,
+			Error: assert.AnError,
+		},
+		"Successful unmarshal": {
+			JSON:   `{"source":{"name":"sma","length":1,"offset":2},"factor":"1","offset":4}`,
+			Result: CCI{source: SMA{length: 1, valid: true, offset: 2}, factor: decimal.RequireFromString("1"), offset: 4, valid: true},
+		},
+		"Successful unmarshal with zero factor": {
+			JSON:   `{"source":{"name":"sma","length":1,"offset":4},"factor":"0","offset":3}`,
+			Result: CCI{source: SMA{length: 1, valid: true, offset: 4}, factor: decimal.RequireFromString("0.015"), offset: 3, valid: true},
+		},
+		"Successful unmarshal with no factor": {
+			JSON:   `{"source":{"name":"sma","length":1,"offset":1},"offset":5}`,
+			Result: CCI{source: SMA{length: 1, valid: true, offset: 1}, factor: decimal.RequireFromString("0.015"), offset: 5, valid: true},
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			cci := CCI{}
-// 			err := cci.UnmarshalJSON([]byte(c.JSON))
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result, cci)
-// 		})
-// 	}
-// }
+			cci := CCI{}
+			err := cci.UnmarshalJSON([]byte(c.JSON))
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_CCI_MarshalJSON(t *testing.T) {
-// 	stubIndicator := func(d []byte, e error) *IndicatorMock {
-// 		return &IndicatorMock{
-// 			namedMarshalJSONFunc: func() ([]byte, error) {
-// 				return d, e
-// 			},
-// 		}
-// 	}
+			assert.Equal(t, c.Result, cci)
+		})
+	}
+}
 
-// 	cc := map[string]struct {
-// 		CCI    CCI
-// 		Result string
-// 		Error  error
-// 	}{
-// 		"Error returned during source marshalling": {
-// 			CCI: CCI{
-// 				source: stubIndicator(nil, assert.AnError),
-// 			},
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful marshal": {
-// 			CCI: CCI{
-// 				source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-// 				factor: Hundred,
-// 			},
-// 			Result: `{"source":{"name":"indicatormock"},"factor":"100"}`,
-// 		},
-// 	}
+func Test_CCI_MarshalJSON(t *testing.T) {
+	stubIndicator := func(d []byte, e error) *IndicatorMock {
+		return &IndicatorMock{
+			namedMarshalJSONFunc: func() ([]byte, error) {
+				return d, e
+			},
+		}
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	cc := map[string]struct {
+		CCI    CCI
+		Result string
+		Error  error
+	}{
+		"Invalid source marshal": {
+			CCI:   CCI{source: stubIndicator(nil, assert.AnError)},
+			Error: assert.AnError,
+		},
+		"Successful marshal": {
+			CCI:    CCI{source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), factor: Hundred, offset: 4},
+			Result: `{"source":{"name":"indicatormock"},"factor":"100","offset":4}`,
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			d, err := c.CCI.MarshalJSON()
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.JSONEq(t, c.Result, string(d))
-// 		})
-// 	}
-// }
+			d, err := c.CCI.MarshalJSON()
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_CCI_namedMarshalJSON(t *testing.T) {
-// 	stubIndicator := func(d []byte, e error) *IndicatorMock {
-// 		return &IndicatorMock{
-// 			namedMarshalJSONFunc: func() ([]byte, error) {
-// 				return d, e
-// 			},
-// 		}
-// 	}
+			assert.JSONEq(t, c.Result, string(d))
+		})
+	}
+}
 
-// 	cc := map[string]struct {
-// 		CCI    CCI
-// 		Result string
-// 		Error  error
-// 	}{
-// 		"Error returned during source marshalling": {
-// 			CCI: CCI{
-// 				source: stubIndicator(nil, assert.AnError),
-// 			},
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful marshal": {
-// 			CCI: CCI{
-// 				source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil),
-// 				factor: Hundred,
-// 			},
-// 			Result: `{"name":"cci","source":{"name":"indicatormock"},"factor":"100"}`,
-// 		},
-// 	}
+func Test_CCI_namedMarshalJSON(t *testing.T) {
+	stubIndicator := func(d []byte, e error) *IndicatorMock {
+		return &IndicatorMock{
+			namedMarshalJSONFunc: func() ([]byte, error) {
+				return d, e
+			},
+		}
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	cc := map[string]struct {
+		CCI    CCI
+		Result string
+		Error  error
+	}{
+		"Error returned during source marshalling": {
+			CCI:   CCI{source: stubIndicator(nil, assert.AnError)},
+			Error: assert.AnError,
+		},
+		"Successful marshal": {
+			CCI:    CCI{source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), factor: Hundred, offset: 2},
+			Result: `{"name":"cci","source":{"name":"indicatormock"},"factor":"100","offset":2}`,
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			d, err := c.CCI.namedMarshalJSON()
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.JSONEq(t, c.Result, string(d))
-// 		})
-// 	}
-// }
+			d, err := c.CCI.namedMarshalJSON()
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
+
+			assert.JSONEq(t, c.Result, string(d))
+		})
+	}
+}
 
 // func Test_NewDEMA(t *testing.T) {
 // 	cc := map[string]struct {
