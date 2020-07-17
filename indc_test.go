@@ -1726,197 +1726,213 @@ func Test_ROC_namedMarshalJSON(t *testing.T) {
 	assert.JSONEq(t, `{"name":"roc","length":1,"offset":3}`, string(d))
 }
 
-// func Test_NewRSI(t *testing.T) {
-// 	cc := map[string]struct {
-// 		Length int
-// 		Offset int
-// 		Result RSI
-// 		Error  error
-// 	}{
-// 		"Invalid parameters": {
-// 			Offset: 0,
-// 			Error:  assert.AnError,
-// 		},
-// 		"Successful creation": {
-// 			Length: 1,
-// 			Offset: 0,
-// 			Result: RSI{length: 1, valid: true},
-// 		},
-// 	}
+func Test_NewRSI(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Offset int
+		Result RSI
+		Error  error
+	}{
+		"Invalid parameters": {
+			Offset: 0,
+			Error:  assert.AnError,
+		},
+		"Successful creation": {
+			Length: 1,
+			Offset: 4,
+			Result: RSI{length: 1, offset: 4, valid: true},
+		},
+	}
 
-// 	for cn, c := range cc {
-// 		c := c
+	for cn, c := range cc {
+		c := c
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			r, err := NewRSI(c.Length, c.Offset)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+			r, err := NewRSI(c.Length, c.Offset)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// 			assert.Equal(t, c.Result, r)
-// 		})
-// 	}
-// }
+			assert.Equal(t, c.Result, r)
+		})
+	}
+}
 
-// func Test_RSI_Length(t *testing.T) {
-// 	r := RSI{length: 1}
-// 	assert.Equal(t, 1, r.Length())
-// }
+func Test_RSI_Length(t *testing.T) {
+	assert.Equal(t, 1, RSI{length: 1}.Length())
+}
 
-// func Test_RSI_validate(t *testing.T) {
-// 	cc := map[string]struct {
-// 		RSI   RSI
-// 		Error error
-// 		Valid bool
-// 	}{
-// 		"Invalid length": {
-// 			RSI:   RSI{length: 0},
-// 			Error: ErrInvalidLength,
-// 			Valid: false,
-// 		},
-// 		"Successful validation": {
-// 			RSI:   RSI{length: 1},
-// 			Valid: true,
-// 		},
-// 	}
+func Test_RSI_Offset(t *testing.T) {
+	assert.Equal(t, 4, RSI{offset: 4}.Offset())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_RSI_validate(t *testing.T) {
+	cc := map[string]struct {
+		RSI   RSI
+		Error error
+		Valid bool
+	}{
+		"Invalid length": {
+			RSI:   RSI{length: 0, offset: 4},
+			Error: ErrInvalidLength,
+			Valid: false,
+		},
+		"Invalid offset": {
+			RSI:   RSI{length: 2, offset: -4},
+			Error: ErrInvalidOffset,
+			Valid: false,
+		},
+		"Successful validation": {
+			RSI:   RSI{length: 1, offset: 0},
+			Valid: true,
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			equalError(t, c.Error, c.RSI.validate())
-// 			assert.Equal(t, c.Valid, c.RSI.valid)
-// 		})
-// 	}
-// }
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// func Test_RSI_Calc(t *testing.T) {
-// 	cc := map[string]struct {
-// 		RSI    RSI
-// 		Data   []decimal.Decimal
-// 		Result decimal.Decimal
-// 		Error  error
-// 	}{
-// 		"Invalid indicator": {
-// 			RSI:   RSI{},
-// 			Error: ErrInvalidIndicator,
-// 		},
-// 		"Invalid data size": {
-// 			RSI: RSI{length: 3, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(30),
-// 			},
-// 			Error: ErrInvalidDataSize,
-// 		},
-// 		"Successful calculation when average gain 0": {
-// 			RSI: RSI{length: 3, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(16),
-// 				decimal.NewFromInt(12),
-// 				decimal.NewFromInt(8),
-// 			},
-// 			Result: decimal.NewFromInt(0),
-// 		},
-// 		"Successful calculation when average loss 0": {
-// 			RSI: RSI{length: 3, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(2),
-// 				decimal.NewFromInt(4),
-// 				decimal.NewFromInt(8),
-// 			},
-// 			Result: Hundred,
-// 		},
-// 		"Successful calculation": {
-// 			RSI: RSI{length: 3, valid: true},
-// 			Data: []decimal.Decimal{
-// 				decimal.NewFromInt(8),
-// 				decimal.NewFromInt(12),
-// 				decimal.NewFromInt(8),
-// 			},
-// 			Result: decimal.NewFromInt(50),
-// 		},
-// 	}
+			equalError(t, c.Error, c.RSI.validate())
+			assert.Equal(t, c.Valid, c.RSI.valid)
+		})
+	}
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_RSI_Calc(t *testing.T) {
+	cc := map[string]struct {
+		RSI    RSI
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			RSI:   RSI{},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size": {
+			RSI: RSI{length: 3, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful calculation when average gain 0": {
+			RSI: RSI{length: 3, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(16),
+				decimal.NewFromInt(12),
+				decimal.NewFromInt(8),
+			},
+			Result: decimal.NewFromInt(0),
+		},
+		"Successful calculation when average loss 0": {
+			RSI: RSI{length: 3, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(4),
+				decimal.NewFromInt(8),
+			},
+			Result: Hundred,
+		},
+		"Successful calculation with offset": {
+			RSI: RSI{length: 3, offset: 2, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(8),
+				decimal.NewFromInt(12),
+				decimal.NewFromInt(8),
+				decimal.NewFromInt(58),
+				decimal.NewFromInt(58),
+			},
+			Result: decimal.NewFromInt(50),
+		},
+		"Successful calculation": {
+			RSI: RSI{length: 3, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(8),
+				decimal.NewFromInt(12),
+				decimal.NewFromInt(8),
+			},
+			Result: decimal.NewFromInt(50),
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			res, err := c.RSI.Calc(c.Data)
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result.String(), res.String())
-// 		})
-// 	}
-// }
+			res, err := c.RSI.Calc(c.Data)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_RSI_Count(t *testing.T) {
-// 	r := RSI{length: 15}
-// 	assert.Equal(t, 15, r.Count())
-// }
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
 
-// func Test_RSI_UnmarshalJSON(t *testing.T) {
-// 	cc := map[string]struct {
-// 		JSON   string
-// 		Result RSI
-// 		Error  error
-// 	}{
-// 		"Invalid JSON": {
-// 			JSON:  `{\"_"/`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Invalid length": {
-// 			JSON:  `{"length":0}`,
-// 			Error: assert.AnError,
-// 		},
-// 		"Successful unmarshal": {
-// 			JSON:   `{"length":1}`,
-// 			Result: RSI{length: 1, valid: true},
-// 		},
-// 	}
+func Test_RSI_Count(t *testing.T) {
+	assert.Equal(t, 15, RSI{length: 15}.Count())
+}
 
-// 	for cn, c := range cc {
-// 		c := c
+func Test_RSI_UnmarshalJSON(t *testing.T) {
+	cc := map[string]struct {
+		JSON   string
+		Result RSI
+		Error  error
+	}{
+		"Invalid JSON": {
+			JSON:  `{\"_"/`,
+			Error: assert.AnError,
+		},
+		"Invalid validation": {
+			JSON:  `{"length":0,"offset":0}`,
+			Error: assert.AnError,
+		},
+		"Successful unmarshal": {
+			JSON:   `{"length":1,"offset":2}`,
+			Result: RSI{length: 1, offset: 2, valid: true},
+		},
+	}
 
-// 		t.Run(cn, func(t *testing.T) {
-// 			t.Parallel()
+	for cn, c := range cc {
+		c := c
 
-// 			r := RSI{}
-// 			err := r.UnmarshalJSON([]byte(c.JSON))
-// 			equalError(t, c.Error, err)
-// 			if err != nil {
-// 				return
-// 			}
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
 
-// 			assert.Equal(t, c.Result, r)
-// 		})
-// 	}
-// }
+			r := RSI{}
+			err := r.UnmarshalJSON([]byte(c.JSON))
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
 
-// func Test_RSI_MarshalJSON(t *testing.T) {
-// 	rs := RSI{length: 1}
-// 	d, err := rs.MarshalJSON()
+			assert.Equal(t, c.Result, r)
+		})
+	}
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"length":1}`, string(d))
-// }
+func Test_RSI_MarshalJSON(t *testing.T) {
+	d, err := RSI{length: 1, offset: 4}.MarshalJSON()
 
-// func Test_RSI_namedMarshalJSON(t *testing.T) {
-// 	rs := RSI{length: 1}
-// 	d, err := rs.namedMarshalJSON()
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"length":1,"offset":4}`, string(d))
+}
 
-// 	assert.NoError(t, err)
-// 	assert.JSONEq(t, `{"name":"rsi","length":1}`, string(d))
-// }
+func Test_RSI_namedMarshalJSON(t *testing.T) {
+	d, err := RSI{length: 1, offset: 2}.namedMarshalJSON()
+
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"name":"rsi","length":1,"offset":2}`, string(d))
+}
 
 // func Test_NewSMA(t *testing.T) {
 // 	cc := map[string]struct {
