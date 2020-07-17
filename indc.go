@@ -1308,7 +1308,7 @@ func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, s.Count(), s.Offset())
+	dd, err := resize(dd, s.Count()-s.offset, s.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -1325,21 +1325,21 @@ func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for SMA
 // calculation.
 func (s SMA) Count() int {
-	return s.length
+	return s.length + s.offset
 }
 
 // UnmarshalJSON parses JSON into SMA structure.
 func (s *SMA) UnmarshalJSON(d []byte) error {
 	var i struct {
-		L int `json:"length"`
-		O int `json:"offset"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &i); err != nil {
 		return err
 	}
 
-	ns, err := NewSMA(i.L, i.O)
+	ns, err := NewSMA(i.Length, i.Offset)
 	if err != nil {
 		return err
 	}
@@ -1352,11 +1352,11 @@ func (s *SMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts SMA configuration data into JSON.
 func (s SMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
-		O int `json:"offset"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}{
-		L: s.length,
-		O: s.offset,
+		Length: s.length,
+		Offset: s.offset,
 	})
 }
 
@@ -1364,13 +1364,13 @@ func (s SMA) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (s SMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		L int    `json:"length"`
-		O int    `json:"offset"`
+		Name   String `json:"name"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameSMA,
-		L: s.length,
-		O: s.offset,
+		Name:   NameSMA,
+		Length: s.length,
+		Offset: s.offset,
 	})
 }
 
