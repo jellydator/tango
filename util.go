@@ -21,6 +21,9 @@ var (
 	// ErrInvalidLength is returned when incorrect length is provided.
 	ErrInvalidLength = errors.New("invalid length")
 
+	// ErrInvalidOffset is returned when incorrect offset is provided.
+	ErrInvalidOffset = errors.New("invalid offset")
+
 	// ErrInvalidDataSize is returned when incorrect data size is provided.
 	ErrInvalidDataSize = errors.New("invalid data size")
 
@@ -51,30 +54,30 @@ func (s String) MarshalText() ([]byte, error) {
 
 // resize cuts given array based on length to use for
 // calculations.
-func resize(dd []decimal.Decimal, length int) ([]decimal.Decimal, error) {
-	if length < 1 {
+func resize(dd []decimal.Decimal, length, offset int) ([]decimal.Decimal, error) {
+	if length < 1 || offset < 0 {
 		return dd, nil
 	}
 
-	if length > len(dd) {
+	if length+offset > len(dd) {
 		return nil, ErrInvalidDataSize
 	}
 
-	return dd[len(dd)-length:], nil
+	return dd[len(dd)-length-offset : len(dd)-offset], nil
 }
 
 // resizeCandles cuts given array based on length to use for
 // calculations.
-func resizeCandles(cc []chartype.Candle, length int) ([]chartype.Candle, error) {
-	if length < 1 {
+func resizeCandles(cc []chartype.Candle, length, offset int) ([]chartype.Candle, error) {
+	if length < 1 || offset < 0 {
 		return cc, nil
 	}
 
-	if length > len(cc) {
+	if length+offset > len(cc) {
 		return nil, ErrInvalidDataSize
 	}
 
-	return cc[len(cc)-length:], nil
+	return cc[len(cc)-length-offset : len(cc)-offset], nil
 }
 
 // typicalPrice recalculates array of candles into an array of typical prices.
@@ -117,7 +120,7 @@ func calcMultiple(dd []decimal.Decimal, a int, s Indicator) ([]decimal.Decimal, 
 		return []decimal.Decimal{}, nil
 	}
 
-	dd, err := resize(dd, s.Count()+a-1)
+	dd, err := resize(dd, s.Count()+a-1, s.Offset())
 	if err != nil {
 		return nil, ErrInvalidDataSize
 	}
