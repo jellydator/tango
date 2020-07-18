@@ -374,12 +374,12 @@ func Test_fromJSON(t *testing.T) {
 			ByteArray: []byte(`{"name":"hma", "wma":{"name":"wma","length":2, "offset":3}}`),
 			Result:    HMA{wma: WMA{length: 2, offset: 3, valid: true}, valid: true},
 		},
-		"Successful creation of SCD": {
-			ByteArray: []byte(`{"name":"scd",
+		"Successful creation of CD": {
+			ByteArray: []byte(`{"name":"cd",
 			"source1":{"name":"sma","length":2,"offset":2},
 			"source2":{"name":"sma","length":3,"offset":4},
 			"offset":3}`),
-			Result: SCD{source1: SMA{length: 2, offset: 2, valid: true},
+			Result: CD{source1: SMA{length: 2, offset: 2, valid: true},
 				source2: SMA{length: 3, offset: 4, valid: true}, offset: 3, valid: true},
 		},
 		"Successful creation of ROC": {
