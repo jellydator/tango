@@ -1133,12 +1133,12 @@ func Test_HMA_namedMarshalJSON(t *testing.T) {
 	assert.JSONEq(t, `{"name":"hma","wma":{"length":3,"offset":1}}`, string(d))
 }
 
-func Test_NewSCD(t *testing.T) {
+func Test_NewCD(t *testing.T) {
 	cc := map[string]struct {
 		Source1 Indicator
 		Source2 Indicator
 		Offset  int
-		Result  SCD
+		Result  CD
 		Error   error
 	}{
 		"Invalid parameters": {
@@ -1148,7 +1148,7 @@ func Test_NewSCD(t *testing.T) {
 			Source1: &IndicatorMock{},
 			Source2: &IndicatorMock{},
 			Offset:  4,
-			Result:  SCD{source1: &IndicatorMock{}, source2: &IndicatorMock{}, offset: 4, valid: true},
+			Result:  CD{source1: &IndicatorMock{}, source2: &IndicatorMock{}, offset: 4, valid: true},
 		},
 	}
 
@@ -1158,7 +1158,7 @@ func Test_NewSCD(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			m, err := NewSCD(c.Source1, c.Source2, c.Offset)
+			m, err := NewCD(c.Source1, c.Source2, c.Offset)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -1169,41 +1169,41 @@ func Test_NewSCD(t *testing.T) {
 	}
 }
 
-func Test_SCD_Sub1(t *testing.T) {
-	assert.Equal(t, &IndicatorMock{}, SCD{source1: &IndicatorMock{}, source2: nil}.Sub1())
+func Test_CD_Sub1(t *testing.T) {
+	assert.Equal(t, &IndicatorMock{}, CD{source1: &IndicatorMock{}, source2: nil}.Sub1())
 }
 
-func Test_SCD_Sub2(t *testing.T) {
-	assert.Equal(t, &IndicatorMock{}, SCD{source1: nil, source2: &IndicatorMock{}}.Sub2())
+func Test_CD_Sub2(t *testing.T) {
+	assert.Equal(t, &IndicatorMock{}, CD{source1: nil, source2: &IndicatorMock{}}.Sub2())
 }
 
-func Test_SCD_Offset(t *testing.T) {
-	assert.Equal(t, 4, SCD{offset: 4}.Offset())
+func Test_CD_Offset(t *testing.T) {
+	assert.Equal(t, 4, CD{offset: 4}.Offset())
 }
 
-func Test_SCD_validate(t *testing.T) {
+func Test_CD_validate(t *testing.T) {
 	cc := map[string]struct {
-		SCD   SCD
+		CD    CD
 		Error error
 		Valid bool
 	}{
 		"Invalid source1": {
-			SCD:   SCD{source1: nil, source2: &IndicatorMock{}, offset: 4},
+			CD:    CD{source1: nil, source2: &IndicatorMock{}, offset: 4},
 			Error: ErrInvalidSource,
 			Valid: false,
 		},
 		"Invalid source2": {
-			SCD:   SCD{source1: &IndicatorMock{}, source2: nil, offset: 4},
+			CD:    CD{source1: &IndicatorMock{}, source2: nil, offset: 4},
 			Error: ErrInvalidSource,
 			Valid: false,
 		},
 		"Invalid offset": {
-			SCD:   SCD{source1: &IndicatorMock{}, source2: &IndicatorMock{}, offset: -4},
+			CD:    CD{source1: &IndicatorMock{}, source2: &IndicatorMock{}, offset: -4},
 			Error: ErrInvalidOffset,
 			Valid: false,
 		},
 		"Successful validation": {
-			SCD:   SCD{source1: &IndicatorMock{}, source2: &IndicatorMock{}, offset: 4},
+			CD:    CD{source1: &IndicatorMock{}, source2: &IndicatorMock{}, offset: 4},
 			Valid: true,
 		},
 	}
@@ -1214,13 +1214,13 @@ func Test_SCD_validate(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			equalError(t, c.Error, c.SCD.validate())
-			assert.Equal(t, c.Valid, c.SCD.valid)
+			equalError(t, c.Error, c.CD.validate())
+			assert.Equal(t, c.Valid, c.CD.valid)
 		})
 	}
 }
 
-func Test_SCD_Calc(t *testing.T) {
+func Test_CD_Calc(t *testing.T) {
 	stubIndicator := func(v decimal.Decimal, e error, a int) *IndicatorMock {
 		return &IndicatorMock{
 			CalcFunc: func(dd []decimal.Decimal) (decimal.Decimal, error) {
@@ -1233,45 +1233,45 @@ func Test_SCD_Calc(t *testing.T) {
 	}
 
 	cc := map[string]struct {
-		SCD    SCD
+		CD     CD
 		Data   []decimal.Decimal
 		Result decimal.Decimal
 		Error  error
 	}{
 		"Invalid indicator": {
-			SCD:   SCD{},
+			CD:    CD{},
 			Error: ErrInvalidIndicator,
 		},
 		"Invalid data size for source1": {
-			SCD: SCD{source1: stubIndicator(decimal.Zero, nil, 10), source2: stubIndicator(decimal.Zero, nil, 1), offset: 0, valid: true},
+			CD: CD{source1: stubIndicator(decimal.Zero, nil, 10), source2: stubIndicator(decimal.Zero, nil, 1), offset: 0, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Invalid data size for source2": {
-			SCD: SCD{source1: stubIndicator(decimal.Zero, nil, 1), source2: stubIndicator(decimal.Zero, nil, 10), offset: 0, valid: true},
+			CD: CD{source1: stubIndicator(decimal.Zero, nil, 1), source2: stubIndicator(decimal.Zero, nil, 10), offset: 0, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Invalid source1": {
-			SCD: SCD{source1: stubIndicator(decimal.Zero, assert.AnError, 1), source2: stubIndicator(decimal.Zero, nil, 1), offset: 0, valid: true},
+			CD: CD{source1: stubIndicator(decimal.Zero, assert.AnError, 1), source2: stubIndicator(decimal.Zero, nil, 1), offset: 0, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: assert.AnError,
 		},
 		"Invalid source2": {
-			SCD: SCD{source1: stubIndicator(decimal.Zero, nil, 1), source2: stubIndicator(decimal.Zero, assert.AnError, 1), offset: 0, valid: true},
+			CD: CD{source1: stubIndicator(decimal.Zero, nil, 1), source2: stubIndicator(decimal.Zero, assert.AnError, 1), offset: 0, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: assert.AnError,
 		},
 		"Successful calculation with offset": {
-			SCD: SCD{source1: stubIndicator(decimal.NewFromInt(5), nil, 1), source2: stubIndicator(decimal.NewFromInt(10), nil, 1), offset: 2, valid: true},
+			CD: CD{source1: stubIndicator(decimal.NewFromInt(5), nil, 1), source2: stubIndicator(decimal.NewFromInt(10), nil, 1), offset: 2, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -1282,7 +1282,7 @@ func Test_SCD_Calc(t *testing.T) {
 			Result: decimal.NewFromInt(-5),
 		},
 		"Successful calculation": {
-			SCD: SCD{source1: stubIndicator(decimal.NewFromInt(5), nil, 1), source2: stubIndicator(decimal.NewFromInt(10), nil, 1), offset: 0, valid: true},
+			CD: CD{source1: stubIndicator(decimal.NewFromInt(5), nil, 1), source2: stubIndicator(decimal.NewFromInt(10), nil, 1), offset: 0, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(31),
@@ -1298,7 +1298,7 @@ func Test_SCD_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res, err := c.SCD.Calc(c.Data)
+			res, err := c.CD.Calc(c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -1309,7 +1309,7 @@ func Test_SCD_Calc(t *testing.T) {
 	}
 }
 
-func Test_SCD_Count(t *testing.T) {
+func Test_CD_Count(t *testing.T) {
 	stubIndicator := func(a int) *IndicatorMock {
 		return &IndicatorMock{
 			CountFunc: func() int {
@@ -1318,13 +1318,13 @@ func Test_SCD_Count(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, 15, SCD{source1: stubIndicator(15), source2: stubIndicator(10)}.Count())
+	assert.Equal(t, 15, CD{source1: stubIndicator(15), source2: stubIndicator(10)}.Count())
 }
 
-func Test_SCD_UnmarshalJSON(t *testing.T) {
+func Test_CD_UnmarshalJSON(t *testing.T) {
 	cc := map[string]struct {
 		JSON   string
-		Result SCD
+		Result CD
 		Error  error
 	}{
 		"Invalid JSON": {
@@ -1345,7 +1345,7 @@ func Test_SCD_UnmarshalJSON(t *testing.T) {
 		},
 		"Successful unmarshal": {
 			JSON:   `{"source1":{"name":"sma","length":1,"offset":4},"source2":{"name":"sma","length":2,"offset":6},"offset":5}`,
-			Result: SCD{source1: SMA{length: 1, offset: 4, valid: true}, source2: SMA{length: 2, offset: 6, valid: true}, offset: 5, valid: true},
+			Result: CD{source1: SMA{length: 1, offset: 4, valid: true}, source2: SMA{length: 2, offset: 6, valid: true}, offset: 5, valid: true},
 		},
 	}
 
@@ -1355,19 +1355,19 @@ func Test_SCD_UnmarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			scd := SCD{}
-			err := scd.UnmarshalJSON([]byte(c.JSON))
+			cd := CD{}
+			err := cd.UnmarshalJSON([]byte(c.JSON))
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, scd)
+			assert.Equal(t, c.Result, cd)
 		})
 	}
 }
 
-func Test_SCD_MarshalJSON(t *testing.T) {
+func Test_CD_MarshalJSON(t *testing.T) {
 	stubIndicator := func(d []byte, e error) *IndicatorMock {
 		return &IndicatorMock{
 			namedMarshalJSONFunc: func() ([]byte, error) {
@@ -1377,20 +1377,20 @@ func Test_SCD_MarshalJSON(t *testing.T) {
 	}
 
 	cc := map[string]struct {
-		SCD    SCD
+		CD     CD
 		Result string
 		Error  error
 	}{
 		"Error returned during source1 marshalling": {
-			SCD:   SCD{source1: stubIndicator(nil, assert.AnError), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil)},
+			CD:    CD{source1: stubIndicator(nil, assert.AnError), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil)},
 			Error: assert.AnError,
 		},
 		"Error returned during source2 marshalling": {
-			SCD:   SCD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator(nil, assert.AnError)},
+			CD:    CD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator(nil, assert.AnError)},
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			SCD:    SCD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
+			CD:     CD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
 			Result: `{"source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"},"offset":4}`,
 		},
 	}
@@ -1401,7 +1401,7 @@ func Test_SCD_MarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			d, err := c.SCD.MarshalJSON()
+			d, err := c.CD.MarshalJSON()
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -1412,7 +1412,7 @@ func Test_SCD_MarshalJSON(t *testing.T) {
 	}
 }
 
-func Test_SCD_namedMarshalJSON(t *testing.T) {
+func Test_CD_namedMarshalJSON(t *testing.T) {
 	stubIndicator := func(d []byte, e error) *IndicatorMock {
 		return &IndicatorMock{
 			namedMarshalJSONFunc: func() ([]byte, error) {
@@ -1422,21 +1422,21 @@ func Test_SCD_namedMarshalJSON(t *testing.T) {
 	}
 
 	cc := map[string]struct {
-		SCD    SCD
+		CD     CD
 		Result string
 		Error  error
 	}{
 		"Error returned during source1 marshalling": {
-			SCD:   SCD{source1: stubIndicator(nil, assert.AnError), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil)},
+			CD:    CD{source1: stubIndicator(nil, assert.AnError), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil)},
 			Error: assert.AnError,
 		},
 		"Error returned during source2 marshalling": {
-			SCD:   SCD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator(nil, assert.AnError)},
+			CD:    CD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator(nil, assert.AnError)},
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			SCD:    SCD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
-			Result: `{"name":"scd","source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"},"offset":4}`,
+			CD:     CD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
+			Result: `{"name":"cd","source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"},"offset":4}`,
 		},
 	}
 
@@ -1446,7 +1446,7 @@ func Test_SCD_namedMarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			d, err := c.SCD.namedMarshalJSON()
+			d, err := c.CD.namedMarshalJSON()
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
