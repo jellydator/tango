@@ -18,6 +18,10 @@ type Indicator interface {
 	// for indicator's calculation.
 	Count() int
 
+	// Offset should determine how many data points should be skipped
+	// from the start during the calculations.
+	Offset() int
+
 	// namedMarshalJSON converts indicator and its name to JSON.
 	namedMarshalJSON() ([]byte, error)
 }
@@ -38,12 +42,16 @@ type Aroon struct {
 	// length specifies how many data points should be used
 	// during the calculations.
 	length int
+
+	// offset specifies how many data points should be skipped from the start
+	// during the calculations.
+	offset int
 }
 
 // NewAroon validates provided configuration options and
 // creates new Aroon indicator.
-func NewAroon(trend String, length int) (Aroon, error) {
-	a := Aroon{trend: trend, length: length}
+func NewAroon(trend String, length, offset int) (Aroon, error) {
+	a := Aroon{trend: trend, length: length, offset: offset}
 
 	if err := a.validate(); err != nil {
 		return Aroon{}, err
@@ -52,14 +60,19 @@ func NewAroon(trend String, length int) (Aroon, error) {
 	return a, nil
 }
 
+// Trend returns trend configuration option.
+func (a Aroon) Trend() String {
+	return a.trend
+}
+
 // Length returns length configuration option.
 func (a Aroon) Length() int {
 	return a.length
 }
 
-// Trend returns trend configuration option.
-func (a Aroon) Trend() String {
-	return a.trend
+// Offset returns offset configuration option.
+func (a Aroon) Offset() int {
+	return a.offset
 }
 
 // validate checks whether Aroon was configured properly or not.
@@ -70,6 +83,10 @@ func (a *Aroon) validate() error {
 
 	if a.length < 1 {
 		return ErrInvalidLength
+	}
+
+	if a.offset < 0 {
+		return ErrInvalidOffset
 	}
 
 	a.valid = true
@@ -86,7 +103,7 @@ func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, a.Count())
+	dd, err := resize(dd, a.Count()-a.offset, a.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -114,21 +131,22 @@ func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for Aroon
 // calculation.
 func (a Aroon) Count() int {
-	return a.length
+	return a.length + a.offset
 }
 
 // UnmarshalJSON parses JSON into Aroon structure.
 func (a *Aroon) UnmarshalJSON(d []byte) error {
-	var i struct {
-		T String `json:"trend"`
-		L int    `json:"length"`
+	var data struct {
+		Trend  String `json:"trend"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
+	if err := json.Unmarshal(d, &data); err != nil {
 		return err
 	}
 
-	na, err := NewAroon(i.T, i.L)
+	na, err := NewAroon(data.Trend, data.Length, data.Offset)
 	if err != nil {
 		return err
 	}
@@ -141,10 +159,13 @@ func (a *Aroon) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts Aroon configuration data into JSON.
 func (a Aroon) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		T String `json:"trend"`
-		L int    `json:"length"`
+		Trend  String `json:"trend"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		T: a.trend, L: a.length,
+		Trend:  a.trend,
+		Length: a.length,
+		Offset: a.offset,
 	})
 }
 
@@ -152,13 +173,15 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (a Aroon) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		T String `json:"trend"`
-		L int    `json:"length"`
+		Name   String `json:"name"`
+		Trend  String `json:"trend"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameAroon,
-		T: a.trend,
-		L: a.length,
+		Name:   NameAroon,
+		Trend:  a.trend,
+		Length: a.length,
+		Offset: a.offset,
 	})
 }
 
@@ -207,6 +230,11 @@ func (c CCI) Factor() decimal.Decimal {
 	return c.factor
 }
 
+// Offset returns Offset configuration option.
+func (c CCI) Offset() int {
+	return c.source.Offset()
+}
+
 // validate checks whether CCI was configured properly or not.
 func (c *CCI) validate() error {
 	if c.source == nil {
@@ -231,7 +259,7 @@ func (c CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, c.Count())
+	dd, err := resize(dd, c.Count(), 0)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -258,30 +286,30 @@ func (c CCI) Count() int {
 
 // UnmarshalJSON parses JSON into CCI structure.
 func (c *CCI) UnmarshalJSON(d []byte) error {
-	var i struct {
-		S json.RawMessage `json:"source"`
-		F string          `json:"factor"`
+	var data struct {
+		Source json.RawMessage `json:"source"`
+		Factor string          `json:"factor"`
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
+	if err := json.Unmarshal(d, &data); err != nil {
 		return err
 	}
 
-	s, err := fromJSON(i.S)
+	src, err := fromJSON(data.Source)
 	if err != nil {
 		return err
 	}
 
-	if i.F == "" {
-		i.F = "0"
+	if data.Factor == "" {
+		data.Factor = "0"
 	}
 
-	f, err := decimal.NewFromString(i.F)
+	fac, err := decimal.NewFromString(data.Factor)
 	if err != nil {
 		return err
 	}
 
-	cn, err := NewCCI(s, f)
+	cn, err := NewCCI(src, fac)
 	if err != nil {
 		return err
 	}
@@ -293,36 +321,36 @@ func (c *CCI) UnmarshalJSON(d []byte) error {
 
 // MarshalJSON converts CCI configuration data into JSON.
 func (c CCI) MarshalJSON() ([]byte, error) {
-	s, err := c.source.namedMarshalJSON()
+	src, err := c.source.namedMarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
 	return json.Marshal(struct {
-		S json.RawMessage `json:"source"`
-		F string          `json:"factor"`
+		Source json.RawMessage `json:"source"`
+		Factor string          `json:"factor"`
 	}{
-		S: s,
-		F: c.factor.String(),
+		Source: src,
+		Factor: c.factor.String(),
 	})
 }
 
 // namedMarshalJSON converts CCI configuration data with its
 // name into JSON.
 func (c CCI) namedMarshalJSON() ([]byte, error) {
-	s, err := c.source.namedMarshalJSON()
+	src, err := c.source.namedMarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
 	return json.Marshal(struct {
-		N String          `json:"name"`
-		S json.RawMessage `json:"source"`
-		F string          `json:"factor"`
+		Name   String          `json:"name"`
+		Source json.RawMessage `json:"source"`
+		Factor string          `json:"factor"`
 	}{
-		N: NameCCI,
-		S: s,
-		F: c.factor.String(),
+		Name:   NameCCI,
+		Source: src,
+		Factor: c.factor.String(),
 	})
 }
 
@@ -343,18 +371,23 @@ type DEMA struct {
 // NewDEMA validates provided configuration options and creates
 // new DEMA indicator.
 func NewDEMA(ema EMA) (DEMA, error) {
-	d := DEMA{ema: ema}
+	dm := DEMA{ema: ema}
 
-	if err := d.validate(); err != nil {
+	if err := dm.validate(); err != nil {
 		return DEMA{}, err
 	}
 
-	return d, nil
+	return dm, nil
 }
 
 // EMA returns ema configuration option.
 func (dm DEMA) EMA() EMA {
 	return dm.ema
+}
+
+// Offset returns offset configuration option.
+func (dm DEMA) Offset() int {
+	return dm.ema.offset
 }
 
 // validate checks whether DEMA was configured properly or not.
@@ -377,14 +410,15 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, dm.Count())
+	dd, err := resize(dd, dm.Count()-dm.ema.offset, dm.ema.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
 	v := make([]decimal.Decimal, dm.ema.Length())
 
-	v[0], _ = dm.ema.sma.Calc(dd[:dm.ema.Length()])
+	s, _ := NewSMA(dm.ema.length, 0)
+	v[0], _ = s.Calc(dd[:dm.ema.Length()])
 
 	for i := dm.ema.Length(); i < len(dd); i++ {
 		v[i-dm.ema.Length()+1], _ = dm.ema.CalcNext(v[i-dm.ema.Length()], dd[i])
@@ -407,17 +441,18 @@ func (dm DEMA) Count() int {
 
 // UnmarshalJSON parses JSON into DEMA structure.
 func (dm *DEMA) UnmarshalJSON(d []byte) error {
-	var i struct {
+	var data struct {
 		EMA struct {
-			L int `json:"length"`
+			Length int `json:"length"`
+			Offset int `json:"offset"`
 		} `json:"ema"`
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
+	if err := json.Unmarshal(d, &data); err != nil {
 		return err
 	}
 
-	ne, err := NewEMA(i.EMA.L)
+	ne, err := NewEMA(data.EMA.Length, data.EMA.Offset)
 	if err != nil {
 		return err
 	}
@@ -432,9 +467,9 @@ func (dm *DEMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts DEMA configuration data into JSON.
 func (dm DEMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		E EMA `json:"ema"`
+		EMA EMA `json:"ema"`
 	}{
-		E: dm.ema,
+		EMA: dm.ema,
 	})
 }
 
@@ -442,11 +477,11 @@ func (dm DEMA) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (dm DEMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		E EMA    `json:"ema"`
+		Name String `json:"name"`
+		EMA  EMA    `json:"ema"`
 	}{
-		N: NameDEMA,
-		E: dm.ema,
+		Name: NameDEMA,
+		EMA:  dm.ema,
 	})
 }
 
@@ -457,40 +492,20 @@ const NameEMA = "ema"
 // moving average.
 // The zero value is not usable.
 type EMA struct {
-	// valid specifies whether EMA paremeters were validated.
-	valid bool
-
-	// sma specifies first EMA calculations SMA parameters.
-	sma SMA
+	SMA
 }
 
 // NewEMA validates provided configuration options and
 // creates new EMA indicator.
-func NewEMA(length int) (EMA, error) {
-	s, err := NewSMA(length)
+func NewEMA(length, offset int) (EMA, error) {
+	s, err := NewSMA(length, offset)
 	if err != nil {
 		return EMA{}, err
 	}
 
-	e := EMA{sma: s, valid: true}
+	e := EMA{SMA: s}
 
 	return e, nil
-}
-
-// Length returns length configuration option.
-func (e EMA) Length() int {
-	return e.sma.Count()
-}
-
-// validate checks whether EMA was configured properly or not.
-func (e *EMA) validate() error {
-	if err := e.sma.validate(); err != nil {
-		return err
-	}
-
-	e.valid = true
-
-	return nil
 }
 
 // Calc calculates EMA from the provided data points slice.
@@ -501,14 +516,15 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, e.Count())
+	dd, err := resize(dd, e.Count()-e.offset, e.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	r, _ := e.sma.Calc(dd[:e.Length()])
+	s, _ := NewSMA(e.length, 0)
+	r, _ := s.Calc(dd[:e.length])
 
-	for i := e.Length(); i < len(dd); i++ {
+	for i := e.length; i < len(dd); i++ {
 		r, _ = e.CalcNext(r, dd[i])
 	}
 
@@ -534,20 +550,21 @@ func (e EMA) multiplier() decimal.Decimal {
 // Count determines the total amount of data points needed for EMA
 // calculation.
 func (e EMA) Count() int {
-	return e.Length()*2 - 1
+	return e.length*2 + e.offset - 1
 }
 
 // UnmarshalJSON parses JSON into EMA structure.
 func (e *EMA) UnmarshalJSON(d []byte) error {
-	var i struct {
-		L int `json:"length"`
+	var data struct {
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
+	if err := json.Unmarshal(d, &data); err != nil {
 		return err
 	}
 
-	ne, err := NewEMA(i.L)
+	ne, err := NewEMA(data.Length, data.Offset)
 	if err != nil {
 		return err
 	}
@@ -560,9 +577,11 @@ func (e *EMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts EMA configuration data into JSON.
 func (e EMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}{
-		L: e.sma.length,
+		Length: e.length,
+		Offset: e.offset,
 	})
 }
 
@@ -570,11 +589,13 @@ func (e EMA) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (e EMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		L int    `json:"length"`
+		Name   String `json:"name"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameEMA,
-		L: e.sma.length,
+		Name:   NameEMA,
+		Length: e.length,
+		Offset: e.offset,
 	})
 }
 
@@ -609,6 +630,11 @@ func (h HMA) WMA() WMA {
 	return h.wma
 }
 
+// Offset returns offset configuration option.
+func (h HMA) Offset() int {
+	return h.wma.offset
+}
+
 // validate checks whether HMA was configured properly or not.
 func (h *HMA) validate() error {
 	if err := h.wma.validate(); err != nil {
@@ -633,7 +659,7 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, h.Count())
+	dd, err := resize(dd, h.Count(), 0)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -662,22 +688,23 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for HMA
 // calculation.
 func (h HMA) Count() int {
-	return h.wma.Count()*2 - 1
+	return h.wma.Count()*2 - h.wma.offset - 1
 }
 
 // UnmarshalJSON parses JSON into HMA structure.
 func (h *HMA) UnmarshalJSON(d []byte) error {
-	var i struct {
+	var data struct {
 		WMA struct {
-			L int `json:"length"`
+			Length int `json:"length"`
+			Offset int `json:"offset"`
 		} `json:"wma"`
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
+	if err := json.Unmarshal(d, &data); err != nil {
 		return err
 	}
 
-	w, err := NewWMA(i.WMA.L)
+	w, err := NewWMA(data.WMA.Length, data.WMA.Offset)
 	if err != nil {
 		return err
 	}
@@ -695,9 +722,9 @@ func (h *HMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts HMA configuration data into JSON.
 func (h HMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		W WMA `json:"wma"`
+		WMA WMA `json:"wma"`
 	}{
-		W: h.wma,
+		WMA: h.wma,
 	})
 }
 
@@ -705,22 +732,22 @@ func (h HMA) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (h HMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		W WMA    `json:"wma"`
+		Name String `json:"name"`
+		WMA  WMA    `json:"wma"`
 	}{
-		N: NameHMA,
-		W: h.wma,
+		Name: NameHMA,
+		WMA:  h.wma,
 	})
 }
 
-// NameMACD returns MACD indicator name.
-const NameMACD = "macd"
+// NameCD returns CD indicator name.
+const NameCD = "cd"
 
-// MACD holds all the necessary information needed to calculate
+// CD holds all the necessary information needed to calculate
 // difference between two source indicators.
 // The zero value is not usable.
-type MACD struct {
-	// valid specifies whether MACD paremeters were validated.
+type CD struct {
+	// valid specifies whether CD paremeters were validated.
 	valid bool
 
 	// source1 specifies which indicator to use as base
@@ -730,62 +757,75 @@ type MACD struct {
 	// source2 specifies which indicator to use as counter
 	// during calculation process.
 	source2 Indicator
+
+	// offset specifies how many data points should be skipped from the start
+	// during the calculations.
+	offset int
 }
 
-// NewMACD validates provided configuration options and
-// creates new MACD indicator.
-func NewMACD(source1, source2 Indicator) (MACD, error) {
-	m := MACD{source1: source1, source2: source2}
+// NewCD validates provided configuration options and
+// creates new CD indicator.
+func NewCD(source1, source2 Indicator, offset int) (CD, error) {
+	cd := CD{source1: source1, source2: source2, offset: offset}
 
-	if err := m.validate(); err != nil {
-		return MACD{}, err
+	if err := cd.validate(); err != nil {
+		return CD{}, err
 	}
 
-	return m, nil
+	return cd, nil
 }
 
 // Sub1 returns source1 configuration option.
-func (m MACD) Sub1() Indicator {
-	return m.source1
+func (cd CD) Sub1() Indicator {
+	return cd.source1
 }
 
 // Sub2 returns source2 configuration option.
-func (m MACD) Sub2() Indicator {
-	return m.source2
+func (cd CD) Sub2() Indicator {
+	return cd.source2
 }
 
-// validate checks whether MACD was configured properly or not.
-func (m *MACD) validate() error {
-	if m.source1 == nil || m.source2 == nil {
+// Offset returns offset configuration option.
+func (cd CD) Offset() int {
+	return cd.offset
+}
+
+// validate checks whether CD was configured properly or not.
+func (cd *CD) validate() error {
+	if cd.source1 == nil || cd.source2 == nil {
 		return ErrInvalidSource
 	}
 
-	m.valid = true
+	if cd.offset < 0 {
+		return ErrInvalidOffset
+	}
+
+	cd.valid = true
 
 	return nil
 }
 
-// Calc calculates MACD from the provided data points slice.
+// Calc calculates CD from the provided data points slice.
 // Calculation is based on formula provided by investopedia.
 // https://www.investopedia.com/terms/m/macd.asp.
 // Formula has been improved upon so any indicators can be compared
 // with each other.
-func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
-	if !m.valid {
+func (cd CD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !cd.valid {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, m.Count())
+	dd, err := resize(dd, cd.Count()-cd.offset, cd.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	r1, err := m.source1.Calc(dd)
+	r1, err := cd.source1.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	r2, err := m.source2.Calc(dd)
+	r2, err := cd.source2.Calc(dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -795,88 +835,97 @@ func (m MACD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	return r, nil
 }
 
-// Count determines the total amount of data points needed for MACD
+// Count determines the total amount of data points needed for CD
 // calculation.
-func (m MACD) Count() int {
-	c1 := m.source1.Count()
-	c2 := m.source2.Count()
+func (cd CD) Count() int {
+	c1 := cd.source1.Count()
+	c2 := cd.source2.Count()
 
 	if c1 > c2 {
-		return c1
+		return c1 + cd.offset
 	}
 
-	return c2
+	return c2 + cd.offset
 }
 
-// UnmarshalJSON parses JSON into MACD structure.
-func (m *MACD) UnmarshalJSON(d []byte) error {
-	var i struct {
-		S1 json.RawMessage `json:"source1"`
-		S2 json.RawMessage `json:"source2"`
+// UnmarshalJSON parses JSON into CD structure.
+func (cd *CD) UnmarshalJSON(d []byte) error {
+	var data struct {
+		Source1 json.RawMessage `json:"source1"`
+		Source2 json.RawMessage `json:"source2"`
+		Offset  int             `json:"offset"`
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
+	if err := json.Unmarshal(d, &data); err != nil {
 		return err
 	}
 
-	s1, err := fromJSON(i.S1)
+	src1, err := fromJSON(data.Source1)
 	if err != nil {
 		return err
 	}
 
-	s2, err := fromJSON(i.S2)
+	src2, err := fromJSON(data.Source2)
 	if err != nil {
 		return err
 	}
 
-	nm, _ := NewMACD(s1, s2)
+	nm, _ := NewCD(src1, src2, data.Offset)
+	if err := nm.validate(); err != nil {
+		return err
+	}
 
-	*m = nm
+	*cd = nm
 
 	return nil
 }
 
-// MarshalJSON converts MACD configuration data into JSON.
-func (m MACD) MarshalJSON() ([]byte, error) {
-	s1, err := m.source1.namedMarshalJSON()
+// MarshalJSON converts CD configuration data into JSON.
+func (cd CD) MarshalJSON() ([]byte, error) {
+	src1, err := cd.source1.namedMarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	s2, err := m.source2.namedMarshalJSON()
+	src2, err := cd.source2.namedMarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
 	return json.Marshal(struct {
-		S1 json.RawMessage `json:"source1"`
-		S2 json.RawMessage `json:"source2"`
+		Source1 json.RawMessage `json:"source1"`
+		Source2 json.RawMessage `json:"source2"`
+		Offset  int             `json:"offset"`
 	}{
-		S1: s1, S2: s2,
+		Source1: src1,
+		Source2: src2,
+		Offset:  cd.offset,
 	})
 }
 
-// namedMarshalJSON converts MACD configuration data with its
+// namedMarshalJSON converts CD configuration data with its
 // name into JSON.
-func (m MACD) namedMarshalJSON() ([]byte, error) {
-	s1, err := m.source1.namedMarshalJSON()
+func (cd CD) namedMarshalJSON() ([]byte, error) {
+	src1, err := cd.source1.namedMarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	s2, err := m.source2.namedMarshalJSON()
+	src2, err := cd.source2.namedMarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
 	return json.Marshal(struct {
-		N  String          `json:"name"`
-		S1 json.RawMessage `json:"source1"`
-		S2 json.RawMessage `json:"source2"`
+		Name    String          `json:"name"`
+		Source1 json.RawMessage `json:"source1"`
+		Source2 json.RawMessage `json:"source2"`
+		Offset  int             `json:"offset"`
 	}{
-		N:  NameMACD,
-		S1: s1,
-		S2: s2,
+		Name:    NameCD,
+		Source1: src1,
+		Source2: src2,
+		Offset:  cd.offset,
 	})
 }
 
@@ -893,12 +942,16 @@ type ROC struct {
 	// length specifies how many data points should be used
 	// during the calculations.
 	length int
+
+	// offset specifies how many data points should be skipped from the start
+	// during the calculations.
+	offset int
 }
 
 // NewROC validates provided configuration options and
 // creates new ROC indicator.
-func NewROC(length int) (ROC, error) {
-	r := ROC{length: length}
+func NewROC(length, offset int) (ROC, error) {
+	r := ROC{length: length, offset: offset}
 
 	if err := r.validate(); err != nil {
 		return ROC{}, err
@@ -912,10 +965,19 @@ func (r ROC) Length() int {
 	return r.length
 }
 
+// Offset returns offset configuration option.
+func (r ROC) Offset() int {
+	return r.offset
+}
+
 // validate checks whether ROC was configured properly or not.
 func (r *ROC) validate() error {
 	if r.length < 1 {
 		return ErrInvalidLength
+	}
+
+	if r.offset < 0 {
+		return ErrInvalidOffset
 	}
 
 	r.valid = true
@@ -931,13 +993,13 @@ func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, r.Count())
+	dd, err := resize(dd, r.Count()-r.offset, r.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
 	n := dd[len(dd)-1]
-	l := dd[len(dd)-r.Count()]
+	l := dd[len(dd)-r.length]
 
 	if l.Equal(decimal.Zero) {
 		return decimal.Zero, nil
@@ -949,20 +1011,21 @@ func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for ROC
 // calculation.
 func (r ROC) Count() int {
-	return r.length
+	return r.length + r.offset
 }
 
 // UnmarshalJSON parses JSON into ROC structure.
 func (r *ROC) UnmarshalJSON(d []byte) error {
-	var i struct {
-		L int `json:"length"`
+	var data struct {
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
+	if err := json.Unmarshal(d, &data); err != nil {
 		return err
 	}
 
-	nr, err := NewROC(i.L)
+	nr, err := NewROC(data.Length, data.Offset)
 	if err != nil {
 		return err
 	}
@@ -975,9 +1038,11 @@ func (r *ROC) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts ROC configuration data into JSON.
 func (r ROC) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}{
-		L: r.length,
+		Length: r.length,
+		Offset: r.offset,
 	})
 }
 
@@ -985,11 +1050,13 @@ func (r ROC) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (r ROC) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		L int    `json:"length"`
+		Name   String `json:"name"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameROC,
-		L: r.length,
+		Name:   NameROC,
+		Length: r.length,
+		Offset: r.offset,
 	})
 }
 
@@ -1006,12 +1073,16 @@ type RSI struct {
 	// length specifies how many data points should be used
 	// during the calculations.
 	length int
+
+	// offset specifies how many data points should be skipped from the start
+	// during the calculations.
+	offset int
 }
 
 // NewRSI validates provided configuration options and
 // creates new RSI indicator.
-func NewRSI(length int) (RSI, error) {
-	r := RSI{length: length}
+func NewRSI(length, offset int) (RSI, error) {
+	r := RSI{length: length, offset: offset}
 
 	if err := r.validate(); err != nil {
 		return RSI{}, err
@@ -1025,10 +1096,19 @@ func (r RSI) Length() int {
 	return r.length
 }
 
+// Offset returns offset configuration option.
+func (r RSI) Offset() int {
+	return r.offset
+}
+
 // validate checks whether RSI was configured properly or not.
 func (r *RSI) validate() error {
 	if r.length < 1 {
 		return ErrInvalidLength
+	}
+
+	if r.offset < 0 {
+		return ErrInvalidOffset
 	}
 
 	r.valid = true
@@ -1045,7 +1125,7 @@ func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, r.Count())
+	dd, err := resize(dd, r.Count()-r.offset, r.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -1080,20 +1160,21 @@ func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for RSI
 // calculation.
 func (r RSI) Count() int {
-	return r.length
+	return r.length + r.offset
 }
 
 // UnmarshalJSON parses JSON into RSI structure.
 func (r *RSI) UnmarshalJSON(d []byte) error {
-	var i struct {
-		L int `json:"length"`
+	var data struct {
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
+	if err := json.Unmarshal(d, &data); err != nil {
 		return err
 	}
 
-	nr, err := NewRSI(i.L)
+	nr, err := NewRSI(data.Length, data.Offset)
 	if err != nil {
 		return err
 	}
@@ -1106,9 +1187,11 @@ func (r *RSI) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts RSI configuration data into JSON.
 func (r RSI) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}{
-		L: r.length,
+		Length: r.length,
+		Offset: r.offset,
 	})
 }
 
@@ -1116,11 +1199,13 @@ func (r RSI) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (r RSI) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		L int    `json:"length"`
+		Name   String `json:"name"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameRSI,
-		L: r.length,
+		Name:   NameRSI,
+		Length: r.length,
+		Offset: r.offset,
 	})
 }
 
@@ -1137,12 +1222,16 @@ type SMA struct {
 	// length specifies how many data points should be used
 	// during the calculations.
 	length int
+
+	// offset specifies how many data points should be skipped from the start
+	// during the calculations.
+	offset int
 }
 
 // NewSMA validates provided configuration options and
 // creates new SMA indicator.
-func NewSMA(length int) (SMA, error) {
-	s := SMA{length: length}
+func NewSMA(length, offset int) (SMA, error) {
+	s := SMA{length: length, offset: offset}
 
 	if err := s.validate(); err != nil {
 		return SMA{}, err
@@ -1156,10 +1245,19 @@ func (s SMA) Length() int {
 	return s.length
 }
 
+// Offset returns offset configuration option.
+func (s SMA) Offset() int {
+	return s.offset
+}
+
 // validate checks whether SMA was configured properly or not.
 func (s *SMA) validate() error {
 	if s.length < 1 {
 		return ErrInvalidLength
+	}
+
+	if s.offset < 0 {
+		return ErrInvalidOffset
 	}
 
 	s.valid = true
@@ -1175,7 +1273,7 @@ func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, s.Count())
+	dd, err := resize(dd, s.Count()-s.offset, s.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -1192,20 +1290,21 @@ func (s SMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for SMA
 // calculation.
 func (s SMA) Count() int {
-	return s.length
+	return s.length + s.offset
 }
 
 // UnmarshalJSON parses JSON into SMA structure.
 func (s *SMA) UnmarshalJSON(d []byte) error {
-	var i struct {
-		L int `json:"length"`
+	var data struct {
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
+	if err := json.Unmarshal(d, &data); err != nil {
 		return err
 	}
 
-	ns, err := NewSMA(i.L)
+	ns, err := NewSMA(data.Length, data.Offset)
 	if err != nil {
 		return err
 	}
@@ -1218,9 +1317,11 @@ func (s *SMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts SMA configuration data into JSON.
 func (s SMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}{
-		L: s.length,
+		Length: s.length,
+		Offset: s.offset,
 	})
 }
 
@@ -1228,11 +1329,13 @@ func (s SMA) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (s SMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		L int    `json:"length"`
+		Name   String `json:"name"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameSMA,
-		L: s.length,
+		Name:   NameSMA,
+		Length: s.length,
+		Offset: s.offset,
 	})
 }
 
@@ -1267,6 +1370,11 @@ func (s SRSI) RSI() RSI {
 	return s.rsi
 }
 
+// Offset returns offset configuration option.
+func (s SRSI) Offset() int {
+	return s.rsi.offset
+}
+
 // validate checks whether SRSI was configured properly or not.
 func (s *SRSI) validate() error {
 	if err := s.rsi.validate(); err != nil {
@@ -1286,7 +1394,7 @@ func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	v, err := calcMultiple(dd, s.rsi.length, s.rsi)
+	v, err := calcMultiple(s.rsi, dd, s.rsi.length)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -1316,22 +1424,23 @@ func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data needed for SRSI
 // calculation.
 func (s SRSI) Count() int {
-	return s.rsi.Count()*2 - 1
+	return s.rsi.length*2 + s.rsi.offset - 1
 }
 
 // UnmarshalJSON parses JSON into SRSI structure.
 func (s *SRSI) UnmarshalJSON(d []byte) error {
-	var i struct {
+	var data struct {
 		RSI struct {
-			L int `json:"length"`
+			Length int `json:"length"`
+			Offset int `json:"offset"`
 		} `json:"rsi"`
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
+	if err := json.Unmarshal(d, &data); err != nil {
 		return err
 	}
 
-	r, err := NewRSI(i.RSI.L)
+	r, err := NewRSI(data.RSI.Length, data.RSI.Offset)
 	if err != nil {
 		return err
 	}
@@ -1346,9 +1455,9 @@ func (s *SRSI) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts SRSI configuration data into JSON.
 func (s SRSI) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		R RSI `json:"rsi"`
+		RSI RSI `json:"rsi"`
 	}{
-		R: s.rsi,
+		RSI: s.rsi,
 	})
 }
 
@@ -1356,11 +1465,11 @@ func (s SRSI) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (s SRSI) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		R RSI    `json:"rsi"`
+		Name String `json:"name"`
+		RSI  RSI    `json:"rsi"`
 	}{
-		N: NameSRSI,
-		R: s.rsi,
+		Name: NameSRSI,
+		RSI:  s.rsi,
 	})
 }
 
@@ -1377,12 +1486,16 @@ type Stoch struct {
 	// length specifies how many data points should be used
 	// during the calculations.
 	length int
+
+	// offset specifies how many data points should be skipped from the start
+	// during the calculations.
+	offset int
 }
 
 // NewStoch validates provided configuration options and
 // creates new Stoch indicator.
-func NewStoch(length int) (Stoch, error) {
-	s := Stoch{length: length}
+func NewStoch(length, offset int) (Stoch, error) {
+	s := Stoch{length: length, offset: offset}
 
 	if err := s.validate(); err != nil {
 		return Stoch{}, err
@@ -1396,10 +1509,19 @@ func (s Stoch) Length() int {
 	return s.length
 }
 
+// Offset returns offset configuration option.
+func (s Stoch) Offset() int {
+	return s.offset
+}
+
 // validate checks whether Stoch was configured properly or not.
 func (s *Stoch) validate() error {
 	if s.length < 1 {
 		return ErrInvalidLength
+	}
+
+	if s.offset < 0 {
+		return ErrInvalidOffset
 	}
 
 	s.valid = true
@@ -1415,7 +1537,7 @@ func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, s.Count())
+	dd, err := resize(dd, s.Count()-s.offset, s.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -1444,20 +1566,21 @@ func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for Stoch
 // calculation.
 func (s Stoch) Count() int {
-	return s.length
+	return s.length + s.offset
 }
 
 // UnmarshalJSON parses JSON into Stoch structure.
 func (s *Stoch) UnmarshalJSON(d []byte) error {
-	var i struct {
-		L int `json:"length"`
+	var data struct {
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
+	if err := json.Unmarshal(d, &data); err != nil {
 		return err
 	}
 
-	ns, err := NewStoch(i.L)
+	ns, err := NewStoch(data.Length, data.Offset)
 	if err != nil {
 		return err
 	}
@@ -1470,9 +1593,11 @@ func (s *Stoch) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts Stoch configuration data into JSON.
 func (s Stoch) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}{
-		L: s.length,
+		Length: s.length,
+		Offset: s.offset,
 	})
 }
 
@@ -1480,11 +1605,13 @@ func (s Stoch) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (s Stoch) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		L int    `json:"length"`
+		Name   String `json:"name"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameStoch,
-		L: s.length,
+		Name:   NameStoch,
+		Length: s.length,
+		Offset: s.offset,
 	})
 }
 
@@ -1501,12 +1628,16 @@ type WMA struct {
 	// length specifies how many data points should be used
 	// during the calculations.
 	length int
+
+	// offset specifies how many data points should be skipped from the start
+	// during the calculations.
+	offset int
 }
 
 // NewWMA validates provided configuration options and
 // creates new WMA indicator.
-func NewWMA(length int) (WMA, error) {
-	w := WMA{length: length}
+func NewWMA(length, offset int) (WMA, error) {
+	w := WMA{length: length, offset: offset}
 
 	if err := w.validate(); err != nil {
 		return WMA{}, err
@@ -1520,10 +1651,19 @@ func (w WMA) Length() int {
 	return w.length
 }
 
+// Offset returns offset configuration option.
+func (w WMA) Offset() int {
+	return w.offset
+}
+
 // validate checks whether WMA was configured properly or not.
 func (w *WMA) validate() error {
 	if w.length < 1 {
 		return ErrInvalidLength
+	}
+
+	if w.offset < 0 {
+		return ErrInvalidOffset
 	}
 
 	w.valid = true
@@ -1539,7 +1679,7 @@ func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	dd, err := resize(dd, w.Count())
+	dd, err := resize(dd, w.Count()-w.offset, w.offset)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -1558,20 +1698,21 @@ func (w WMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for WMA
 // calculation.
 func (w WMA) Count() int {
-	return w.length
+	return w.length + w.offset
 }
 
 // UnmarshalJSON parses JSON into WMA structure.
 func (w *WMA) UnmarshalJSON(d []byte) error {
-	var i struct {
-		L int `json:"length"`
+	var data struct {
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}
 
-	if err := json.Unmarshal(d, &i); err != nil {
+	if err := json.Unmarshal(d, &data); err != nil {
 		return err
 	}
 
-	nw, err := NewWMA(i.L)
+	nw, err := NewWMA(data.Length, data.Offset)
 	if err != nil {
 		return err
 	}
@@ -1584,9 +1725,11 @@ func (w *WMA) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts WMA configuration data into JSON.
 func (w WMA) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		L int `json:"length"`
+		Length int `json:"length"`
+		Offset int `json:"offset"`
 	}{
-		L: w.length,
+		Length: w.length,
+		Offset: w.offset,
 	})
 }
 
@@ -1594,10 +1737,12 @@ func (w WMA) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (w WMA) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		N String `json:"name"`
-		L int    `json:"length"`
+		Name   String `json:"name"`
+		Length int    `json:"length"`
+		Offset int    `json:"offset"`
 	}{
-		N: NameWMA,
-		L: w.length,
+		Name:   NameWMA,
+		Length: w.length,
+		Offset: w.offset,
 	})
 }

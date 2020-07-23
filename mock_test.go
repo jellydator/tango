@@ -11,6 +11,7 @@ import (
 var (
 	lockIndicatorMockCalc             sync.RWMutex
 	lockIndicatorMockCount            sync.RWMutex
+	lockIndicatorMockOffset           sync.RWMutex
 	lockIndicatorMocknamedMarshalJSON sync.RWMutex
 )
 
@@ -30,6 +31,9 @@ var _ Indicator = &IndicatorMock{}
 //             CountFunc: func() int {
 // 	               panic("mock out the Count method")
 //             },
+//             OffsetFunc: func() int {
+// 	               panic("mock out the Offset method")
+//             },
 //             namedMarshalJSONFunc: func() ([]byte, error) {
 // 	               panic("mock out the namedMarshalJSON method")
 //             },
@@ -46,6 +50,9 @@ type IndicatorMock struct {
 	// CountFunc mocks the Count method.
 	CountFunc func() int
 
+	// OffsetFunc mocks the Offset method.
+	OffsetFunc func() int
+
 	// namedMarshalJSONFunc mocks the namedMarshalJSON method.
 	namedMarshalJSONFunc func() ([]byte, error)
 
@@ -58,6 +65,9 @@ type IndicatorMock struct {
 		}
 		// Count holds details about calls to the Count method.
 		Count []struct {
+		}
+		// Offset holds details about calls to the Offset method.
+		Offset []struct {
 		}
 		// namedMarshalJSON holds details about calls to the namedMarshalJSON method.
 		namedMarshalJSON []struct {
@@ -119,6 +129,32 @@ func (mock *IndicatorMock) CountCalls() []struct {
 	lockIndicatorMockCount.RLock()
 	calls = mock.calls.Count
 	lockIndicatorMockCount.RUnlock()
+	return calls
+}
+
+// Offset calls OffsetFunc.
+func (mock *IndicatorMock) Offset() int {
+	if mock.OffsetFunc == nil {
+		panic("IndicatorMock.OffsetFunc: method is nil but Indicator.Offset was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockIndicatorMockOffset.Lock()
+	mock.calls.Offset = append(mock.calls.Offset, callInfo)
+	lockIndicatorMockOffset.Unlock()
+	return mock.OffsetFunc()
+}
+
+// OffsetCalls gets all the calls that were made to Offset.
+// Check the length with:
+//     len(mockedIndicator.OffsetCalls())
+func (mock *IndicatorMock) OffsetCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockIndicatorMockOffset.RLock()
+	calls = mock.calls.Offset
+	lockIndicatorMockOffset.RUnlock()
 	return calls
 }
 

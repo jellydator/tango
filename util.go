@@ -21,6 +21,9 @@ var (
 	// ErrInvalidLength is returned when incorrect length is provided.
 	ErrInvalidLength = errors.New("invalid length")
 
+	// ErrInvalidOffset is returned when incorrect offset is provided.
+	ErrInvalidOffset = errors.New("invalid offset")
+
 	// ErrInvalidDataSize is returned when incorrect data size is provided.
 	ErrInvalidDataSize = errors.New("invalid data size")
 
@@ -51,30 +54,30 @@ func (s String) MarshalText() ([]byte, error) {
 
 // resize cuts given array based on length to use for
 // calculations.
-func resize(dd []decimal.Decimal, length int) ([]decimal.Decimal, error) {
-	if length < 1 {
+func resize(dd []decimal.Decimal, length, offset int) ([]decimal.Decimal, error) {
+	if length < 1 || offset < 0 {
 		return dd, nil
 	}
 
-	if length > len(dd) {
+	if length+offset > len(dd) {
 		return nil, ErrInvalidDataSize
 	}
 
-	return dd[len(dd)-length:], nil
+	return dd[len(dd)-length-offset : len(dd)-offset], nil
 }
 
 // resizeCandles cuts given array based on length to use for
 // calculations.
-func resizeCandles(cc []chartype.Candle, length int) ([]chartype.Candle, error) {
-	if length < 1 {
+func resizeCandles(cc []chartype.Candle, length, offset int) ([]chartype.Candle, error) {
+	if length < 1 || offset < 0 {
 		return cc, nil
 	}
 
-	if length > len(cc) {
+	if length+offset > len(cc) {
 		return nil, ErrInvalidDataSize
 	}
 
-	return cc[len(cc)-length:], nil
+	return cc[len(cc)-length-offset : len(cc)-offset], nil
 }
 
 // typicalPrice recalculates array of candles into an array of typical prices.
@@ -112,20 +115,20 @@ func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 }
 
 // calcMultiple calculates specified amount of indicator within given list.
-func calcMultiple(dd []decimal.Decimal, a int, s Indicator) ([]decimal.Decimal, error) {
-	if a < 1 {
+func calcMultiple(src Indicator, dd []decimal.Decimal, count int) ([]decimal.Decimal, error) {
+	if count < 1 {
 		return []decimal.Decimal{}, nil
 	}
 
-	dd, err := resize(dd, s.Count()+a-1)
+	dd, err := resize(dd, src.Count()+count-1, 0)
 	if err != nil {
 		return nil, ErrInvalidDataSize
 	}
 
-	v := make([]decimal.Decimal, a)
+	v := make([]decimal.Decimal, count)
 
-	for i := 0; i < a; i++ {
-		v[i], err = s.Calc(dd[:len(dd)-i])
+	for i := 0; i < count; i++ {
+		v[i], err = src.Calc(dd[:len(dd)-i])
 		if err != nil {
 			return nil, err
 		}
@@ -170,8 +173,8 @@ func fromJSON(d []byte) (Indicator, error) {
 		err := json.Unmarshal(d, &h)
 
 		return h, err
-	case NameMACD:
-		m := MACD{}
+	case NameCD:
+		m := CD{}
 		err := json.Unmarshal(d, &m)
 
 		return m, err
