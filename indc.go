@@ -699,8 +699,8 @@ func NewHMA(w WMA) (HMA, error) {
 	return h, nil
 }
 
-// Equal checks whether provided aroon has exactly the same values as main
-// aroon.
+// Equal checks whether provided hma has exactly the same values as main
+// hma.
 func (h HMA) Equal(h1 HMA) bool {
 	if h.valid != h1.valid {
 		return false
