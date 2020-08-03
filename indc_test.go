@@ -44,6 +44,12 @@ func Test_NewAroon(t *testing.T) {
 	}
 }
 
+func Test_Aroon_Equal(t *testing.T) {
+	assert.True(t, Aroon{trend: "up", length: 3, offset: 2}.equal(Aroon{trend: "up", length: 3, offset: 2}))
+	assert.False(t, Aroon{trend: "down", length: 3, offset: 2}.equal(Aroon{trend: "up", length: 3, offset: 2}))
+	assert.False(t, Aroon{trend: "down", length: 3, offset: 2}.equal(SMA{}))
+}
+
 func Test_Aroon_Length(t *testing.T) {
 	assert.Equal(t, 1, Aroon{length: 1}.Length())
 }
@@ -270,6 +276,13 @@ func Test_NewCCI(t *testing.T) {
 	}
 }
 
+func Test_CCI_Equal(t *testing.T) {
+	assert.True(t, CCI{source: SMA{}, factor: decimal.Zero}.equal(CCI{source: SMA{}, factor: decimal.Zero}))
+	assert.False(t, CCI{source: SMA{}, factor: decimal.NewFromInt(1)}.equal(CCI{source: SMA{}, factor: decimal.Zero}))
+	assert.False(t, CCI{source: SMA{length: 1}, factor: decimal.Zero}.equal(CCI{source: SMA{}, factor: decimal.Zero}))
+	assert.False(t, CCI{source: SMA{length: 1}, factor: decimal.Zero}.equal(SMA{}))
+}
+
 func Test_CCI_Sub(t *testing.T) {
 	assert.Equal(t, &IndicatorMock{}, CCI{source: &IndicatorMock{}}.Sub())
 }
@@ -417,6 +430,10 @@ func Test_CCI_UnmarshalJSON(t *testing.T) {
 			JSON:  `{"source":{"name":"sma","length":1,"offset":4},"factor":"abc"}`,
 			Error: assert.AnError,
 		},
+		"Invalid validation": {
+			JSON:  `{"source":{"name":"sma","length":1,"offset":4},"factor":"-2"}`,
+			Error: assert.AnError,
+		},
 		"Successful unmarshal": {
 			JSON:   `{"source":{"name":"sma","length":1,"offset":2},"factor":"1"}`,
 			Result: CCI{source: SMA{length: 1, valid: true, offset: 2}, factor: decimal.RequireFromString("1"), valid: true},
@@ -561,6 +578,13 @@ func Test_NewDEMA(t *testing.T) {
 			assert.Equal(t, c.Result, dm)
 		})
 	}
+}
+
+func Test_DEMA_Equal(t *testing.T) {
+	assert.True(t, DEMA{ema: EMA{}}.equal(DEMA{ema: EMA{}}))
+	assert.False(t, DEMA{ema: EMA{}, valid: true}.equal(DEMA{ema: EMA{}}))
+	assert.False(t, DEMA{ema: EMA{SMA{length: 4}}}.equal(DEMA{ema: EMA{}}))
+	assert.False(t, DEMA{ema: EMA{}}.equal(SMA{}))
 }
 
 func Test_DEMA_EMA(t *testing.T) {
@@ -751,6 +775,12 @@ func Test_NewEMA(t *testing.T) {
 			assert.Equal(t, c.Result, e)
 		})
 	}
+}
+
+func Test_EMA_Equal(t *testing.T) {
+	assert.True(t, EMA{SMA{}}.equal(EMA{SMA{}}))
+	assert.False(t, EMA{SMA{length: 2}}.equal(EMA{SMA{}}))
+	assert.False(t, EMA{SMA{}}.equal(SMA{}))
 }
 
 func Test_EMA_Length(t *testing.T) {
@@ -991,6 +1021,13 @@ func Test_NewHMA(t *testing.T) {
 	}
 }
 
+func Test_HMA_Equal(t *testing.T) {
+	assert.True(t, HMA{wma: WMA{}}.equal(HMA{wma: WMA{}}))
+	assert.False(t, HMA{wma: WMA{}, valid: true}.equal(HMA{wma: WMA{}}))
+	assert.False(t, HMA{wma: WMA{length: 2}}.equal(HMA{wma: WMA{}}))
+	assert.False(t, HMA{wma: WMA{}}.equal(WMA{}))
+}
+
 func Test_HMA_WMA(t *testing.T) {
 	assert.Equal(t, WMA{length: 1, offset: 2}, HMA{wma: WMA{length: 1, offset: 2}}.WMA())
 }
@@ -1091,6 +1128,10 @@ func Test_HMA_UnmarshalJSON(t *testing.T) {
 			JSON:  `{\"_"/}`,
 			Error: assert.AnError,
 		},
+		"Invalid creation": {
+			JSON:  `{"wma":{"length":-1}}`,
+			Error: assert.AnError,
+		},
 		"Invalid validation": {
 			JSON:  `{"wma":{"length":1}}`,
 			Error: assert.AnError,
@@ -1167,6 +1208,14 @@ func Test_NewCD(t *testing.T) {
 			assert.Equal(t, c.Result, m)
 		})
 	}
+}
+
+func Test_CD_Equal(t *testing.T) {
+	assert.True(t, CD{source1: SMA{}, source2: SMA{}}.equal(CD{source1: SMA{}, source2: SMA{}}))
+	assert.False(t, CD{source1: SMA{}, source2: SMA{}, offset: 2}.equal(CD{source1: SMA{}, source2: SMA{}}))
+	assert.False(t, CD{source1: SMA{length: 1}, source2: SMA{}}.equal(CD{source1: SMA{}, source2: SMA{}}))
+	assert.False(t, CD{source1: SMA{}, source2: SMA{length: 1}}.equal(CD{source1: SMA{}, source2: SMA{}}))
+	assert.False(t, CD{source1: SMA{}, source2: SMA{}}.equal(SMA{}))
 }
 
 func Test_CD_Sub1(t *testing.T) {
@@ -1491,6 +1540,12 @@ func Test_NewROC(t *testing.T) {
 	}
 }
 
+func Test_ROC_Equal(t *testing.T) {
+	assert.True(t, ROC{}.equal(ROC{}))
+	assert.False(t, ROC{length: 1}.equal(ROC{}))
+	assert.False(t, ROC{}.equal(RSI{}))
+}
+
 func Test_ROC_Length(t *testing.T) {
 	assert.Equal(t, 1, ROC{length: 1}.Length())
 }
@@ -1695,6 +1750,12 @@ func Test_NewRSI(t *testing.T) {
 			assert.Equal(t, c.Result, r)
 		})
 	}
+}
+
+func Test_RSI_Equal(t *testing.T) {
+	assert.True(t, RSI{}.equal(RSI{}))
+	assert.False(t, RSI{length: 1}.equal(RSI{}))
+	assert.False(t, RSI{}.equal(ROC{}))
 }
 
 func Test_RSI_Length(t *testing.T) {
@@ -1904,6 +1965,12 @@ func Test_NewSMA(t *testing.T) {
 	}
 }
 
+func Test_SMA_Equal(t *testing.T) {
+	assert.True(t, SMA{}.equal(SMA{}))
+	assert.False(t, SMA{length: 1}.equal(SMA{}))
+	assert.False(t, SMA{}.equal(ROC{}))
+}
+
 func Test_SMA_Length(t *testing.T) {
 	assert.Equal(t, 1, SMA{length: 1}.Length())
 }
@@ -2089,6 +2156,13 @@ func Test_NewSRSI(t *testing.T) {
 			assert.Equal(t, c.Result, s)
 		})
 	}
+}
+
+func Test_SRSI_Equal(t *testing.T) {
+	assert.True(t, SRSI{}.equal(SRSI{}))
+	assert.False(t, SRSI{valid: true}.equal(SRSI{}))
+	assert.False(t, SRSI{rsi: RSI{length: 1}}.equal(SRSI{}))
+	assert.False(t, SRSI{}.equal(ROC{}))
 }
 
 func Test_SRSI_RSI(t *testing.T) {
@@ -2289,6 +2363,12 @@ func Test_NewStoch(t *testing.T) {
 			assert.Equal(t, c.Result, s)
 		})
 	}
+}
+
+func Test_Stoch_Equal(t *testing.T) {
+	assert.True(t, Stoch{}.equal(Stoch{}))
+	assert.False(t, Stoch{length: 1}.equal(Stoch{}))
+	assert.False(t, Stoch{}.equal(ROC{}))
 }
 
 func Test_Stoch_Length(t *testing.T) {
@@ -2497,6 +2577,12 @@ func Test_NewWMA(t *testing.T) {
 			assert.Equal(t, c.Result, w)
 		})
 	}
+}
+
+func Test_WMA_Equal(t *testing.T) {
+	assert.True(t, WMA{}.equal(WMA{}))
+	assert.False(t, WMA{length: 1}.equal(WMA{}))
+	assert.False(t, WMA{}.equal(ROC{}))
 }
 
 func Test_WMA_Length(t *testing.T) {

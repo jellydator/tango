@@ -12,6 +12,7 @@ var (
 	lockIndicatorMockCalc             sync.RWMutex
 	lockIndicatorMockCount            sync.RWMutex
 	lockIndicatorMockOffset           sync.RWMutex
+	lockIndicatorMockequal            sync.RWMutex
 	lockIndicatorMocknamedMarshalJSON sync.RWMutex
 )
 
@@ -34,6 +35,9 @@ var _ Indicator = &IndicatorMock{}
 //             OffsetFunc: func() int {
 // 	               panic("mock out the Offset method")
 //             },
+//             equalFunc: func(i Indicator) bool {
+// 	               panic("mock out the equal method")
+//             },
 //             namedMarshalJSONFunc: func() ([]byte, error) {
 // 	               panic("mock out the namedMarshalJSON method")
 //             },
@@ -53,6 +57,9 @@ type IndicatorMock struct {
 	// OffsetFunc mocks the Offset method.
 	OffsetFunc func() int
 
+	// equalFunc mocks the equal method.
+	equalFunc func(i Indicator) bool
+
 	// namedMarshalJSONFunc mocks the namedMarshalJSON method.
 	namedMarshalJSONFunc func() ([]byte, error)
 
@@ -68,6 +75,11 @@ type IndicatorMock struct {
 		}
 		// Offset holds details about calls to the Offset method.
 		Offset []struct {
+		}
+		// equal holds details about calls to the equal method.
+		equal []struct {
+			// I is the i argument value.
+			I Indicator
 		}
 		// namedMarshalJSON holds details about calls to the namedMarshalJSON method.
 		namedMarshalJSON []struct {
@@ -155,6 +167,37 @@ func (mock *IndicatorMock) OffsetCalls() []struct {
 	lockIndicatorMockOffset.RLock()
 	calls = mock.calls.Offset
 	lockIndicatorMockOffset.RUnlock()
+	return calls
+}
+
+// equal calls equalFunc.
+func (mock *IndicatorMock) equal(i Indicator) bool {
+	if mock.equalFunc == nil {
+		panic("IndicatorMock.equalFunc: method is nil but Indicator.equal was just called")
+	}
+	callInfo := struct {
+		I Indicator
+	}{
+		I: i,
+	}
+	lockIndicatorMockequal.Lock()
+	mock.calls.equal = append(mock.calls.equal, callInfo)
+	lockIndicatorMockequal.Unlock()
+	return mock.equalFunc(i)
+}
+
+// equalCalls gets all the calls that were made to equal.
+// Check the length with:
+//     len(mockedIndicator.equalCalls())
+func (mock *IndicatorMock) equalCalls() []struct {
+	I Indicator
+} {
+	var calls []struct {
+		I Indicator
+	}
+	lockIndicatorMockequal.RLock()
+	calls = mock.calls.equal
+	lockIndicatorMockequal.RUnlock()
 	return calls
 }
 
