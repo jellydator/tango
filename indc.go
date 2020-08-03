@@ -70,7 +70,6 @@ func (a Aroon) Equal(a1 Aroon) bool {
 
 func (a Aroon) equal(i Indicator) bool {
 	a1, ok := i.(Aroon)
-
 	if ok {
 		return a.Equal(a1)
 	}
@@ -250,7 +249,6 @@ func (c CCI) Equal(c1 CCI) bool {
 
 func (c CCI) equal(i Indicator) bool {
 	c1, ok := i.(CCI)
-
 	if ok {
 		return c.Equal(c1)
 	}
@@ -430,7 +428,6 @@ func (dm DEMA) Equal(dm1 DEMA) bool {
 
 func (dm DEMA) equal(i Indicator) bool {
 	dm1, ok := i.(DEMA)
-
 	if ok {
 		return dm.Equal(dm1)
 	}
@@ -574,7 +571,6 @@ func (e EMA) Equal(e1 EMA) bool {
 
 func (e EMA) equal(i Indicator) bool {
 	e1, ok := i.(EMA)
-
 	if ok {
 		return e.Equal(e1)
 	}
@@ -711,7 +707,6 @@ func (h HMA) Equal(h1 HMA) bool {
 
 func (h HMA) equal(i Indicator) bool {
 	h1, ok := i.(HMA)
-
 	if ok {
 		return h.Equal(h1)
 	}
@@ -881,7 +876,6 @@ func (cd CD) Equal(cd1 CD) bool {
 
 func (cd CD) equal(i Indicator) bool {
 	cd1, ok := i.(CD)
-
 	if ok {
 		return cd.Equal(cd1)
 	}
@@ -1082,7 +1076,6 @@ func (r ROC) Equal(r1 ROC) bool {
 
 func (r ROC) equal(i Indicator) bool {
 	r1, ok := i.(ROC)
-
 	if ok {
 		return r.Equal(r1)
 	}
@@ -1229,7 +1222,6 @@ func (r RSI) Equal(r1 RSI) bool {
 
 func (r RSI) equal(i Indicator) bool {
 	r1, ok := i.(RSI)
-
 	if ok {
 		return r.Equal(r1)
 	}
@@ -1394,7 +1386,6 @@ func (s SMA) Equal(s1 SMA) bool {
 
 func (s SMA) equal(i Indicator) bool {
 	s1, ok := i.(SMA)
-
 	if ok {
 		return s.Equal(s1)
 	}
@@ -1539,7 +1530,6 @@ func (s SRSI) Equal(s1 SRSI) bool {
 
 func (s SRSI) equal(i Indicator) bool {
 	s1, ok := i.(SRSI)
-
 	if ok {
 		return s.Equal(s1)
 	}
@@ -1694,7 +1684,6 @@ func (s Stoch) Equal(s1 Stoch) bool {
 
 func (s Stoch) equal(i Indicator) bool {
 	s1, ok := i.(Stoch)
-
 	if ok {
 		return s.Equal(s1)
 	}
@@ -1852,7 +1841,6 @@ func (w WMA) Equal(w1 WMA) bool {
 
 func (w WMA) equal(i Indicator) bool {
 	w1, ok := i.(WMA)
-
 	if ok {
 		return w.Equal(w1)
 	}
