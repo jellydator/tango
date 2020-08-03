@@ -240,7 +240,7 @@ func NewCCI(source Indicator, factor decimal.Decimal) (CCI, error) {
 // Equal checks whether provided cci has exactly the same values as main
 // cci.
 func (c CCI) Equal(c1 CCI) bool {
-	if c.valid != c1.valid || c.factor != c1.factor {
+	if c.valid != c1.valid || !c.factor.Equal(c1.factor) {
 		return false
 	}
 
