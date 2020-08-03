@@ -19,11 +19,13 @@ type Indicator interface {
 	Count() int
 
 	// Offset should determine how many data points should be skipped
-	// from the start during the calculations.
+	// from the end during the calculations.
 	Offset() int
 
 	// namedMarshalJSON converts indicator and its name to JSON.
 	namedMarshalJSON() ([]byte, error)
+
+	equal(i Indicator) bool
 }
 
 // NameAroon returns Aroon indicator name.
@@ -43,7 +45,7 @@ type Aroon struct {
 	// during the calculations.
 	length int
 
-	// offset specifies how many data points should be skipped from the start
+	// offset specifies how many data points should be skipped from the end
 	// during the calculations.
 	offset int
 }
@@ -58,6 +60,21 @@ func NewAroon(trend String, length, offset int) (Aroon, error) {
 	}
 
 	return a, nil
+}
+
+// Equal checks whether provided aroon has exactly the same values as main
+// aroon.
+func (a Aroon) Equal(a1 Aroon) bool {
+	return a == a1
+}
+
+func (a Aroon) equal(i Indicator) bool {
+	a1, ok := i.(Aroon)
+	if ok {
+		return a.Equal(a1)
+	}
+
+	return ok
 }
 
 // Trend returns trend configuration option.
@@ -220,6 +237,25 @@ func NewCCI(source Indicator, factor decimal.Decimal) (CCI, error) {
 	return c, nil
 }
 
+// Equal checks whether provided cci has exactly the same values as main
+// cci.
+func (c CCI) Equal(c1 CCI) bool {
+	if c.valid != c1.valid || c.factor != c1.factor {
+		return false
+	}
+
+	return c.source.equal(c1.source)
+}
+
+func (c CCI) equal(i Indicator) bool {
+	c1, ok := i.(CCI)
+	if ok {
+		return c.Equal(c1)
+	}
+
+	return ok
+}
+
 // Sub returns source configuration option.
 func (c CCI) Sub() Indicator {
 	return c.source
@@ -380,6 +416,25 @@ func NewDEMA(ema EMA) (DEMA, error) {
 	return dm, nil
 }
 
+// Equal checks whether provided dema has exactly the same values as main
+// dema.
+func (dm DEMA) Equal(dm1 DEMA) bool {
+	if dm.valid != dm1.valid {
+		return false
+	}
+
+	return dm.ema.Equal(dm1.ema)
+}
+
+func (dm DEMA) equal(i Indicator) bool {
+	dm1, ok := i.(DEMA)
+	if ok {
+		return dm.Equal(dm1)
+	}
+
+	return ok
+}
+
 // EMA returns ema configuration option.
 func (dm DEMA) EMA() EMA {
 	return dm.ema
@@ -508,6 +563,21 @@ func NewEMA(length, offset int) (EMA, error) {
 	return e, nil
 }
 
+// Equal checks whether provided ema has exactly the same values as main
+// ema.
+func (e EMA) Equal(e1 EMA) bool {
+	return e.SMA.Equal(e1.SMA)
+}
+
+func (e EMA) equal(i Indicator) bool {
+	e1, ok := i.(EMA)
+	if ok {
+		return e.Equal(e1)
+	}
+
+	return ok
+}
+
 // Calc calculates EMA from the provided data points slice.
 // Calculation is based on formula provided by investopedia.
 // https://www.investopedia.com/terms/e/ema.asp.
@@ -623,6 +693,25 @@ func NewHMA(w WMA) (HMA, error) {
 	}
 
 	return h, nil
+}
+
+// Equal checks whether provided hma has exactly the same values as main
+// hma.
+func (h HMA) Equal(h1 HMA) bool {
+	if h.valid != h1.valid {
+		return false
+	}
+
+	return h.wma.Equal(h1.wma)
+}
+
+func (h HMA) equal(i Indicator) bool {
+	h1, ok := i.(HMA)
+	if ok {
+		return h.Equal(h1)
+	}
+
+	return ok
 }
 
 // WMA returns wma configuration option.
@@ -758,7 +847,7 @@ type CD struct {
 	// during calculation process.
 	source2 Indicator
 
-	// offset specifies how many data points should be skipped from the start
+	// offset specifies how many data points should be skipped from the end
 	// during the calculations.
 	offset int
 }
@@ -773,6 +862,25 @@ func NewCD(source1, source2 Indicator, offset int) (CD, error) {
 	}
 
 	return cd, nil
+}
+
+// Equal checks whether provided cd has exactly the same values as main
+// cd.
+func (cd CD) Equal(cd1 CD) bool {
+	if cd.valid != cd1.valid || cd.offset != cd1.offset {
+		return false
+	}
+
+	return cd.source1.equal(cd1.source1) && cd.source2.equal(cd1.source2)
+}
+
+func (cd CD) equal(i Indicator) bool {
+	cd1, ok := i.(CD)
+	if ok {
+		return cd.Equal(cd1)
+	}
+
+	return ok
 }
 
 // Sub1 returns source1 configuration option.
@@ -943,7 +1051,7 @@ type ROC struct {
 	// during the calculations.
 	length int
 
-	// offset specifies how many data points should be skipped from the start
+	// offset specifies how many data points should be skipped from the end
 	// during the calculations.
 	offset int
 }
@@ -958,6 +1066,21 @@ func NewROC(length, offset int) (ROC, error) {
 	}
 
 	return r, nil
+}
+
+// Equal checks whether provided roc has exactly the same values as main
+// roc.
+func (r ROC) Equal(r1 ROC) bool {
+	return r == r1
+}
+
+func (r ROC) equal(i Indicator) bool {
+	r1, ok := i.(ROC)
+	if ok {
+		return r.Equal(r1)
+	}
+
+	return ok
 }
 
 // Length returns length configuration option.
@@ -1074,7 +1197,7 @@ type RSI struct {
 	// during the calculations.
 	length int
 
-	// offset specifies how many data points should be skipped from the start
+	// offset specifies how many data points should be skipped from the end
 	// during the calculations.
 	offset int
 }
@@ -1089,6 +1212,21 @@ func NewRSI(length, offset int) (RSI, error) {
 	}
 
 	return r, nil
+}
+
+// Equal checks whether provided rsi has exactly the same values as main
+// rsi.
+func (r RSI) Equal(r1 RSI) bool {
+	return r == r1
+}
+
+func (r RSI) equal(i Indicator) bool {
+	r1, ok := i.(RSI)
+	if ok {
+		return r.Equal(r1)
+	}
+
+	return ok
 }
 
 // Length returns length configuration option.
@@ -1223,7 +1361,7 @@ type SMA struct {
 	// during the calculations.
 	length int
 
-	// offset specifies how many data points should be skipped from the start
+	// offset specifies how many data points should be skipped from the end
 	// during the calculations.
 	offset int
 }
@@ -1238,6 +1376,21 @@ func NewSMA(length, offset int) (SMA, error) {
 	}
 
 	return s, nil
+}
+
+// Equal checks whether provided sma has exactly the same values as main
+// sma.
+func (s SMA) Equal(s1 SMA) bool {
+	return s == s1
+}
+
+func (s SMA) equal(i Indicator) bool {
+	s1, ok := i.(SMA)
+	if ok {
+		return s.Equal(s1)
+	}
+
+	return ok
 }
 
 // Length returns length configuration option.
@@ -1365,6 +1518,25 @@ func NewSRSI(r RSI) (SRSI, error) {
 	return s, nil
 }
 
+// Equal checks whether provided srsi has exactly the same values as main
+// srsi.
+func (s SRSI) Equal(s1 SRSI) bool {
+	if s.valid != s1.valid {
+		return false
+	}
+
+	return s.rsi.Equal(s1.rsi)
+}
+
+func (s SRSI) equal(i Indicator) bool {
+	s1, ok := i.(SRSI)
+	if ok {
+		return s.Equal(s1)
+	}
+
+	return ok
+}
+
 // RSI returns rsi configuration option.
 func (s SRSI) RSI() RSI {
 	return s.rsi
@@ -1487,7 +1659,7 @@ type Stoch struct {
 	// during the calculations.
 	length int
 
-	// offset specifies how many data points should be skipped from the start
+	// offset specifies how many data points should be skipped from the end
 	// during the calculations.
 	offset int
 }
@@ -1502,6 +1674,21 @@ func NewStoch(length, offset int) (Stoch, error) {
 	}
 
 	return s, nil
+}
+
+// Equal checks whether provided stoch has exactly the same values as main
+// stoch.
+func (s Stoch) Equal(s1 Stoch) bool {
+	return s == s1
+}
+
+func (s Stoch) equal(i Indicator) bool {
+	s1, ok := i.(Stoch)
+	if ok {
+		return s.Equal(s1)
+	}
+
+	return ok
 }
 
 // Length returns length configuration option.
@@ -1629,7 +1816,7 @@ type WMA struct {
 	// during the calculations.
 	length int
 
-	// offset specifies how many data points should be skipped from the start
+	// offset specifies how many data points should be skipped from the end
 	// during the calculations.
 	offset int
 }
@@ -1644,6 +1831,21 @@ func NewWMA(length, offset int) (WMA, error) {
 	}
 
 	return w, nil
+}
+
+// Equal checks whether provided wma has exactly the same values as main
+// wma.
+func (w WMA) Equal(w1 WMA) bool {
+	return w == w1
+}
+
+func (w WMA) equal(i Indicator) bool {
+	w1, ok := i.(WMA)
+	if ok {
+		return w.Equal(w1)
+	}
+
+	return ok
 }
 
 // Length returns length configuration option.
