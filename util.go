@@ -277,9 +277,7 @@ func (t Trend) MarshalText() ([]byte, error) {
 
 // UnmarshalText turns string to appropriate trend value.
 func (t *Trend) UnmarshalText(d []byte) error {
-	f := string(d)
-
-	switch f {
+	switch string(d) {
 	case "up", "u":
 		*t = TrendUp
 	case "down", "d":
@@ -336,9 +334,7 @@ func (b Band) MarshalText() ([]byte, error) {
 
 // UnmarshalText turns JSON string to appropriate band value.
 func (b *Band) UnmarshalText(d []byte) error {
-	f := string(d)
-
-	switch f {
+	switch string(d) {
 	case "upper", "u":
 		*b = BandUpper
 	case "middle", "m":
