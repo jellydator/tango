@@ -192,7 +192,7 @@ func Test_Aroon_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Invalid validation": {
-			JSON:  `{"trend":"upp","length":1,"offset":0}`,
+			JSON:  `{"trend":"up","length":1,"offset":-1}`,
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
@@ -235,6 +235,7 @@ func Test_Aroon_namedMarshalJSON(t *testing.T) {
 
 func Test_NewBB(t *testing.T) {
 	cc := map[string]struct {
+		Percent bool
 		Band    Band
 		StdDevs decimal.Decimal
 		Length  int
@@ -246,11 +247,12 @@ func Test_NewBB(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful creation": {
+			Percent: true,
 			Band:    BandUpper,
 			StdDevs: decimal.RequireFromString("2.5"),
 			Length:  5,
 			Offset:  2,
-			Result:  BB{band: BandUpper, stdDevs: decimal.RequireFromString("2.5"), length: 5, offset: 2, valid: true},
+			Result:  BB{percent: true, band: BandUpper, stdDevs: decimal.RequireFromString("2.5"), length: 5, offset: 2, valid: true},
 		},
 	}
 
@@ -260,7 +262,7 @@ func Test_NewBB(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			v, err := NewBB(c.Band, c.StdDevs, c.Length, c.Offset)
+			v, err := NewBB(c.Percent, c.Band, c.StdDevs, c.Length, c.Offset)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -272,9 +274,13 @@ func Test_NewBB(t *testing.T) {
 }
 
 func Test_BB_Equal(t *testing.T) {
-	assert.True(t, BB{band: BandUpper, stdDevs: decimal.RequireFromString("2"), length: 3, offset: 2}.equal(BB{band: BandUpper, stdDevs: decimal.RequireFromString("2"), length: 3, offset: 2}))
+	assert.True(t, BB{percent: true, band: BandUpper, stdDevs: decimal.RequireFromString("2"), length: 3, offset: 2}.equal(BB{percent: true, band: BandUpper, stdDevs: decimal.RequireFromString("2"), length: 3, offset: 2}))
 	assert.False(t, BB{band: BandUpper, stdDevs: decimal.RequireFromString("2"), length: 3, offset: 2}.equal(BB{band: BandUpper, stdDevs: decimal.RequireFromString("3"), length: 3, offset: 2}))
 	assert.False(t, BB{band: BandUpper, length: 3, offset: 2}.equal(SMA{}))
+}
+
+func Test_BB_Percent(t *testing.T) {
+	assert.Equal(t, true, BB{percent: true}.Percent())
 }
 
 func Test_BB_Band(t *testing.T) {
@@ -312,6 +318,16 @@ func Test_BB_validate(t *testing.T) {
 		"Invalid offset": {
 			BB:    BB{band: BandUpper, length: 1, offset: -1},
 			Error: ErrInvalidOffset,
+			Valid: false,
+		},
+		"Invalid BB configuration (BandMiddle)": {
+			BB:    BB{percent: true, band: BandMiddle, length: 1, offset: 1},
+			Error: errors.New("invalid bb configuration"),
+			Valid: false,
+		},
+		"Invalid BB configuration (BandWidth)": {
+			BB:    BB{percent: true, band: BandWidth, length: 1, offset: 1},
+			Error: errors.New("invalid bb configuration"),
 			Valid: false,
 		},
 		"Successful validation": {
@@ -359,7 +375,18 @@ func Test_BB_Calc(t *testing.T) {
 				decimal.NewFromInt(38),
 				decimal.NewFromInt(32),
 			},
-			Result: decimal.NewFromInt(35).Add(sqrt(decimal.RequireFromString("13.6"))),
+			Result: decimal.RequireFromString("38.68781778"),
+		},
+		"Successful calculation with BandUpper using percent": {
+			BB: BB{percent: true, band: BandUpper, length: 5, stdDevs: decimal.RequireFromString("1"), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(40),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.RequireFromString("10.53662224"),
 		},
 		"Successful calculation with BandUpper using offset": {
 			BB: BB{band: BandUpper, length: 5, stdDevs: decimal.RequireFromString("1"), offset: 2, valid: true},
@@ -372,7 +399,7 @@ func Test_BB_Calc(t *testing.T) {
 				decimal.NewFromInt(38),
 				decimal.NewFromInt(32),
 			},
-			Result: decimal.NewFromInt(35).Add(sqrt(decimal.RequireFromString("13.6"))),
+			Result: decimal.RequireFromString("38.68781778"),
 		},
 		"Successful calculation with BandMiddle": {
 			BB: BB{band: BandMiddle, length: 5, stdDevs: decimal.RequireFromString("1"), offset: 0, valid: true},
@@ -399,7 +426,7 @@ func Test_BB_Calc(t *testing.T) {
 			Result: decimal.NewFromInt(35),
 		},
 		"Successful calculation with BandLower": {
-			BB: BB{band: BandLower, length: 5, stdDevs: decimal.RequireFromString("2.5"), offset: 0, valid: true},
+			BB: BB{band: BandLower, length: 5, stdDevs: decimal.RequireFromString("1"), offset: 0, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 				decimal.NewFromInt(35),
@@ -407,7 +434,18 @@ func Test_BB_Calc(t *testing.T) {
 				decimal.NewFromInt(38),
 				decimal.NewFromInt(32),
 			},
-			Result: decimal.NewFromInt(35).Sub(sqrt(decimal.RequireFromString("13.6")).Mul(decimal.RequireFromString("2.5"))),
+			Result: decimal.RequireFromString("31.31218222"),
+		},
+		"Successful calculation with BandLower using percent": {
+			BB: BB{percent: true, band: BandLower, length: 5, stdDevs: decimal.RequireFromString("1"), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(40),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.RequireFromString("-10.53662224"),
 		},
 		"Successful calculation with BandLower using offset": {
 			BB: BB{band: BandLower, length: 5, stdDevs: decimal.RequireFromString("2"), offset: 2, valid: true},
@@ -420,7 +458,65 @@ func Test_BB_Calc(t *testing.T) {
 				decimal.NewFromInt(38),
 				decimal.NewFromInt(32),
 			},
-			Result: decimal.NewFromInt(35).Sub(sqrt(decimal.RequireFromString("13.6")).Mul(decimal.RequireFromString("2"))),
+			Result: decimal.RequireFromString("27.62436443"),
+		},
+		"Successful calculation with BandWidth": {
+			BB: BB{band: BandWidth, length: 20, stdDevs: decimal.RequireFromString("2"), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.RequireFromString("62.34"),
+				decimal.RequireFromString("62.72"),
+				decimal.RequireFromString("62.02"),
+				decimal.RequireFromString("63.98"),
+				decimal.RequireFromString("64.17"),
+				decimal.RequireFromString("64.71"),
+				decimal.RequireFromString("64.75"),
+				decimal.RequireFromString("63.94"),
+				decimal.RequireFromString("63.82"),
+				decimal.RequireFromString("63.19"),
+				decimal.RequireFromString("62.84"),
+				decimal.RequireFromString("62.25"),
+				decimal.RequireFromString("63.20"),
+				decimal.RequireFromString("63.02"),
+				decimal.RequireFromString("63.35"),
+				decimal.RequireFromString("64.21"),
+				decimal.RequireFromString("64.91"),
+				decimal.RequireFromString("64.05"),
+				decimal.RequireFromString("63.28"),
+				decimal.RequireFromString("62.78"),
+				decimal.RequireFromString("62.36"),
+				decimal.RequireFromString("63.19"),
+				decimal.RequireFromString("64.69"),
+			},
+			Result: decimal.RequireFromString("4.91959301"),
+		},
+		"Successful calculation with BandWidth using offset": {
+			BB: BB{band: BandWidth, length: 20, stdDevs: decimal.RequireFromString("2"), offset: 2, valid: true},
+			Data: []decimal.Decimal{
+				decimal.RequireFromString("62.02"),
+				decimal.RequireFromString("63.98"),
+				decimal.RequireFromString("64.17"),
+				decimal.RequireFromString("64.71"),
+				decimal.RequireFromString("64.75"),
+				decimal.RequireFromString("63.94"),
+				decimal.RequireFromString("63.82"),
+				decimal.RequireFromString("63.19"),
+				decimal.RequireFromString("62.84"),
+				decimal.RequireFromString("62.25"),
+				decimal.RequireFromString("63.20"),
+				decimal.RequireFromString("63.02"),
+				decimal.RequireFromString("63.35"),
+				decimal.RequireFromString("64.21"),
+				decimal.RequireFromString("64.91"),
+				decimal.RequireFromString("64.05"),
+				decimal.RequireFromString("63.28"),
+				decimal.RequireFromString("62.78"),
+				decimal.RequireFromString("62.36"),
+				decimal.RequireFromString("63.19"),
+				decimal.RequireFromString("64.69"),
+				decimal.RequireFromString("62.34"),
+				decimal.RequireFromString("62.72"),
+			},
+			Result: decimal.RequireFromString("4.91959301"),
 		},
 	}
 
@@ -436,7 +532,7 @@ func Test_BB_Calc(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, c.Result.String(), res.String())
+			assert.Equal(t, c.Result.Round(8).String(), res.Round(8).String())
 		})
 	}
 }
@@ -456,12 +552,12 @@ func Test_BB_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Invalid validation": {
-			JSON:  `{"band":"brand","length":1,"offset":0}`,
+			JSON:  `{"band":"upper","length":1,"offset":-1}`,
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
-			JSON:   `{"band":"lower","standard_deviations":"3","length":2,"offset":4}`,
-			Result: BB{band: BandLower, stdDevs: decimal.RequireFromString("3"), length: 2, offset: 4, valid: true},
+			JSON:   `{"percent": true, "band":"lower","standard_deviations":"3","length":2,"offset":4}`,
+			Result: BB{percent: true, band: BandLower, stdDevs: decimal.RequireFromString("3"), length: 2, offset: 4, valid: true},
 		},
 	}
 
@@ -484,17 +580,17 @@ func Test_BB_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_BB_MarshalJSON(t *testing.T) {
-	d, err := BB{band: BandLower, stdDevs: decimal.RequireFromString("1"), length: 3, offset: 0}.MarshalJSON()
+	d, err := BB{percent: true, band: BandLower, stdDevs: decimal.RequireFromString("1"), length: 3, offset: 0}.MarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"band":"lower","standard_deviations":"1","length":3,"offset":0}`, string(d))
+	assert.JSONEq(t, `{"percent":true,"band":"lower","standard_deviations":"1","length":3,"offset":0}`, string(d))
 }
 
 func Test_BB_namedMarshalJSON(t *testing.T) {
-	d, err := BB{band: BandUpper, stdDevs: decimal.RequireFromString("2.3"), length: 1, offset: 4}.namedMarshalJSON()
+	d, err := BB{percent: true, band: BandUpper, stdDevs: decimal.RequireFromString("2.3"), length: 1, offset: 4}.namedMarshalJSON()
 
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"name":"bb","band":"upper","standard_deviations":"2.3","length":1,"offset":4}`, string(d))
+	assert.JSONEq(t, `{"percent":true,"name":"bb","band":"upper","standard_deviations":"2.3","length":1,"offset":4}`, string(d))
 }
 
 func Test_NewCCI(t *testing.T) {

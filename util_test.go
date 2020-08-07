@@ -504,6 +504,9 @@ func Test_Band_Validate(t *testing.T) {
 		"Successful BandLower validation": {
 			Band: BandLower,
 		},
+		"Successful BandWidth validation": {
+			Band: BandWidth,
+		},
 	}
 
 	for cn, c := range cc {
@@ -536,9 +539,13 @@ func Test_Band_MarshalJSON(t *testing.T) {
 			Band: BandMiddle,
 			JSON: `"middle"`,
 		},
-		"Successful Band marshal": {
+		"Successful BandLower marshal": {
 			Band: BandLower,
 			JSON: `"lower"`,
+		},
+		"Successful BandWidth marshal": {
+			Band: BandWidth,
+			JSON: `"width"`,
 		},
 	}
 
@@ -596,6 +603,14 @@ func Test_Band_UnmarshalJSON(t *testing.T) {
 		"Successful BandLower unmarshal  (short form)": {
 			JSON:   `"l"`,
 			Result: BandLower,
+		},
+		"Successful BandWidth unmarshal  (long form)": {
+			JSON:   `"width"`,
+			Result: BandWidth,
+		},
+		"Successful BandWidth unmarshal  (short form)": {
+			JSON:   `"w"`,
+			Result: BandWidth,
 		},
 	}
 

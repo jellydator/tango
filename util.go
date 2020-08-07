@@ -12,6 +12,9 @@ import (
 var (
 	// Hundred is just plain 100 in decimal format.
 	Hundred = decimal.NewFromInt(100)
+
+	// One is just plain 1 in decimal format.
+	One = decimal.NewFromInt(1)
 )
 
 var (
@@ -259,6 +262,7 @@ func (t Trend) Validate() error {
 // representation in JSON.
 func (t Trend) MarshalJSON() ([]byte, error) {
 	var v string
+
 	switch t {
 	case TrendUp:
 		v = "up"
@@ -292,15 +296,15 @@ func (t *Trend) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
+// Available Bollinger Band indicator types.
 const (
-	// BandUpper specifies upper bollinger band type.
 	BandUpper Band = iota + 1
 
-	// BandUpper specifies middle bollinger band type.
 	BandMiddle
 
-	// BandUpper specifies lower bollinger band type.
 	BandLower
+
+	BandWidth
 )
 
 // Band specifies which band should be used.
@@ -310,7 +314,7 @@ type Band int
 // supported band types or not.
 func (b Band) Validate() error {
 	switch b {
-	case BandUpper, BandMiddle, BandLower:
+	case BandUpper, BandMiddle, BandLower, BandWidth:
 		return nil
 	default:
 		return ErrInvalidBand
@@ -321,6 +325,7 @@ func (b Band) Validate() error {
 // representation in JSON.
 func (b Band) MarshalJSON() ([]byte, error) {
 	var v string
+
 	switch b {
 	case BandUpper:
 		v = "upper"
@@ -328,6 +333,8 @@ func (b Band) MarshalJSON() ([]byte, error) {
 		v = "middle"
 	case BandLower:
 		v = "lower"
+	case BandWidth:
+		v = "width"
 	default:
 		return nil, ErrInvalidBand
 	}
@@ -351,6 +358,8 @@ func (b *Band) UnmarshalJSON(d []byte) error {
 		*b = BandMiddle
 	case "lower", "l":
 		*b = BandLower
+	case "width", "w":
+		*b = BandWidth
 	default:
 		return ErrInvalidBand
 	}
