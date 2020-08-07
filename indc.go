@@ -214,8 +214,8 @@ type BB struct {
 	// band specifies which bollinger band to calculate.
 	band Band
 
-	// stdDev specifies how many standard deviations to apply.
-	stdDev decimal.Decimal
+	// stdDevs specifies how many standard deviations to apply.
+	stdDevs decimal.Decimal
 
 	// length specifies how many data points should be used
 	// during the calculations.
@@ -228,8 +228,8 @@ type BB struct {
 
 // NewBB validates provided configuration options and creates
 // new BB indicator.
-func NewBB(band Band, stdDev decimal.Decimal, length, offset int) (BB, error) {
-	bb := BB{band: band, stdDev: stdDev, length: length, offset: offset}
+func NewBB(band Band, stdDevs decimal.Decimal, length, offset int) (BB, error) {
+	bb := BB{band: band, stdDevs: stdDevs, length: length, offset: offset}
 
 	if err := bb.validate(); err != nil {
 		return BB{}, err
@@ -241,7 +241,13 @@ func NewBB(band Band, stdDev decimal.Decimal, length, offset int) (BB, error) {
 // Equal checks whether provided band has exactly the same values as main
 // band.
 func (bb BB) Equal(bb1 BB) bool {
-	return bb == bb1
+	if bb.valid != bb1.valid || bb.band != bb1.band ||
+		!bb.stdDevs.Equal(bb1.stdDevs) || bb.length != bb1.length ||
+		bb.offset != bb1.offset {
+		return false
+	}
+
+	return true
 }
 
 func (bb BB) equal(i Indicator) bool {
@@ -260,7 +266,7 @@ func (bb BB) Band() Band {
 
 // StandardDeviations returns standard deviation configuration option.
 func (bb BB) StandardDeviations() decimal.Decimal {
-	return bb.stdDev
+	return bb.stdDevs
 }
 
 // Length returns length configuration option.
@@ -313,7 +319,7 @@ func (bb BB) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return r, nil
 	}
 
-	a := standardDeviation(dd).Mul(bb.stdDev)
+	a := standardDeviation(dd).Mul(bb.stdDevs)
 
 	if bb.band == BandUpper {
 		return r.Add(a), nil
@@ -331,17 +337,17 @@ func (bb BB) Count() int {
 // UnmarshalJSON parses JSON into Aroon structure.
 func (bb *BB) UnmarshalJSON(d []byte) error {
 	var data struct {
-		Band   Band            `json:"band"`
-		StdDev decimal.Decimal `json:"standard_deviation"`
-		Length int             `json:"length"`
-		Offset int             `json:"offset"`
+		Band    Band            `json:"band"`
+		StdDevs decimal.Decimal `json:"standard_deviations"`
+		Length  int             `json:"length"`
+		Offset  int             `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &data); err != nil {
 		return err
 	}
 
-	nbb, err := NewBB(data.Band, data.StdDev, data.Length, data.Offset)
+	nbb, err := NewBB(data.Band, data.StdDevs, data.Length, data.Offset)
 	if err != nil {
 		return err
 	}
@@ -354,15 +360,15 @@ func (bb *BB) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts BB configuration data into JSON.
 func (bb BB) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Band   Band            `json:"band"`
-		StdDev decimal.Decimal `json:"standard_deviation"`
-		Length int             `json:"length"`
-		Offset int             `json:"offset"`
+		Band    Band            `json:"band"`
+		StdDevs decimal.Decimal `json:"standard_deviations"`
+		Length  int             `json:"length"`
+		Offset  int             `json:"offset"`
 	}{
-		Band:   bb.band,
-		StdDev: bb.stdDev,
-		Length: bb.length,
-		Offset: bb.offset,
+		Band:    bb.band,
+		StdDevs: bb.stdDevs,
+		Length:  bb.length,
+		Offset:  bb.offset,
 	})
 }
 
@@ -370,17 +376,17 @@ func (bb BB) MarshalJSON() ([]byte, error) {
 // name into JSON.
 func (bb BB) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Name   String          `json:"name"`
-		Band   Band            `json:"band"`
-		StdDev decimal.Decimal `json:"standard_deviation"`
-		Length int             `json:"length"`
-		Offset int             `json:"offset"`
+		Name    String          `json:"name"`
+		Band    Band            `json:"band"`
+		StdDevs decimal.Decimal `json:"standard_deviations"`
+		Length  int             `json:"length"`
+		Offset  int             `json:"offset"`
 	}{
-		Name:   NameBB,
-		Band:   bb.band,
-		StdDev: bb.stdDev,
-		Length: bb.length,
-		Offset: bb.offset,
+		Name:    NameBB,
+		Band:    bb.band,
+		StdDevs: bb.stdDevs,
+		Length:  bb.length,
+		Offset:  bb.offset,
 	})
 }
 
