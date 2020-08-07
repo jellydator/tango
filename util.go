@@ -3,9 +3,9 @@ package indc
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"strings"
 
-	"github.com/jellydator/chartype"
 	"github.com/shopspring/decimal"
 )
 
@@ -74,68 +74,74 @@ func resize(dd []decimal.Decimal, length, offset int) ([]decimal.Decimal, error)
 	return dd[len(dd)-length-offset : len(dd)-offset], nil
 }
 
-// resizeCandles cuts given array based on length to use for
-// calculations.
-func resizeCandles(cc []chartype.Candle, length, offset int) ([]chartype.Candle, error) {
-	if length < 1 || offset < 0 {
-		return cc, nil
+// avearage calculates average decimal number of given array.
+func average(dd []decimal.Decimal) decimal.Decimal {
+	var sum decimal.Decimal
+
+	for i := range dd {
+		sum = sum.Add(dd[i])
 	}
 
-	if length+offset > len(cc) {
-		return nil, ErrInvalidDataSize
-	}
-
-	return cc[len(cc)-length-offset : len(cc)-offset], nil
+	return sum.Div(decimal.NewFromInt(int64(len(dd))))
 }
 
-// typicalPrice recalculates array of candles into an array of typical prices.
-func typicalPrice(cc []chartype.Candle) []decimal.Decimal {
-	tp := make([]decimal.Decimal, len(cc))
+func sqrt(d decimal.Decimal) decimal.Decimal {
+	f, _ := d.Float64()
 
-	for i := 0; i < len(cc); i++ {
-		tp[i] = cc[i].High.Add(cc[i].Low.Add(cc[i].Close)).Div(decimal.NewFromInt(3))
-	}
-
-	return tp
+	return decimal.NewFromFloat(math.Sqrt(f))
 }
 
 // meanDeviation calculates mean deviation of given array.
 func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
-	s := decimal.Zero
-	rez := decimal.Zero
 	length := decimal.NewFromInt(int64(len(dd)))
 
 	if length.Equal(decimal.Zero) {
 		return decimal.Zero
 	}
 
-	for i := 0; i < len(dd); i++ {
-		s = s.Add(dd[i])
+	res := decimal.Zero
+	mean := average(dd)
+
+	for i := range dd {
+		res = res.Add(dd[i].Sub(mean).Abs().Div(length))
 	}
 
-	s = s.Div(length)
-
-	for i := 0; i < len(dd); i++ {
-		rez = rez.Add(dd[i].Sub(s).Abs())
-	}
-
-	return rez.Div(length)
+	return res
 }
 
-// calcMultiple calculates specified amount of indicator within given list.
-func calcMultiple(src Indicator, dd []decimal.Decimal, count int) ([]decimal.Decimal, error) {
-	if count < 1 {
+// standardDeviation calculates standart deviation of given array.
+func standardDeviation(dd []decimal.Decimal) decimal.Decimal {
+	length := decimal.NewFromInt(int64(len(dd)))
+
+	if length.Equal(decimal.Zero) {
+		return decimal.Zero
+	}
+
+	res := decimal.Zero
+	mean := average(dd)
+
+	for i := range dd {
+		res = res.Add(dd[i].Sub(mean).Pow(decimal.NewFromInt(2)).Div(length))
+	}
+
+	return sqrt(res)
+}
+
+// calcMultiple calculates specified amount of values by using specified
+// indicator.
+func calcMultiple(src Indicator, amount int, dd []decimal.Decimal) ([]decimal.Decimal, error) {
+	if amount < 1 {
 		return []decimal.Decimal{}, nil
 	}
 
-	dd, err := resize(dd, src.Count()+count-1, 0)
+	dd, err := resize(dd, src.Count()+amount-1, 0)
 	if err != nil {
 		return nil, ErrInvalidDataSize
 	}
 
-	v := make([]decimal.Decimal, count)
+	v := make([]decimal.Decimal, amount)
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < amount; i++ {
 		v[i], err = src.Calc(dd[:len(dd)-i])
 		if err != nil {
 			return nil, err
