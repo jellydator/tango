@@ -300,8 +300,8 @@ func Test_fromJSON(t *testing.T) {
 			Result:    Aroon{trend: TrendUp, length: 1, offset: 2, valid: true},
 		},
 		"Successful creation of BB": {
-			ByteArray: []byte(`{"name":"bb","band":"upper","standard_deviations":"2","length":1,"offset":2}`),
-			Result:    BB{band: BandUpper, stdDevs: decimal.RequireFromString("2"), length: 1, offset: 2, valid: true},
+			ByteArray: []byte(`{"name":"bb","band":"upper","std_dev":"2","length":1,"offset":2}`),
+			Result:    BB{band: BandUpper, stdDev: decimal.RequireFromString("2"), length: 1, offset: 2, valid: true},
 		},
 		"Successful creation of CCI": {
 			ByteArray: []byte(`{"name":"cci","source":{"name":"sma","length":1,"offset":3}}`),
@@ -399,10 +399,10 @@ func Test_Trend_Validate(t *testing.T) {
 	}
 }
 
-func Test_Trend_MarshalJSON(t *testing.T) {
+func Test_Trend_MarshalText(t *testing.T) {
 	cc := map[string]struct {
 		Trend Trend
-		JSON  string
+		Text  string
 		Err   error
 	}{
 		"Invalid Trend": {
@@ -411,11 +411,11 @@ func Test_Trend_MarshalJSON(t *testing.T) {
 		},
 		"Successful TrendUp marshal": {
 			Trend: TrendUp,
-			JSON:  `"up"`,
+			Text:  "up",
 		},
 		"Successful TrendDown marshal": {
 			Trend: TrendDown,
-			JSON:  `"down"`,
+			Text:  "down",
 		},
 	}
 
@@ -425,45 +425,41 @@ func Test_Trend_MarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res, err := c.Trend.MarshalJSON()
+			res, err := c.Trend.MarshalText()
 			AssertEqualError(t, c.Err, err)
 			if err != nil {
 				return
 			}
 
-			assert.JSONEq(t, c.JSON, string(res))
+			assert.Equal(t, c.Text, string(res))
 		})
 	}
 }
 
-func Test_Trend_UnmarshalJSON(t *testing.T) {
+func Test_Trend_UnmarshalText(t *testing.T) {
 	cc := map[string]struct {
-		JSON   string
+		Text   string
 		Result Trend
 		Err    error
 	}{
-		"Malformed JSON": {
-			JSON: `{"70"`,
-			Err:  assert.AnError,
-		},
 		"Invalid Trend": {
-			JSON: `"70"`,
+			Text: "70",
 			Err:  ErrInvalidTrend,
 		},
 		"Successful TrendUp unmarshal (long form)": {
-			JSON:   `"up"`,
+			Text:   "up",
 			Result: TrendUp,
 		},
 		"Successful TrendUp unmarshal (short form)": {
-			JSON:   `"u"`,
+			Text:   "u",
 			Result: TrendUp,
 		},
 		"Successful TrendDown unmarshal  (long form)": {
-			JSON:   `"down"`,
+			Text:   "down",
 			Result: TrendDown,
 		},
 		"Successful TrendDown unmarshal  (short form)": {
-			JSON:   `"d"`,
+			Text:   "d",
 			Result: TrendDown,
 		},
 	}
@@ -475,7 +471,7 @@ func Test_Trend_UnmarshalJSON(t *testing.T) {
 			t.Parallel()
 
 			var tr Trend
-			err := tr.UnmarshalJSON([]byte(c.JSON))
+			err := tr.UnmarshalText([]byte(c.Text))
 			AssertEqualError(t, c.Err, err)
 			if err != nil {
 				return
@@ -521,10 +517,10 @@ func Test_Band_Validate(t *testing.T) {
 	}
 }
 
-func Test_Band_MarshalJSON(t *testing.T) {
+func Test_Band_MarshalText(t *testing.T) {
 	cc := map[string]struct {
 		Band Band
-		JSON string
+		Text string
 		Err  error
 	}{
 		"Invalid Band": {
@@ -533,19 +529,19 @@ func Test_Band_MarshalJSON(t *testing.T) {
 		},
 		"Successful BandUpper marshal": {
 			Band: BandUpper,
-			JSON: `"upper"`,
+			Text: "upper",
 		},
 		"Successful BandMiddle marshal": {
 			Band: BandMiddle,
-			JSON: `"middle"`,
+			Text: "middle",
 		},
 		"Successful BandLower marshal": {
 			Band: BandLower,
-			JSON: `"lower"`,
+			Text: "lower",
 		},
 		"Successful BandWidth marshal": {
 			Band: BandWidth,
-			JSON: `"width"`,
+			Text: "width",
 		},
 	}
 
@@ -555,61 +551,57 @@ func Test_Band_MarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res, err := c.Band.MarshalJSON()
+			res, err := c.Band.MarshalText()
 			AssertEqualError(t, c.Err, err)
 			if err != nil {
 				return
 			}
 
-			assert.JSONEq(t, c.JSON, string(res))
+			assert.Equal(t, c.Text, string(res))
 		})
 	}
 }
 
-func Test_Band_UnmarshalJSON(t *testing.T) {
+func Test_Band_UnmarshalText(t *testing.T) {
 	cc := map[string]struct {
-		JSON   string
+		Text   string
 		Result Band
 		Err    error
 	}{
-		"Malformed JSON": {
-			JSON: `{"70"`,
-			Err:  assert.AnError,
-		},
 		"Invalid Band": {
-			JSON: `"70"`,
+			Text: "70",
 			Err:  ErrInvalidBand,
 		},
 		"Successful BandUpper unmarshal (long form)": {
-			JSON:   `"upper"`,
+			Text:   "upper",
 			Result: BandUpper,
 		},
 		"Successful BandUpper unmarshal (short form)": {
-			JSON:   `"u"`,
+			Text:   "u",
 			Result: BandUpper,
 		},
 		"Successful BandMiddle unmarshal  (long form)": {
-			JSON:   `"middle"`,
+			Text:   "middle",
 			Result: BandMiddle,
 		},
 		"Successful BandMiddle unmarshal  (short form)": {
-			JSON:   `"m"`,
+			Text:   "m",
 			Result: BandMiddle,
 		},
 		"Successful BandLower unmarshal  (long form)": {
-			JSON:   `"lower"`,
+			Text:   "lower",
 			Result: BandLower,
 		},
 		"Successful BandLower unmarshal  (short form)": {
-			JSON:   `"l"`,
+			Text:   "l",
 			Result: BandLower,
 		},
 		"Successful BandWidth unmarshal  (long form)": {
-			JSON:   `"width"`,
+			Text:   "width",
 			Result: BandWidth,
 		},
 		"Successful BandWidth unmarshal  (short form)": {
-			JSON:   `"w"`,
+			Text:   "w",
 			Result: BandWidth,
 		},
 	}
@@ -621,7 +613,7 @@ func Test_Band_UnmarshalJSON(t *testing.T) {
 			t.Parallel()
 
 			var b Band
-			err := b.UnmarshalJSON([]byte(c.JSON))
+			err := b.UnmarshalText([]byte(c.Text))
 			AssertEqualError(t, c.Err, err)
 			if err != nil {
 				return

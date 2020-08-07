@@ -218,8 +218,8 @@ type BB struct {
 	// band specifies which bollinger band to calculate.
 	band Band
 
-	// stdDevs specifies how many standard deviations to apply.
-	stdDevs decimal.Decimal
+	// stdDev specifies how many standard deviations to apply.
+	stdDev decimal.Decimal
 
 	// length specifies how many data points should be used
 	// during the calculations.
@@ -232,8 +232,14 @@ type BB struct {
 
 // NewBB validates provided configuration options and creates
 // new BB indicator.
-func NewBB(percent bool, band Band, stdDevs decimal.Decimal, length, offset int) (BB, error) {
-	bb := BB{percent: percent, band: band, stdDevs: stdDevs, length: length, offset: offset}
+func NewBB(percent bool, band Band, stdDev decimal.Decimal, length, offset int) (BB, error) {
+	bb := BB{
+		percent: percent,
+		band:    band,
+		stdDev:  stdDev,
+		length:  length,
+		offset:  offset,
+	}
 
 	if err := bb.validate(); err != nil {
 		return BB{}, err
@@ -245,14 +251,9 @@ func NewBB(percent bool, band Band, stdDevs decimal.Decimal, length, offset int)
 // Equal checks whether provided band has exactly the same values as main
 // band.
 func (bb BB) Equal(bb1 BB) bool {
-	if bb.valid != bb1.valid || bb.percent != bb1.percent ||
-		bb.band != bb1.band || !bb.stdDevs.Equal(bb1.stdDevs) ||
-		bb.length != bb1.length || bb.offset != bb1.offset {
-
-		return false
-	}
-
-	return true
+	return bb.valid == bb1.valid && bb.percent == bb1.percent &&
+		bb.band == bb1.band && bb.stdDev.Equal(bb1.stdDev) &&
+		bb.length == bb1.length && bb.offset == bb1.offset
 }
 
 func (bb BB) equal(i Indicator) bool {
@@ -274,9 +275,9 @@ func (bb BB) Band() Band {
 	return bb.band
 }
 
-// StandardDeviations returns standard deviation configuration option.
-func (bb BB) StandardDeviations() decimal.Decimal {
-	return bb.stdDevs
+// StdDev returns standard deviation configuration option.
+func (bb BB) StdDev() decimal.Decimal {
+	return bb.stdDev
 }
 
 // Length returns length configuration option.
@@ -326,14 +327,23 @@ func (bb BB) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	s, _ := NewSMA(bb.length, 0)
-	m, _ := s.Calc(dd)
+	s, err := NewSMA(bb.length, 0)
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
+
+	m, err := s.Calc(dd)
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
 
 	if bb.band == BandMiddle {
 		return m, nil
 	}
 
-	a := standardDeviation(dd).Mul(bb.stdDevs)
+	a := standardDeviation(dd).Mul(bb.stdDev)
 
 	if bb.band == BandUpper {
 		if bb.percent {
@@ -365,7 +375,7 @@ func (bb *BB) UnmarshalJSON(d []byte) error {
 	var data struct {
 		Percent bool            `json:"percent"`
 		Band    Band            `json:"band"`
-		StdDevs decimal.Decimal `json:"standard_deviations"`
+		StdDev  decimal.Decimal `json:"std_dev"`
 		Length  int             `json:"length"`
 		Offset  int             `json:"offset"`
 	}
@@ -374,7 +384,7 @@ func (bb *BB) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	nbb, err := NewBB(data.Percent, data.Band, data.StdDevs, data.Length, data.Offset)
+	nbb, err := NewBB(data.Percent, data.Band, data.StdDev, data.Length, data.Offset)
 	if err != nil {
 		return err
 	}
@@ -389,13 +399,13 @@ func (bb BB) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Percent bool            `json:"percent"`
 		Band    Band            `json:"band"`
-		StdDevs decimal.Decimal `json:"standard_deviations"`
+		StdDev  decimal.Decimal `json:"std_dev"`
 		Length  int             `json:"length"`
 		Offset  int             `json:"offset"`
 	}{
 		Percent: bb.percent,
 		Band:    bb.band,
-		StdDevs: bb.stdDevs,
+		StdDev:  bb.stdDev,
 		Length:  bb.length,
 		Offset:  bb.offset,
 	})
@@ -408,14 +418,14 @@ func (bb BB) namedMarshalJSON() ([]byte, error) {
 		Name    String          `json:"name"`
 		Percent bool            `json:"percent"`
 		Band    Band            `json:"band"`
-		StdDevs decimal.Decimal `json:"standard_deviations"`
+		StdDev  decimal.Decimal `json:"std_dev"`
 		Length  int             `json:"length"`
 		Offset  int             `json:"offset"`
 	}{
 		Name:    NameBB,
 		Percent: bb.percent,
 		Band:    bb.band,
-		StdDevs: bb.stdDevs,
+		StdDev:  bb.stdDev,
 		Length:  bb.length,
 		Offset:  bb.offset,
 	})
@@ -691,17 +701,34 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	v := make([]decimal.Decimal, dm.ema.Length())
 
-	s, _ := NewSMA(dm.ema.length, 0)
-	v[0], _ = s.Calc(dd[:dm.ema.Length()])
+	s, err := NewSMA(dm.ema.length, 0)
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
+
+	v[0], err = s.Calc(dd[:dm.ema.Length()])
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
 
 	for i := dm.ema.Length(); i < len(dd); i++ {
-		v[i-dm.ema.Length()+1], _ = dm.ema.CalcNext(v[i-dm.ema.Length()], dd[i])
+		v[i-dm.ema.Length()+1], err = dm.ema.CalcNext(v[i-dm.ema.Length()], dd[i])
+		if err != nil {
+			// unlikely to happen
+			return decimal.Zero, err
+		}
 	}
 
 	r := v[0]
 
 	for i := 0; i < len(v); i++ {
-		r, _ = dm.ema.CalcNext(r, v[i])
+		r, err = dm.ema.CalcNext(r, v[i])
+		if err != nil {
+			// unlikely to happen
+			return decimal.Zero, err
+		}
 	}
 
 	return r, nil
@@ -731,7 +758,11 @@ func (dm *DEMA) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	ndm, _ := NewDEMA(ne)
+	ndm, err := NewDEMA(ne)
+	if err != nil {
+		// unlikely to happen
+		return err
+	}
 
 	*dm = ndm
 
@@ -810,11 +841,24 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	s, _ := NewSMA(e.length, 0)
-	r, _ := s.Calc(dd[:e.length])
+	s, err := NewSMA(e.length, 0)
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
+
+	r, err := s.Calc(dd[:e.length])
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
 
 	for i := e.length; i < len(dd); i++ {
-		r, _ = e.CalcNext(r, dd[i])
+		r, err = e.CalcNext(r, dd[i])
+		if err != nil {
+			// unlikely to happen
+			return decimal.Zero, err
+		}
 	}
 
 	return r, nil
@@ -981,14 +1025,26 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	v := make([]decimal.Decimal, l)
 
 	for i := 0; i < l; i++ {
-		r1, _ := w1.Calc(dd[:len(dd)-l+i+1])
+		r1, err := w1.Calc(dd[:len(dd)-l+i+1])
+		if err != nil {
+			// unlikely to happen
+			return decimal.Zero, err
+		}
 
-		r2, _ := w2.Calc(dd[:len(dd)-l+i+1])
+		r2, err := w2.Calc(dd[:len(dd)-l+i+1])
+		if err != nil {
+			// unlikely to happen
+			return decimal.Zero, err
+		}
 
 		v[i] = r1.Mul(decimal.NewFromInt(2)).Sub(r2)
 	}
 
-	r, _ := w3.Calc(v)
+	r, err := w3.Calc(v)
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
 
 	return r, nil
 }
@@ -1209,7 +1265,12 @@ func (cd *CD) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	nm, _ := NewCD(data.Percent, src1, src2, data.Offset)
+	nm, err := NewCD(data.Percent, src1, src2, data.Offset)
+	if err != nil {
+		// unlikely to happen
+		return err
+	}
+
 	if err := nm.validate(); err != nil {
 		return err
 	}
@@ -1852,7 +1913,11 @@ func (s *SRSI) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	ns, _ := NewSRSI(r)
+	ns, err := NewSRSI(r)
+	if err != nil {
+		// unlikely to happen
+		return err
+	}
 
 	*s = ns
 
