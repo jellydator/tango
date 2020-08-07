@@ -38,8 +38,8 @@ type Aroon struct {
 	valid bool
 
 	// trend specifies which Aroon trend to use during the
-	// calculation process. Allowed values: up, down.
-	trend String
+	// calculation process.
+	trend Trend
 
 	// length specifies how many data points should be used
 	// during the calculations.
@@ -52,7 +52,7 @@ type Aroon struct {
 
 // NewAroon validates provided configuration options and
 // creates new Aroon indicator.
-func NewAroon(trend String, length, offset int) (Aroon, error) {
+func NewAroon(trend Trend, length, offset int) (Aroon, error) {
 	a := Aroon{trend: trend, length: length, offset: offset}
 
 	if err := a.validate(); err != nil {
@@ -78,7 +78,7 @@ func (a Aroon) equal(i Indicator) bool {
 }
 
 // Trend returns trend configuration option.
-func (a Aroon) Trend() String {
+func (a Aroon) Trend() Trend {
 	return a.trend
 }
 
@@ -94,8 +94,8 @@ func (a Aroon) Offset() int {
 
 // validate checks whether Aroon was configured properly or not.
 func (a *Aroon) validate() error {
-	if a.trend != "down" && a.trend != "up" {
-		return errors.New("invalid trend")
+	if err := a.trend.Validate(); err != nil {
+		return err
 	}
 
 	if a.length < 1 {
@@ -133,8 +133,8 @@ func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 			v = dd[i]
 		}
 
-		if a.trend == "up" && v.LessThanOrEqual(dd[i]) ||
-			a.trend == "down" && !v.LessThan(dd[i]) {
+		if a.trend == TrendUp && v.LessThanOrEqual(dd[i]) ||
+			a.trend == TrendDown && !v.LessThan(dd[i]) {
 
 			v = dd[i]
 			p = decimal.NewFromInt(int64(a.length - i - 1))
@@ -154,9 +154,9 @@ func (a Aroon) Count() int {
 // UnmarshalJSON parses JSON into Aroon structure.
 func (a *Aroon) UnmarshalJSON(d []byte) error {
 	var data struct {
-		Trend  String `json:"trend"`
-		Length int    `json:"length"`
-		Offset int    `json:"offset"`
+		Trend  Trend `json:"trend"`
+		Length int   `json:"length"`
+		Offset int   `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &data); err != nil {
@@ -176,9 +176,9 @@ func (a *Aroon) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts Aroon configuration data into JSON.
 func (a Aroon) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Trend  String `json:"trend"`
-		Length int    `json:"length"`
-		Offset int    `json:"offset"`
+		Trend  Trend `json:"trend"`
+		Length int   `json:"length"`
+		Offset int   `json:"offset"`
 	}{
 		Trend:  a.trend,
 		Length: a.length,
@@ -191,7 +191,7 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 func (a Aroon) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Name   String `json:"name"`
-		Trend  String `json:"trend"`
+		Trend  Trend  `json:"trend"`
 		Length int    `json:"length"`
 		Offset int    `json:"offset"`
 	}{
@@ -199,6 +199,235 @@ func (a Aroon) namedMarshalJSON() ([]byte, error) {
 		Trend:  a.trend,
 		Length: a.length,
 		Offset: a.offset,
+	})
+}
+
+// NameBB returns Bollinger Band indicator name.
+const NameBB = "bb"
+
+// BB holds all the necessary information needed to calculate Bollinger Bands.
+// The zero value is not usable.
+type BB struct {
+	// valid specifies whether BB paremeters were validated.
+	valid bool
+
+	// percent specifies whether returned number should be in units (if false)
+	// or percent (true).
+	percent bool
+
+	// band specifies which bollinger band to calculate.
+	band Band
+
+	// stdDev specifies how many standard deviations to apply.
+	stdDev decimal.Decimal
+
+	// length specifies how many data points should be used
+	// during the calculations.
+	length int
+
+	// offset specifies how many data points should be skipped from the end
+	// during the calculations.
+	offset int
+}
+
+// NewBB validates provided configuration options and creates
+// new BB indicator.
+func NewBB(percent bool, band Band, stdDev decimal.Decimal, length, offset int) (BB, error) {
+	bb := BB{
+		percent: percent,
+		band:    band,
+		stdDev:  stdDev,
+		length:  length,
+		offset:  offset,
+	}
+
+	if err := bb.validate(); err != nil {
+		return BB{}, err
+	}
+
+	return bb, nil
+}
+
+// Equal checks whether provided band has exactly the same values as main
+// band.
+func (bb BB) Equal(bb1 BB) bool {
+	return bb.valid == bb1.valid && bb.percent == bb1.percent &&
+		bb.band == bb1.band && bb.stdDev.Equal(bb1.stdDev) &&
+		bb.length == bb1.length && bb.offset == bb1.offset
+}
+
+func (bb BB) equal(i Indicator) bool {
+	b1, ok := i.(BB)
+	if ok {
+		return bb.Equal(b1)
+	}
+
+	return ok
+}
+
+// Percent returns percent configuration option.
+func (bb BB) Percent() bool {
+	return bb.percent
+}
+
+// Band returns band configuration option.
+func (bb BB) Band() Band {
+	return bb.band
+}
+
+// StdDev returns standard deviation configuration option.
+func (bb BB) StdDev() decimal.Decimal {
+	return bb.stdDev
+}
+
+// Length returns length configuration option.
+func (bb BB) Length() int {
+	return bb.length
+}
+
+// Offset returns offset configuration option.
+func (bb BB) Offset() int {
+	return bb.offset
+}
+
+// validate checks whether BB was configured properly or not.
+func (bb *BB) validate() error {
+	if err := bb.band.Validate(); err != nil {
+		return err
+	}
+
+	if bb.percent && bb.band == BandMiddle || bb.percent && bb.band == BandWidth {
+		return errors.New("invalid bb configuration")
+	}
+
+	if bb.length < 1 {
+		return ErrInvalidLength
+	}
+
+	if bb.offset < 0 {
+		return ErrInvalidOffset
+	}
+
+	bb.valid = true
+
+	return nil
+}
+
+// Calc calculates BB from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/b/bollingerbands.asp.
+// All credits are due to John Bollinger who developed BB indicator.
+func (bb BB) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !bb.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
+	dd, err := resize(dd, bb.Count()-bb.offset, bb.offset)
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	s, err := NewSMA(bb.length, 0)
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
+
+	m, err := s.Calc(dd)
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
+
+	if bb.band == BandMiddle {
+		return m, nil
+	}
+
+	a := standardDeviation(dd).Mul(bb.stdDev)
+
+	if bb.band == BandUpper {
+		if bb.percent {
+			return m.Add(a).Div(m).Sub(One).Mul(Hundred), nil
+		}
+
+		return m.Add(a), nil
+	}
+
+	if bb.band == BandLower {
+		if bb.percent {
+			return m.Sub(a).Div(m).Sub(One).Mul(Hundred), nil
+		}
+
+		return m.Sub(a), nil
+	}
+
+	return m.Add(a).Sub(m.Sub(a)).Div(m).Mul(Hundred), nil
+}
+
+// Count determines the total amount of data points needed for BB
+// calculation.
+func (bb BB) Count() int {
+	return bb.length + bb.offset
+}
+
+// UnmarshalJSON parses JSON into Aroon structure.
+func (bb *BB) UnmarshalJSON(d []byte) error {
+	var data struct {
+		Percent bool            `json:"percent"`
+		Band    Band            `json:"band"`
+		StdDev  decimal.Decimal `json:"std_dev"`
+		Length  int             `json:"length"`
+		Offset  int             `json:"offset"`
+	}
+
+	if err := json.Unmarshal(d, &data); err != nil {
+		return err
+	}
+
+	nbb, err := NewBB(data.Percent, data.Band, data.StdDev, data.Length, data.Offset)
+	if err != nil {
+		return err
+	}
+
+	*bb = nbb
+
+	return nil
+}
+
+// MarshalJSON converts BB configuration data into JSON.
+func (bb BB) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Percent bool            `json:"percent"`
+		Band    Band            `json:"band"`
+		StdDev  decimal.Decimal `json:"std_dev"`
+		Length  int             `json:"length"`
+		Offset  int             `json:"offset"`
+	}{
+		Percent: bb.percent,
+		Band:    bb.band,
+		StdDev:  bb.stdDev,
+		Length:  bb.length,
+		Offset:  bb.offset,
+	})
+}
+
+// namedMarshalJSON converts BB configuration data with its
+// name into JSON.
+func (bb BB) namedMarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Name    String          `json:"name"`
+		Percent bool            `json:"percent"`
+		Band    Band            `json:"band"`
+		StdDev  decimal.Decimal `json:"std_dev"`
+		Length  int             `json:"length"`
+		Offset  int             `json:"offset"`
+	}{
+		Name:    NameBB,
+		Percent: bb.percent,
+		Band:    bb.band,
+		StdDev:  bb.stdDev,
+		Length:  bb.length,
+		Offset:  bb.offset,
 	})
 }
 
@@ -472,17 +701,34 @@ func (dm DEMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	v := make([]decimal.Decimal, dm.ema.Length())
 
-	s, _ := NewSMA(dm.ema.length, 0)
-	v[0], _ = s.Calc(dd[:dm.ema.Length()])
+	s, err := NewSMA(dm.ema.length, 0)
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
+
+	v[0], err = s.Calc(dd[:dm.ema.Length()])
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
 
 	for i := dm.ema.Length(); i < len(dd); i++ {
-		v[i-dm.ema.Length()+1], _ = dm.ema.CalcNext(v[i-dm.ema.Length()], dd[i])
+		v[i-dm.ema.Length()+1], err = dm.ema.CalcNext(v[i-dm.ema.Length()], dd[i])
+		if err != nil {
+			// unlikely to happen
+			return decimal.Zero, err
+		}
 	}
 
 	r := v[0]
 
 	for i := 0; i < len(v); i++ {
-		r, _ = dm.ema.CalcNext(r, v[i])
+		r, err = dm.ema.CalcNext(r, v[i])
+		if err != nil {
+			// unlikely to happen
+			return decimal.Zero, err
+		}
 	}
 
 	return r, nil
@@ -512,7 +758,11 @@ func (dm *DEMA) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	ndm, _ := NewDEMA(ne)
+	ndm, err := NewDEMA(ne)
+	if err != nil {
+		// unlikely to happen
+		return err
+	}
 
 	*dm = ndm
 
@@ -591,11 +841,24 @@ func (e EMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	s, _ := NewSMA(e.length, 0)
-	r, _ := s.Calc(dd[:e.length])
+	s, err := NewSMA(e.length, 0)
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
+
+	r, err := s.Calc(dd[:e.length])
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
 
 	for i := e.length; i < len(dd); i++ {
-		r, _ = e.CalcNext(r, dd[i])
+		r, err = e.CalcNext(r, dd[i])
+		if err != nil {
+			// unlikely to happen
+			return decimal.Zero, err
+		}
 	}
 
 	return r, nil
@@ -762,14 +1025,26 @@ func (h HMA) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	v := make([]decimal.Decimal, l)
 
 	for i := 0; i < l; i++ {
-		r1, _ := w1.Calc(dd[:len(dd)-l+i+1])
+		r1, err := w1.Calc(dd[:len(dd)-l+i+1])
+		if err != nil {
+			// unlikely to happen
+			return decimal.Zero, err
+		}
 
-		r2, _ := w2.Calc(dd[:len(dd)-l+i+1])
+		r2, err := w2.Calc(dd[:len(dd)-l+i+1])
+		if err != nil {
+			// unlikely to happen
+			return decimal.Zero, err
+		}
 
 		v[i] = r1.Mul(decimal.NewFromInt(2)).Sub(r2)
 	}
 
-	r, _ := w3.Calc(v)
+	r, err := w3.Calc(v)
+	if err != nil {
+		// unlikely to happen
+		return decimal.Zero, err
+	}
 
 	return r, nil
 }
@@ -839,6 +1114,10 @@ type CD struct {
 	// valid specifies whether CD paremeters were validated.
 	valid bool
 
+	// percent specifies whether returned number should be in units (if false)
+	// or percent (true).
+	percent bool
+
 	// source1 specifies which indicator to use as base
 	// during calculation process.
 	source1 Indicator
@@ -854,8 +1133,8 @@ type CD struct {
 
 // NewCD validates provided configuration options and
 // creates new CD indicator.
-func NewCD(source1, source2 Indicator, offset int) (CD, error) {
-	cd := CD{source1: source1, source2: source2, offset: offset}
+func NewCD(percent bool, source1, source2 Indicator, offset int) (CD, error) {
+	cd := CD{percent: percent, source1: source1, source2: source2, offset: offset}
 
 	if err := cd.validate(); err != nil {
 		return CD{}, err
@@ -881,6 +1160,11 @@ func (cd CD) equal(i Indicator) bool {
 	}
 
 	return ok
+}
+
+// Percent returns percent configuration option.
+func (cd CD) Percent() bool {
+	return cd.percent
 }
 
 // Sub1 returns source1 configuration option.
@@ -938,9 +1222,11 @@ func (cd CD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	r := r1.Sub(r2)
+	if cd.percent {
+		return r2.Div(r1).Sub(decimal.NewFromInt(1)).Mul(Hundred), nil
+	}
 
-	return r, nil
+	return r2.Sub(r1), nil
 }
 
 // Count determines the total amount of data points needed for CD
@@ -959,6 +1245,7 @@ func (cd CD) Count() int {
 // UnmarshalJSON parses JSON into CD structure.
 func (cd *CD) UnmarshalJSON(d []byte) error {
 	var data struct {
+		Percent bool            `json:"percent"`
 		Source1 json.RawMessage `json:"source1"`
 		Source2 json.RawMessage `json:"source2"`
 		Offset  int             `json:"offset"`
@@ -978,7 +1265,12 @@ func (cd *CD) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	nm, _ := NewCD(src1, src2, data.Offset)
+	nm, err := NewCD(data.Percent, src1, src2, data.Offset)
+	if err != nil {
+		// unlikely to happen
+		return err
+	}
+
 	if err := nm.validate(); err != nil {
 		return err
 	}
@@ -1001,10 +1293,12 @@ func (cd CD) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
+		Percent bool            `json:"percent"`
 		Source1 json.RawMessage `json:"source1"`
 		Source2 json.RawMessage `json:"source2"`
 		Offset  int             `json:"offset"`
 	}{
+		Percent: cd.percent,
 		Source1: src1,
 		Source2: src2,
 		Offset:  cd.offset,
@@ -1026,11 +1320,13 @@ func (cd CD) namedMarshalJSON() ([]byte, error) {
 
 	return json.Marshal(struct {
 		Name    String          `json:"name"`
+		Percent bool            `json:"percent"`
 		Source1 json.RawMessage `json:"source1"`
 		Source2 json.RawMessage `json:"source2"`
 		Offset  int             `json:"offset"`
 	}{
 		Name:    NameCD,
+		Percent: cd.percent,
 		Source1: src1,
 		Source2: src2,
 		Offset:  cd.offset,
@@ -1566,7 +1862,7 @@ func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	v, err := calcMultiple(s.rsi, dd, s.rsi.length)
+	v, err := calcMultiple(s.rsi, s.rsi.length, dd)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -1617,7 +1913,11 @@ func (s *SRSI) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	ns, _ := NewSRSI(r)
+	ns, err := NewSRSI(r)
+	if err != nil {
+		// unlikely to happen
+		return err
+	}
 
 	*s = ns
 

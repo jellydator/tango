@@ -10,7 +10,7 @@ import (
 
 func Test_NewAroon(t *testing.T) {
 	cc := map[string]struct {
-		Trend  String
+		Trend  Trend
 		Length int
 		Offset int
 		Result Aroon
@@ -20,10 +20,10 @@ func Test_NewAroon(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful creation": {
-			Trend:  "down",
+			Trend:  TrendDown,
 			Length: 5,
 			Offset: 2,
-			Result: Aroon{trend: "down", length: 5, offset: 2, valid: true},
+			Result: Aroon{trend: TrendDown, length: 5, offset: 2, valid: true},
 		},
 	}
 
@@ -33,29 +33,29 @@ func Test_NewAroon(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			a, err := NewAroon(c.Trend, c.Length, c.Offset)
+			v, err := NewAroon(c.Trend, c.Length, c.Offset)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, a)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
 
 func Test_Aroon_Equal(t *testing.T) {
-	assert.True(t, Aroon{trend: "up", length: 3, offset: 2}.equal(Aroon{trend: "up", length: 3, offset: 2}))
-	assert.False(t, Aroon{trend: "down", length: 3, offset: 2}.equal(Aroon{trend: "up", length: 3, offset: 2}))
-	assert.False(t, Aroon{trend: "down", length: 3, offset: 2}.equal(SMA{}))
+	assert.True(t, Aroon{trend: TrendUp, length: 3, offset: 2}.equal(Aroon{trend: TrendUp, length: 3, offset: 2}))
+	assert.False(t, Aroon{trend: TrendDown, length: 3, offset: 2}.equal(Aroon{trend: TrendUp, length: 3, offset: 2}))
+	assert.False(t, Aroon{trend: TrendDown, length: 3, offset: 2}.equal(SMA{}))
+}
+
+func Test_Aroon_Trend(t *testing.T) {
+	assert.Equal(t, TrendUp, Aroon{trend: TrendUp}.Trend())
 }
 
 func Test_Aroon_Length(t *testing.T) {
 	assert.Equal(t, 1, Aroon{length: 1}.Length())
-}
-
-func Test_Aroon_Trend(t *testing.T) {
-	assert.Equal(t, CleanString("up"), Aroon{trend: CleanString("up")}.Trend())
 }
 
 func Test_Aroon_Offset(t *testing.T) {
@@ -69,26 +69,22 @@ func Test_Aroon_validate(t *testing.T) {
 		Valid bool
 	}{
 		"Invalid trend": {
-			Aroon: Aroon{trend: "downn", length: 5, offset: 0},
-			Error: errors.New("invalid trend"),
+			Aroon: Aroon{trend: 70, length: 5, offset: 0},
+			Error: ErrInvalidTrend,
 			Valid: false,
 		},
 		"Invalid length": {
-			Aroon: Aroon{trend: "down", length: 0, offset: 0},
+			Aroon: Aroon{trend: TrendDown, length: 0, offset: 0},
 			Error: ErrInvalidLength,
 			Valid: false,
 		},
 		"Invalid offset": {
-			Aroon: Aroon{trend: "down", length: 1, offset: -1},
+			Aroon: Aroon{trend: TrendDown, length: 1, offset: -1},
 			Error: ErrInvalidOffset,
 			Valid: false,
 		},
-		"Successful validation with trend being up": {
-			Aroon: Aroon{trend: "up", length: 1, offset: 0},
-			Valid: true,
-		},
-		"Successful validation with trend being down": {
-			Aroon: Aroon{trend: "down", length: 1, offset: 0},
+		"Successful validation": {
+			Aroon: Aroon{trend: TrendUp, length: 1, offset: 0},
 			Valid: true,
 		},
 	}
@@ -117,14 +113,14 @@ func Test_Aroon_Calc(t *testing.T) {
 			Error: ErrInvalidIndicator,
 		},
 		"Invalid data size": {
-			Aroon: Aroon{trend: "down", length: 5, offset: 0, valid: true},
+			Aroon: Aroon{trend: TrendDown, length: 5, offset: 0, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
-		"Successful calculation with trend being up": {
-			Aroon: Aroon{trend: "up", length: 5, offset: 0, valid: true},
+		"Successful calculation with TrendUp": {
+			Aroon: Aroon{trend: TrendUp, length: 5, offset: 0, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(25),
 				decimal.NewFromInt(31),
@@ -135,8 +131,8 @@ func Test_Aroon_Calc(t *testing.T) {
 			},
 			Result: decimal.NewFromInt(40),
 		},
-		"Successful calculation with trend being down": {
-			Aroon: Aroon{trend: "down", length: 5, offset: 0, valid: true},
+		"Successful calculation with TrendDown": {
+			Aroon: Aroon{trend: TrendDown, length: 5, offset: 0, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(25),
 				decimal.NewFromInt(31),
@@ -148,7 +144,7 @@ func Test_Aroon_Calc(t *testing.T) {
 			Result: Hundred,
 		},
 		"Successful calculation with offset": {
-			Aroon: Aroon{trend: "down", length: 5, offset: 3, valid: true},
+			Aroon: Aroon{trend: TrendDown, length: 5, offset: 3, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(25),
 				decimal.NewFromInt(31),
@@ -196,12 +192,12 @@ func Test_Aroon_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Invalid validation": {
-			JSON:  `{"trend":"upp","length":1,"offset":0}`,
+			JSON:  `{"trend":"up","length":1,"offset":-1}`,
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
 			JSON:   `{"trend":"up","length":1,"offset":0}`,
-			Result: Aroon{trend: "up", length: 1, offset: 0, valid: true},
+			Result: Aroon{trend: TrendUp, length: 1, offset: 0, valid: true},
 		},
 	}
 
@@ -211,30 +207,390 @@ func Test_Aroon_UnmarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			a := Aroon{}
-			err := a.UnmarshalJSON([]byte(c.JSON))
+			v := Aroon{}
+			err := v.UnmarshalJSON([]byte(c.JSON))
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, a)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
 
 func Test_Aroon_MarshalJSON(t *testing.T) {
-	d, err := Aroon{trend: "down", length: 1, offset: 4}.MarshalJSON()
+	d, err := Aroon{trend: TrendDown, length: 1, offset: 4}.MarshalJSON()
 
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"trend":"down","length":1,"offset":4}`, string(d))
 }
 
 func Test_Aroon_namedMarshalJSON(t *testing.T) {
-	d, err := Aroon{trend: "down", length: 1, offset: 4}.namedMarshalJSON()
+	d, err := Aroon{trend: TrendDown, length: 1, offset: 4}.namedMarshalJSON()
 
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"name":"aroon","trend":"down","length":1,"offset":4}`, string(d))
+}
+
+func Test_NewBB(t *testing.T) {
+	cc := map[string]struct {
+		Percent bool
+		Band    Band
+		StdDev  decimal.Decimal
+		Length  int
+		Offset  int
+		Result  BB
+		Error   error
+	}{
+		"Invalid parameters": {
+			Error: assert.AnError,
+		},
+		"Successful creation": {
+			Percent: true,
+			Band:    BandUpper,
+			StdDev:  decimal.RequireFromString("2.5"),
+			Length:  5,
+			Offset:  2,
+			Result:  BB{percent: true, band: BandUpper, stdDev: decimal.RequireFromString("2.5"), length: 5, offset: 2, valid: true},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			v, err := NewBB(c.Percent, c.Band, c.StdDev, c.Length, c.Offset)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.Result, v)
+		})
+	}
+}
+
+func Test_BB_Equal(t *testing.T) {
+	assert.True(t, BB{percent: true, band: BandUpper, stdDev: decimal.RequireFromString("2"), length: 3, offset: 2}.equal(BB{percent: true, band: BandUpper, stdDev: decimal.RequireFromString("2"), length: 3, offset: 2}))
+	assert.False(t, BB{band: BandUpper, stdDev: decimal.RequireFromString("2"), length: 3, offset: 2}.equal(BB{band: BandUpper, stdDev: decimal.RequireFromString("3"), length: 3, offset: 2}))
+	assert.False(t, BB{band: BandUpper, length: 3, offset: 2}.equal(SMA{}))
+}
+
+func Test_BB_Percent(t *testing.T) {
+	assert.Equal(t, true, BB{percent: true}.Percent())
+}
+
+func Test_BB_Band(t *testing.T) {
+	assert.Equal(t, BandLower, BB{band: BandLower}.Band())
+}
+
+func Test_BB_StdDev(t *testing.T) {
+	assert.Equal(t, decimal.RequireFromString("2"), BB{stdDev: decimal.RequireFromString("2")}.StdDev())
+}
+
+func Test_BB_Length(t *testing.T) {
+	assert.Equal(t, 1, BB{length: 1}.Length())
+}
+
+func Test_BB_Offset(t *testing.T) {
+	assert.Equal(t, 3, BB{offset: 3}.Offset())
+}
+
+func Test_BB_validate(t *testing.T) {
+	cc := map[string]struct {
+		BB    BB
+		Error error
+		Valid bool
+	}{
+		"Invalid band": {
+			BB:    BB{band: 70, length: 5, offset: 0},
+			Error: ErrInvalidBand,
+			Valid: false,
+		},
+		"Invalid length": {
+			BB:    BB{band: BandUpper, length: 0, offset: 0},
+			Error: ErrInvalidLength,
+			Valid: false,
+		},
+		"Invalid offset": {
+			BB:    BB{band: BandUpper, length: 1, offset: -1},
+			Error: ErrInvalidOffset,
+			Valid: false,
+		},
+		"Invalid BB configuration (BandMiddle)": {
+			BB:    BB{percent: true, band: BandMiddle, length: 1, offset: 1},
+			Error: errors.New("invalid bb configuration"),
+			Valid: false,
+		},
+		"Invalid BB configuration (BandWidth)": {
+			BB:    BB{percent: true, band: BandWidth, length: 1, offset: 1},
+			Error: errors.New("invalid bb configuration"),
+			Valid: false,
+		},
+		"Successful validation": {
+			BB:    BB{band: BandUpper, length: 1, offset: 0},
+			Valid: true,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			equalError(t, c.Error, c.BB.validate())
+			assert.Equal(t, c.Valid, c.BB.valid)
+		})
+	}
+}
+
+func Test_BB_Calc(t *testing.T) {
+	cc := map[string]struct {
+		BB     BB
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			BB:    BB{valid: false},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size": {
+			BB: BB{band: BandUpper, length: 5, offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful calculation with BandUpper": {
+			BB: BB{band: BandUpper, length: 5, stdDev: decimal.RequireFromString("1"), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(40),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.RequireFromString("38.68781778"),
+		},
+		"Successful calculation with BandUpper using percent": {
+			BB: BB{percent: true, band: BandUpper, length: 5, stdDev: decimal.RequireFromString("1"), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(40),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.RequireFromString("10.53662224"),
+		},
+		"Successful calculation with BandUpper using offset": {
+			BB: BB{band: BandUpper, length: 5, stdDev: decimal.RequireFromString("1"), offset: 2, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(40),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.RequireFromString("38.68781778"),
+		},
+		"Successful calculation with BandMiddle": {
+			BB: BB{band: BandMiddle, length: 5, stdDev: decimal.RequireFromString("1"), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(40),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.NewFromInt(35),
+		},
+		"Successful calculation with BandMiddle using offset": {
+			BB: BB{band: BandMiddle, length: 5, stdDev: decimal.RequireFromString("1"), offset: 2, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(40),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.NewFromInt(35),
+		},
+		"Successful calculation with BandLower": {
+			BB: BB{band: BandLower, length: 5, stdDev: decimal.RequireFromString("1"), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(40),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.RequireFromString("31.31218222"),
+		},
+		"Successful calculation with BandLower using percent": {
+			BB: BB{percent: true, band: BandLower, length: 5, stdDev: decimal.RequireFromString("1"), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(40),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.RequireFromString("-10.53662224"),
+		},
+		"Successful calculation with BandLower using offset": {
+			BB: BB{band: BandLower, length: 5, stdDev: decimal.RequireFromString("2"), offset: 2, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(40),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(32),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.RequireFromString("27.62436443"),
+		},
+		"Successful calculation with BandWidth": {
+			BB: BB{band: BandWidth, length: 20, stdDev: decimal.RequireFromString("2"), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.RequireFromString("62.34"),
+				decimal.RequireFromString("62.72"),
+				decimal.RequireFromString("62.02"),
+				decimal.RequireFromString("63.98"),
+				decimal.RequireFromString("64.17"),
+				decimal.RequireFromString("64.71"),
+				decimal.RequireFromString("64.75"),
+				decimal.RequireFromString("63.94"),
+				decimal.RequireFromString("63.82"),
+				decimal.RequireFromString("63.19"),
+				decimal.RequireFromString("62.84"),
+				decimal.RequireFromString("62.25"),
+				decimal.RequireFromString("63.20"),
+				decimal.RequireFromString("63.02"),
+				decimal.RequireFromString("63.35"),
+				decimal.RequireFromString("64.21"),
+				decimal.RequireFromString("64.91"),
+				decimal.RequireFromString("64.05"),
+				decimal.RequireFromString("63.28"),
+				decimal.RequireFromString("62.78"),
+				decimal.RequireFromString("62.36"),
+				decimal.RequireFromString("63.19"),
+				decimal.RequireFromString("64.69"),
+			},
+			Result: decimal.RequireFromString("4.91959301"),
+		},
+		"Successful calculation with BandWidth using offset": {
+			BB: BB{band: BandWidth, length: 20, stdDev: decimal.RequireFromString("2"), offset: 2, valid: true},
+			Data: []decimal.Decimal{
+				decimal.RequireFromString("62.02"),
+				decimal.RequireFromString("63.98"),
+				decimal.RequireFromString("64.17"),
+				decimal.RequireFromString("64.71"),
+				decimal.RequireFromString("64.75"),
+				decimal.RequireFromString("63.94"),
+				decimal.RequireFromString("63.82"),
+				decimal.RequireFromString("63.19"),
+				decimal.RequireFromString("62.84"),
+				decimal.RequireFromString("62.25"),
+				decimal.RequireFromString("63.20"),
+				decimal.RequireFromString("63.02"),
+				decimal.RequireFromString("63.35"),
+				decimal.RequireFromString("64.21"),
+				decimal.RequireFromString("64.91"),
+				decimal.RequireFromString("64.05"),
+				decimal.RequireFromString("63.28"),
+				decimal.RequireFromString("62.78"),
+				decimal.RequireFromString("62.36"),
+				decimal.RequireFromString("63.19"),
+				decimal.RequireFromString("64.69"),
+				decimal.RequireFromString("62.34"),
+				decimal.RequireFromString("62.72"),
+			},
+			Result: decimal.RequireFromString("4.91959301"),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := c.BB.Calc(c.Data)
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.Result.Round(8).String(), res.Round(8).String())
+		})
+	}
+}
+
+func Test_BB_Count(t *testing.T) {
+	assert.Equal(t, 2, BB{length: 1, offset: 1}.Count())
+}
+
+func Test_BB_UnmarshalJSON(t *testing.T) {
+	cc := map[string]struct {
+		JSON   string
+		Result BB
+		Error  error
+	}{
+		"Invalid JSON": {
+			JSON:  `{\"_"/`,
+			Error: assert.AnError,
+		},
+		"Invalid validation": {
+			JSON:  `{"band":"upper","length":1,"offset":-1}`,
+			Error: assert.AnError,
+		},
+		"Successful unmarshal": {
+			JSON:   `{"percent": true, "band":"lower","std_dev":"3","length":2,"offset":4}`,
+			Result: BB{percent: true, band: BandLower, stdDev: decimal.RequireFromString("3"), length: 2, offset: 4, valid: true},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			v := BB{}
+			err := v.UnmarshalJSON([]byte(c.JSON))
+			equalError(t, c.Error, err)
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.Result, v)
+		})
+	}
+}
+
+func Test_BB_MarshalJSON(t *testing.T) {
+	d, err := BB{percent: true, band: BandLower, stdDev: decimal.RequireFromString("1"), length: 3, offset: 0}.MarshalJSON()
+
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"percent":true,"band":"lower","std_dev":"1","length":3,"offset":0}`, string(d))
+}
+
+func Test_BB_namedMarshalJSON(t *testing.T) {
+	d, err := BB{percent: true, band: BandUpper, stdDev: decimal.RequireFromString("2.3"), length: 1, offset: 4}.namedMarshalJSON()
+
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"percent":true,"name":"bb","band":"upper","std_dev":"2.3","length":1,"offset":4}`, string(d))
 }
 
 func Test_NewCCI(t *testing.T) {
@@ -265,13 +621,13 @@ func Test_NewCCI(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			cci, err := NewCCI(c.Source, c.Factor)
+			v, err := NewCCI(c.Source, c.Factor)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, cci)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -454,14 +810,14 @@ func Test_CCI_UnmarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			cci := CCI{}
-			err := cci.UnmarshalJSON([]byte(c.JSON))
+			v := CCI{}
+			err := v.UnmarshalJSON([]byte(c.JSON))
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, cci)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -569,13 +925,13 @@ func Test_NewDEMA(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			dm, err := NewDEMA(c.EMA)
+			v, err := NewDEMA(c.EMA)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, dm)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -717,14 +1073,14 @@ func Test_DEMA_UnmarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			dm := DEMA{}
-			err := dm.UnmarshalJSON([]byte(c.JSON))
+			v := DEMA{}
+			err := v.UnmarshalJSON([]byte(c.JSON))
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, dm)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -766,13 +1122,13 @@ func Test_NewEMA(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			e, err := NewEMA(c.Length, c.Offset)
+			v, err := NewEMA(c.Length, c.Offset)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, e)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -963,14 +1319,14 @@ func Test_EMA_UnmarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			e := EMA{}
-			err := e.UnmarshalJSON([]byte(c.JSON))
+			v := EMA{}
+			err := v.UnmarshalJSON([]byte(c.JSON))
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, e)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -1010,13 +1366,13 @@ func Test_NewHMA(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			h, err := NewHMA(c.WMA)
+			v, err := NewHMA(c.WMA)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, h)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -1148,14 +1504,14 @@ func Test_HMA_UnmarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			h := HMA{}
-			err := h.UnmarshalJSON([]byte(c.JSON))
+			v := HMA{}
+			err := v.UnmarshalJSON([]byte(c.JSON))
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, h)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -1176,6 +1532,7 @@ func Test_HMA_namedMarshalJSON(t *testing.T) {
 
 func Test_NewCD(t *testing.T) {
 	cc := map[string]struct {
+		Percent bool
 		Source1 Indicator
 		Source2 Indicator
 		Offset  int
@@ -1186,10 +1543,11 @@ func Test_NewCD(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful creation": {
+			Percent: true,
 			Source1: &IndicatorMock{},
 			Source2: &IndicatorMock{},
 			Offset:  4,
-			Result:  CD{source1: &IndicatorMock{}, source2: &IndicatorMock{}, offset: 4, valid: true},
+			Result:  CD{percent: true, source1: &IndicatorMock{}, source2: &IndicatorMock{}, offset: 4, valid: true},
 		},
 	}
 
@@ -1199,13 +1557,13 @@ func Test_NewCD(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			m, err := NewCD(c.Source1, c.Source2, c.Offset)
+			v, err := NewCD(c.Percent, c.Source1, c.Source2, c.Offset)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, m)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -1216,6 +1574,10 @@ func Test_CD_Equal(t *testing.T) {
 	assert.False(t, CD{source1: SMA{length: 1}, source2: SMA{}}.equal(CD{source1: SMA{}, source2: SMA{}}))
 	assert.False(t, CD{source1: SMA{}, source2: SMA{length: 1}}.equal(CD{source1: SMA{}, source2: SMA{}}))
 	assert.False(t, CD{source1: SMA{}, source2: SMA{}}.equal(SMA{}))
+}
+
+func Test_CD_Percent(t *testing.T) {
+	assert.Equal(t, true, CD{percent: true}.Percent())
 }
 
 func Test_CD_Sub1(t *testing.T) {
@@ -1328,7 +1690,16 @@ func Test_CD_Calc(t *testing.T) {
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(32),
 			},
-			Result: decimal.NewFromInt(-5),
+			Result: decimal.NewFromInt(5),
+		},
+		"Successful calculation using percent": {
+			CD: CD{percent: true, source1: stubIndicator(decimal.NewFromInt(5), nil, 1), source2: stubIndicator(decimal.NewFromInt(10), nil, 1), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.NewFromInt(100),
 		},
 		"Successful calculation": {
 			CD: CD{source1: stubIndicator(decimal.NewFromInt(5), nil, 1), source2: stubIndicator(decimal.NewFromInt(10), nil, 1), offset: 0, valid: true},
@@ -1337,7 +1708,7 @@ func Test_CD_Calc(t *testing.T) {
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(32),
 			},
-			Result: decimal.NewFromInt(-5),
+			Result: decimal.NewFromInt(5),
 		},
 	}
 
@@ -1393,8 +1764,8 @@ func Test_CD_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
-			JSON:   `{"source1":{"name":"sma","length":1,"offset":4},"source2":{"name":"sma","length":2,"offset":6},"offset":5}`,
-			Result: CD{source1: SMA{length: 1, offset: 4, valid: true}, source2: SMA{length: 2, offset: 6, valid: true}, offset: 5, valid: true},
+			JSON:   `{"percent":true,"source1":{"name":"sma","length":1,"offset":4},"source2":{"name":"sma","length":2,"offset":6},"offset":5}`,
+			Result: CD{percent: true, source1: SMA{length: 1, offset: 4, valid: true}, source2: SMA{length: 2, offset: 6, valid: true}, offset: 5, valid: true},
 		},
 	}
 
@@ -1404,14 +1775,14 @@ func Test_CD_UnmarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			cd := CD{}
-			err := cd.UnmarshalJSON([]byte(c.JSON))
+			v := CD{}
+			err := v.UnmarshalJSON([]byte(c.JSON))
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, cd)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -1439,8 +1810,8 @@ func Test_CD_MarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			CD:     CD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
-			Result: `{"source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"},"offset":4}`,
+			CD:     CD{percent: true, source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
+			Result: `{"percent":true,"source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"},"offset":4}`,
 		},
 	}
 
@@ -1484,8 +1855,8 @@ func Test_CD_namedMarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			CD:     CD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
-			Result: `{"name":"cd","source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"},"offset":4}`,
+			CD:     CD{percent: true, source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
+			Result: `{"name":"cd","percent":true,"source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"},"offset":4}`,
 		},
 	}
 
@@ -1529,13 +1900,13 @@ func Test_NewROC(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			r, err := NewROC(c.Length, c.Offset)
+			v, err := NewROC(c.Length, c.Offset)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, r)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -1692,14 +2063,14 @@ func Test_ROC_UnmarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			r := ROC{}
-			err := r.UnmarshalJSON([]byte(c.JSON))
+			v := ROC{}
+			err := v.UnmarshalJSON([]byte(c.JSON))
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, r)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -1741,13 +2112,13 @@ func Test_NewRSI(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			r, err := NewRSI(c.Length, c.Offset)
+			v, err := NewRSI(c.Length, c.Offset)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, r)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -1905,14 +2276,14 @@ func Test_RSI_UnmarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			r := RSI{}
-			err := r.UnmarshalJSON([]byte(c.JSON))
+			v := RSI{}
+			err := v.UnmarshalJSON([]byte(c.JSON))
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, r)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -1954,13 +2325,13 @@ func Test_NewSMA(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s, err := NewSMA(c.Length, c.Offset)
+			v, err := NewSMA(c.Length, c.Offset)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, s)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -2100,14 +2471,14 @@ func Test_SMA_UnmarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := SMA{}
-			err := s.UnmarshalJSON([]byte(c.JSON))
+			v := SMA{}
+			err := v.UnmarshalJSON([]byte(c.JSON))
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, s)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -2147,13 +2518,13 @@ func Test_NewSRSI(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s, err := NewSRSI(c.RSI)
+			v, err := NewSRSI(c.RSI)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, s)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -2305,14 +2676,14 @@ func Test_SRSI_UnmarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := SRSI{}
-			err := s.UnmarshalJSON([]byte(c.JSON))
+			v := SRSI{}
+			err := v.UnmarshalJSON([]byte(c.JSON))
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, s)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -2354,13 +2725,13 @@ func Test_NewStoch(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s, err := NewStoch(c.Length, c.Offset)
+			v, err := NewStoch(c.Length, c.Offset)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, s)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -2519,14 +2890,14 @@ func Test_Stoch_UnmarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			s := Stoch{}
-			err := s.UnmarshalJSON([]byte(c.JSON))
+			v := Stoch{}
+			err := v.UnmarshalJSON([]byte(c.JSON))
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, s)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -2568,13 +2939,13 @@ func Test_NewWMA(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			w, err := NewWMA(c.Length, c.Offset)
+			v, err := NewWMA(c.Length, c.Offset)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, w)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }
@@ -2721,14 +3092,14 @@ func Test_WMA_UnmarshalJSON(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			w := WMA{}
-			err := w.UnmarshalJSON([]byte(c.JSON))
+			v := WMA{}
+			err := v.UnmarshalJSON([]byte(c.JSON))
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
 			}
 
-			assert.Equal(t, c.Result, w)
+			assert.Equal(t, c.Result, v)
 		})
 	}
 }

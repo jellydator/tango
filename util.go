@@ -3,15 +3,18 @@ package indc
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"strings"
 
-	"github.com/jellydator/chartype"
 	"github.com/shopspring/decimal"
 )
 
 var (
 	// Hundred is just plain 100 in decimal format.
 	Hundred = decimal.NewFromInt(100)
+
+	// One is just plain 1 in decimal format.
+	One = decimal.NewFromInt(1)
 )
 
 var (
@@ -27,9 +30,17 @@ var (
 	// ErrInvalidDataSize is returned when incorrect data size is provided.
 	ErrInvalidDataSize = errors.New("invalid data size")
 
-	// ErrInvalidSource is returned when source doesn't match any
-	// of the available sources.
+	// ErrInvalidSource is returned when source doesn't match any of the
+	// available sources.
 	ErrInvalidSource = errors.New("invalid source")
+
+	// ErrInvalidTrend is returned when trend doesn't match any of the
+	// available trends.
+	ErrInvalidTrend = errors.New("invalid trend")
+
+	// ErrInvalidBand is returned when band doesn't match any of the
+	// available bands.
+	ErrInvalidBand = errors.New("invalid band")
 )
 
 // String is a custom string that helps prevent capitalization issues by
@@ -66,68 +77,75 @@ func resize(dd []decimal.Decimal, length, offset int) ([]decimal.Decimal, error)
 	return dd[len(dd)-length-offset : len(dd)-offset], nil
 }
 
-// resizeCandles cuts given array based on length to use for
-// calculations.
-func resizeCandles(cc []chartype.Candle, length, offset int) ([]chartype.Candle, error) {
-	if length < 1 || offset < 0 {
-		return cc, nil
+// average calculates average decimal number of given array.
+func average(dd []decimal.Decimal) decimal.Decimal {
+	var sum decimal.Decimal
+
+	for i := range dd {
+		sum = sum.Add(dd[i])
 	}
 
-	if length+offset > len(cc) {
-		return nil, ErrInvalidDataSize
-	}
-
-	return cc[len(cc)-length-offset : len(cc)-offset], nil
+	return sum.Div(decimal.NewFromInt(int64(len(dd))))
 }
 
-// typicalPrice recalculates array of candles into an array of typical prices.
-func typicalPrice(cc []chartype.Candle) []decimal.Decimal {
-	tp := make([]decimal.Decimal, len(cc))
+// sqrt is used to get a square root of decimal number.
+func sqrt(d decimal.Decimal) decimal.Decimal {
+	f, _ := d.Float64()
 
-	for i := 0; i < len(cc); i++ {
-		tp[i] = cc[i].High.Add(cc[i].Low.Add(cc[i].Close)).Div(decimal.NewFromInt(3))
-	}
-
-	return tp
+	return decimal.NewFromFloat(math.Sqrt(f))
 }
 
 // meanDeviation calculates mean deviation of given array.
 func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
-	s := decimal.Zero
-	rez := decimal.Zero
 	length := decimal.NewFromInt(int64(len(dd)))
 
 	if length.Equal(decimal.Zero) {
 		return decimal.Zero
 	}
 
-	for i := 0; i < len(dd); i++ {
-		s = s.Add(dd[i])
+	res := decimal.Zero
+	mean := average(dd)
+
+	for i := range dd {
+		res = res.Add(dd[i].Sub(mean).Abs().Div(length))
 	}
 
-	s = s.Div(length)
-
-	for i := 0; i < len(dd); i++ {
-		rez = rez.Add(dd[i].Sub(s).Abs())
-	}
-
-	return rez.Div(length)
+	return res
 }
 
-// calcMultiple calculates specified amount of indicator within given list.
-func calcMultiple(src Indicator, dd []decimal.Decimal, count int) ([]decimal.Decimal, error) {
-	if count < 1 {
+// standardDeviation calculates standart deviation of given array.
+func standardDeviation(dd []decimal.Decimal) decimal.Decimal {
+	length := decimal.NewFromInt(int64(len(dd)))
+
+	if length.Equal(decimal.Zero) {
+		return decimal.Zero
+	}
+
+	res := decimal.Zero
+	mean := average(dd)
+
+	for i := range dd {
+		res = res.Add(dd[i].Sub(mean).Pow(decimal.NewFromInt(2)).Div(length))
+	}
+
+	return sqrt(res)
+}
+
+// calcMultiple calculates specified amount of values by using specified
+// indicator.
+func calcMultiple(src Indicator, amount int, dd []decimal.Decimal) ([]decimal.Decimal, error) {
+	if amount < 1 {
 		return []decimal.Decimal{}, nil
 	}
 
-	dd, err := resize(dd, src.Count()+count-1, 0)
+	dd, err := resize(dd, src.Count()+amount-1, 0)
 	if err != nil {
 		return nil, ErrInvalidDataSize
 	}
 
-	v := make([]decimal.Decimal, count)
+	v := make([]decimal.Decimal, amount)
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < amount; i++ {
 		v[i], err = src.Calc(dd[:len(dd)-i])
 		if err != nil {
 			return nil, err
@@ -149,66 +167,185 @@ func fromJSON(d []byte) (Indicator, error) {
 
 	switch i.N {
 	case NameAroon:
-		a := Aroon{}
-		err := json.Unmarshal(d, &a)
+		v := Aroon{}
+		err := json.Unmarshal(d, &v)
 
-		return a, err
+		return v, err
+	case NameBB:
+		v := BB{}
+		err := json.Unmarshal(d, &v)
+
+		return v, err
 	case NameCCI:
-		c := CCI{}
-		err := json.Unmarshal(d, &c)
+		v := CCI{}
+		err := json.Unmarshal(d, &v)
 
-		return c, err
+		return v, err
 	case NameDEMA:
-		dm := DEMA{}
-		err := json.Unmarshal(d, &dm)
+		v := DEMA{}
+		err := json.Unmarshal(d, &v)
 
-		return dm, err
+		return v, err
 	case NameEMA:
-		e := EMA{}
-		err := json.Unmarshal(d, &e)
+		v := EMA{}
+		err := json.Unmarshal(d, &v)
 
-		return e, err
+		return v, err
 	case NameHMA:
-		h := HMA{}
-		err := json.Unmarshal(d, &h)
+		v := HMA{}
+		err := json.Unmarshal(d, &v)
 
-		return h, err
+		return v, err
 	case NameCD:
-		m := CD{}
-		err := json.Unmarshal(d, &m)
+		v := CD{}
+		err := json.Unmarshal(d, &v)
 
-		return m, err
+		return v, err
 	case NameROC:
-		r := ROC{}
-		err := json.Unmarshal(d, &r)
+		v := ROC{}
+		err := json.Unmarshal(d, &v)
 
-		return r, err
+		return v, err
 	case NameRSI:
-		r := RSI{}
-		err := json.Unmarshal(d, &r)
+		v := RSI{}
+		err := json.Unmarshal(d, &v)
 
-		return r, err
+		return v, err
 	case NameSMA:
-		s := SMA{}
-		err := json.Unmarshal(d, &s)
+		v := SMA{}
+		err := json.Unmarshal(d, &v)
 
-		return s, err
+		return v, err
 	case NameSRSI:
-		s := SRSI{}
-		err := json.Unmarshal(d, &s)
+		v := SRSI{}
+		err := json.Unmarshal(d, &v)
 
-		return s, err
+		return v, err
 	case NameStoch:
-		s := Stoch{}
-		err := json.Unmarshal(d, &s)
+		v := Stoch{}
+		err := json.Unmarshal(d, &v)
 
-		return s, err
+		return v, err
 	case NameWMA:
-		w := WMA{}
-		err := json.Unmarshal(d, &w)
+		v := WMA{}
+		err := json.Unmarshal(d, &v)
 
-		return w, err
+		return v, err
 	}
 
 	return nil, ErrInvalidSource
+}
+
+const (
+	// TrendUp specifies increasing value trend.
+	TrendUp Trend = iota + 1
+
+	// TrendDown specifies decreasing value value.
+	TrendDown
+)
+
+// Trend specifies which trend should be used.
+type Trend int
+
+// Validate checks whether the trend is one of
+// supported trend types or not.
+func (t Trend) Validate() error {
+	switch t {
+	case TrendUp, TrendDown:
+		return nil
+	default:
+		return ErrInvalidTrend
+	}
+}
+
+// MarshalText turns trend into appropriate string
+// representation.
+func (t Trend) MarshalText() ([]byte, error) {
+	var v string
+
+	switch t {
+	case TrendUp:
+		v = "up"
+	case TrendDown:
+		v = "down"
+	default:
+		return nil, ErrInvalidTrend
+	}
+
+	return []byte(v), nil
+}
+
+// UnmarshalText turns string to appropriate trend value.
+func (t *Trend) UnmarshalText(d []byte) error {
+	switch string(d) {
+	case "up", "u":
+		*t = TrendUp
+	case "down", "d":
+		*t = TrendDown
+	default:
+		return ErrInvalidTrend
+	}
+
+	return nil
+}
+
+// Available Bollinger Band indicator types.
+const (
+	BandUpper Band = iota + 1
+	BandMiddle
+	BandLower
+	BandWidth
+)
+
+// Band specifies which band should be used.
+type Band int
+
+// Validate checks whether the band is one of
+// supported band types or not.
+func (b Band) Validate() error {
+	switch b {
+	case BandUpper, BandMiddle, BandLower, BandWidth:
+		return nil
+	default:
+		return ErrInvalidBand
+	}
+}
+
+// MarshalText turns band into appropriate string
+// representation in JSON.
+func (b Band) MarshalText() ([]byte, error) {
+	var v string
+
+	switch b {
+	case BandUpper:
+		v = "upper"
+	case BandMiddle:
+		v = "middle"
+	case BandLower:
+		v = "lower"
+	case BandWidth:
+		v = "width"
+	default:
+		return nil, ErrInvalidBand
+	}
+
+	return []byte(v), nil
+}
+
+// UnmarshalText turns JSON string to appropriate band value.
+func (b *Band) UnmarshalText(d []byte) error {
+	switch string(d) {
+	case "upper", "u":
+		*b = BandUpper
+	case "middle", "m":
+		*b = BandMiddle
+	case "lower", "l":
+		*b = BandLower
+	case "width", "w":
+		*b = BandWidth
+	default:
+		return ErrInvalidBand
+	}
+
+	return nil
 }

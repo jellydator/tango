@@ -3,7 +3,6 @@ package indc
 import (
 	"testing"
 
-	"github.com/jellydator/chartype"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
@@ -111,104 +110,6 @@ func Test_resize(t *testing.T) {
 	}
 }
 
-func Test_resizeCandles(t *testing.T) {
-	cc := map[string]struct {
-		Length int
-		Offset int
-		Data   []chartype.Candle
-		Result []chartype.Candle
-		Error  error
-	}{
-		"Invalid data size": {
-			Length: 3,
-			Offset: 0,
-			Data: []chartype.Candle{
-				{Close: decimal.NewFromInt(30)},
-			},
-			Error: ErrInvalidDataSize,
-		},
-		"Unmodified slice returned when length is 1": {
-			Length: 0,
-			Offset: 0,
-			Data: []chartype.Candle{
-				{Close: decimal.NewFromInt(30)},
-			},
-			Result: []chartype.Candle{
-				{Close: decimal.NewFromInt(30)},
-			},
-		},
-		"Successful computation": {
-			Length: 3,
-			Offset: 0,
-			Data: []chartype.Candle{
-				{Close: decimal.NewFromInt(30)},
-				{Close: decimal.NewFromInt(31)},
-				{Close: decimal.NewFromInt(32)},
-				{Close: decimal.NewFromInt(32)},
-				{Close: decimal.NewFromInt(32)},
-				{Close: decimal.NewFromInt(32)},
-			},
-			Result: []chartype.Candle{
-				{Close: decimal.NewFromInt(32)},
-				{Close: decimal.NewFromInt(32)},
-				{Close: decimal.NewFromInt(32)},
-			},
-		},
-	}
-
-	for cn, c := range cc {
-		c := c
-
-		t.Run(cn, func(t *testing.T) {
-			t.Parallel()
-
-			res, err := resizeCandles(c.Data, c.Length, c.Offset)
-			equalError(t, c.Error, err)
-			if err != nil {
-				return
-			}
-
-			for i := 0; i < len(c.Result); i++ {
-				assert.Equal(t, c.Result[i].Close.Round(8), res[i].Close.Round(8))
-			}
-		})
-	}
-}
-
-func Test_typicalPrice(t *testing.T) {
-	cc := map[string]struct {
-		Data   []chartype.Candle
-		Result []decimal.Decimal
-	}{
-		"Successful calculation": {
-			Data: []chartype.Candle{
-				{High: decimal.RequireFromString("24.2"), Low: decimal.RequireFromString("23.85"), Close: decimal.RequireFromString("23.89")},
-				{High: decimal.RequireFromString("24.07"), Low: decimal.RequireFromString("23.72"), Close: decimal.RequireFromString("23.95")},
-				{High: decimal.RequireFromString("24.04"), Low: decimal.RequireFromString("23.64"), Close: decimal.RequireFromString("23.67")},
-			},
-			Result: []decimal.Decimal{
-				decimal.RequireFromString("23.98"),
-				decimal.RequireFromString("23.91333333"),
-				decimal.RequireFromString("23.78333333"),
-			},
-		},
-	}
-
-	for cn, c := range cc {
-		c := c
-
-		t.Run(cn, func(t *testing.T) {
-			t.Parallel()
-
-			res := typicalPrice(c.Data)
-
-			for i := 0; i < len(c.Result); i++ {
-				assert.Equal(t, c.Result[i].Round(8), res[i].Round(8))
-			}
-		})
-	}
-}
-
 func Test_meanDeviation(t *testing.T) {
 	cc := map[string]struct {
 		Data   []decimal.Decimal
@@ -241,6 +142,46 @@ func Test_meanDeviation(t *testing.T) {
 			t.Parallel()
 
 			res := meanDeviation(c.Data)
+
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
+
+func Test_standardDeviation(t *testing.T) {
+	cc := map[string]struct {
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+	}{
+		"Successful calculation with no values": {
+			Data:   []decimal.Decimal{},
+			Result: decimal.NewFromInt(0),
+		},
+		"Successful calculation with one value": {
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(2),
+			},
+			Result: decimal.NewFromInt(0),
+		},
+		"Successful calculation": {
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(600),
+				decimal.NewFromInt(470),
+				decimal.NewFromInt(170),
+				decimal.NewFromInt(430),
+				decimal.NewFromInt(300),
+			},
+			Result: sqrt(decimal.NewFromInt(21704)),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res := standardDeviation(c.Data)
 
 			assert.Equal(t, c.Result.String(), res.String())
 		})
@@ -327,7 +268,7 @@ func Test_calcMultiple(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res, err := calcMultiple(c.Indicator, c.Data, c.Amount)
+			res, err := calcMultiple(c.Indicator, c.Amount, c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -356,7 +297,11 @@ func Test_fromJSON(t *testing.T) {
 		},
 		"Successful creation of Aroon": {
 			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1,"offset":2}`),
-			Result:    Aroon{trend: "up", length: 1, offset: 2, valid: true},
+			Result:    Aroon{trend: TrendUp, length: 1, offset: 2, valid: true},
+		},
+		"Successful creation of BB": {
+			ByteArray: []byte(`{"name":"bb","band":"upper","std_dev":"2","length":1,"offset":2}`),
+			Result:    BB{band: BandUpper, stdDev: decimal.RequireFromString("2"), length: 1, offset: 2, valid: true},
 		},
 		"Successful creation of CCI": {
 			ByteArray: []byte(`{"name":"cci","source":{"name":"sma","length":1,"offset":3}}`),
@@ -379,7 +324,7 @@ func Test_fromJSON(t *testing.T) {
 			"source1":{"name":"sma","length":2,"offset":2},
 			"source2":{"name":"sma","length":3,"offset":4},
 			"offset":3}`),
-			Result: CD{source1: SMA{length: 2, offset: 2, valid: true},
+			Result: CD{percent: false, source1: SMA{length: 2, offset: 2, valid: true},
 				source2: SMA{length: 3, offset: 4, valid: true}, offset: 3, valid: true},
 		},
 		"Successful creation of ROC": {
@@ -421,6 +366,260 @@ func Test_fromJSON(t *testing.T) {
 			}
 
 			assert.Equal(t, c.Result, res)
+		})
+	}
+}
+
+func Test_Trend_Validate(t *testing.T) {
+	cc := map[string]struct {
+		Trend Trend
+		Err   error
+	}{
+		"Invalid Trend": {
+			Trend: 70,
+			Err:   ErrInvalidTrend,
+		},
+		"Successful TrendUp validation": {
+			Trend: TrendUp,
+		},
+		"Successful TrendDown validation": {
+			Trend: TrendDown,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			err := c.Trend.Validate()
+			AssertEqualError(t, c.Err, err)
+		})
+	}
+}
+
+func Test_Trend_MarshalText(t *testing.T) {
+	cc := map[string]struct {
+		Trend Trend
+		Text  string
+		Err   error
+	}{
+		"Invalid Trend": {
+			Trend: 70,
+			Err:   ErrInvalidTrend,
+		},
+		"Successful TrendUp marshal": {
+			Trend: TrendUp,
+			Text:  "up",
+		},
+		"Successful TrendDown marshal": {
+			Trend: TrendDown,
+			Text:  "down",
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := c.Trend.MarshalText()
+			AssertEqualError(t, c.Err, err)
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.Text, string(res))
+		})
+	}
+}
+
+func Test_Trend_UnmarshalText(t *testing.T) {
+	cc := map[string]struct {
+		Text   string
+		Result Trend
+		Err    error
+	}{
+		"Invalid Trend": {
+			Text: "70",
+			Err:  ErrInvalidTrend,
+		},
+		"Successful TrendUp unmarshal (long form)": {
+			Text:   "up",
+			Result: TrendUp,
+		},
+		"Successful TrendUp unmarshal (short form)": {
+			Text:   "u",
+			Result: TrendUp,
+		},
+		"Successful TrendDown unmarshal  (long form)": {
+			Text:   "down",
+			Result: TrendDown,
+		},
+		"Successful TrendDown unmarshal  (short form)": {
+			Text:   "d",
+			Result: TrendDown,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			var tr Trend
+			err := tr.UnmarshalText([]byte(c.Text))
+			AssertEqualError(t, c.Err, err)
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.Result, tr)
+		})
+	}
+}
+
+func Test_Band_Validate(t *testing.T) {
+	cc := map[string]struct {
+		Band Band
+		Err  error
+	}{
+		"Invalid Band": {
+			Band: 70,
+			Err:  ErrInvalidBand,
+		},
+		"Successful BandUpper validation": {
+			Band: BandUpper,
+		},
+		"Successful BandMiddle validation": {
+			Band: BandMiddle,
+		},
+		"Successful BandLower validation": {
+			Band: BandLower,
+		},
+		"Successful BandWidth validation": {
+			Band: BandWidth,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			err := c.Band.Validate()
+			AssertEqualError(t, c.Err, err)
+		})
+	}
+}
+
+func Test_Band_MarshalText(t *testing.T) {
+	cc := map[string]struct {
+		Band Band
+		Text string
+		Err  error
+	}{
+		"Invalid Band": {
+			Band: 70,
+			Err:  ErrInvalidBand,
+		},
+		"Successful BandUpper marshal": {
+			Band: BandUpper,
+			Text: "upper",
+		},
+		"Successful BandMiddle marshal": {
+			Band: BandMiddle,
+			Text: "middle",
+		},
+		"Successful BandLower marshal": {
+			Band: BandLower,
+			Text: "lower",
+		},
+		"Successful BandWidth marshal": {
+			Band: BandWidth,
+			Text: "width",
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := c.Band.MarshalText()
+			AssertEqualError(t, c.Err, err)
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.Text, string(res))
+		})
+	}
+}
+
+func Test_Band_UnmarshalText(t *testing.T) {
+	cc := map[string]struct {
+		Text   string
+		Result Band
+		Err    error
+	}{
+		"Invalid Band": {
+			Text: "70",
+			Err:  ErrInvalidBand,
+		},
+		"Successful BandUpper unmarshal (long form)": {
+			Text:   "upper",
+			Result: BandUpper,
+		},
+		"Successful BandUpper unmarshal (short form)": {
+			Text:   "u",
+			Result: BandUpper,
+		},
+		"Successful BandMiddle unmarshal  (long form)": {
+			Text:   "middle",
+			Result: BandMiddle,
+		},
+		"Successful BandMiddle unmarshal  (short form)": {
+			Text:   "m",
+			Result: BandMiddle,
+		},
+		"Successful BandLower unmarshal  (long form)": {
+			Text:   "lower",
+			Result: BandLower,
+		},
+		"Successful BandLower unmarshal  (short form)": {
+			Text:   "l",
+			Result: BandLower,
+		},
+		"Successful BandWidth unmarshal  (long form)": {
+			Text:   "width",
+			Result: BandWidth,
+		},
+		"Successful BandWidth unmarshal  (short form)": {
+			Text:   "w",
+			Result: BandWidth,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			var b Band
+			err := b.UnmarshalText([]byte(c.Text))
+			AssertEqualError(t, c.Err, err)
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.Result, b)
 		})
 	}
 }
