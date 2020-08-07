@@ -258,9 +258,9 @@ func (t Trend) Validate() error {
 	}
 }
 
-// MarshalJSON turns trend into appropriate string
-// representation in JSON.
-func (t Trend) MarshalJSON() ([]byte, error) {
+// MarshalText turns trend into appropriate string
+// representation.
+func (t Trend) MarshalText() ([]byte, error) {
 	var v string
 
 	switch t {
@@ -272,17 +272,12 @@ func (t Trend) MarshalJSON() ([]byte, error) {
 		return nil, ErrInvalidTrend
 	}
 
-	return json.Marshal(v)
+	return []byte(v), nil
 }
 
-// UnmarshalJSON turns JSON string to appropriate trend value.
-func (t *Trend) UnmarshalJSON(d []byte) error {
-	var f string
-	if err := json.Unmarshal(d, &f); err != nil {
-		return err
-	}
-
-	f = strings.ToLower(f)
+// UnmarshalText turns string to appropriate trend value.
+func (t *Trend) UnmarshalText(d []byte) error {
+	f := string(d)
 
 	switch f {
 	case "up", "u":
@@ -299,11 +294,8 @@ func (t *Trend) UnmarshalJSON(d []byte) error {
 // Available Bollinger Band indicator types.
 const (
 	BandUpper Band = iota + 1
-
 	BandMiddle
-
 	BandLower
-
 	BandWidth
 )
 
@@ -321,9 +313,9 @@ func (b Band) Validate() error {
 	}
 }
 
-// MarshalJSON turns band into appropriate string
+// MarshalText turns band into appropriate string
 // representation in JSON.
-func (b Band) MarshalJSON() ([]byte, error) {
+func (b Band) MarshalText() ([]byte, error) {
 	var v string
 
 	switch b {
@@ -339,17 +331,12 @@ func (b Band) MarshalJSON() ([]byte, error) {
 		return nil, ErrInvalidBand
 	}
 
-	return json.Marshal(v)
+	return []byte(v), nil
 }
 
-// UnmarshalJSON turns JSON string to appropriate band value.
-func (b *Band) UnmarshalJSON(d []byte) error {
-	var f string
-	if err := json.Unmarshal(d, &f); err != nil {
-		return err
-	}
-
-	f = strings.ToLower(f)
+// UnmarshalText turns JSON string to appropriate band value.
+func (b *Band) UnmarshalText(d []byte) error {
+	f := string(d)
 
 	switch f {
 	case "upper", "u":
