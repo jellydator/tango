@@ -299,6 +299,10 @@ func Test_fromJSON(t *testing.T) {
 			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1,"offset":2}`),
 			Result:    Aroon{trend: TrendUp, length: 1, offset: 2, valid: true},
 		},
+		"Successful creation of BB": {
+			ByteArray: []byte(`{"name":"bb","band":"upper","standard_deviations":"2","length":1,"offset":2}`),
+			Result:    BB{band: BandUpper, stdDevs: decimal.RequireFromString("2"), length: 1, offset: 2, valid: true},
+		},
 		"Successful creation of CCI": {
 			ByteArray: []byte(`{"name":"cci","source":{"name":"sma","length":1,"offset":3}}`),
 			Result:    CCI{source: SMA{length: 1, offset: 3, valid: true}, factor: decimal.RequireFromString("0.015"), valid: true},
@@ -320,7 +324,7 @@ func Test_fromJSON(t *testing.T) {
 			"source1":{"name":"sma","length":2,"offset":2},
 			"source2":{"name":"sma","length":3,"offset":4},
 			"offset":3}`),
-			Result: CD{source1: SMA{length: 2, offset: 2, valid: true},
+			Result: CD{percent: false, source1: SMA{length: 2, offset: 2, valid: true},
 				source2: SMA{length: 3, offset: 4, valid: true}, offset: 3, valid: true},
 		},
 		"Successful creation of ROC": {
