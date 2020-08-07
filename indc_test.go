@@ -10,7 +10,7 @@ import (
 
 func Test_NewAroon(t *testing.T) {
 	cc := map[string]struct {
-		Trend  String
+		Trend  Trend
 		Length int
 		Offset int
 		Result Aroon
@@ -20,10 +20,10 @@ func Test_NewAroon(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful creation": {
-			Trend:  "down",
+			Trend:  TrendDown,
 			Length: 5,
 			Offset: 2,
-			Result: Aroon{trend: "down", length: 5, offset: 2, valid: true},
+			Result: Aroon{trend: TrendDown, length: 5, offset: 2, valid: true},
 		},
 	}
 
@@ -45,9 +45,9 @@ func Test_NewAroon(t *testing.T) {
 }
 
 func Test_Aroon_Equal(t *testing.T) {
-	assert.True(t, Aroon{trend: "up", length: 3, offset: 2}.equal(Aroon{trend: "up", length: 3, offset: 2}))
-	assert.False(t, Aroon{trend: "down", length: 3, offset: 2}.equal(Aroon{trend: "up", length: 3, offset: 2}))
-	assert.False(t, Aroon{trend: "down", length: 3, offset: 2}.equal(SMA{}))
+	assert.True(t, Aroon{trend: TrendUp, length: 3, offset: 2}.equal(Aroon{trend: TrendUp, length: 3, offset: 2}))
+	assert.False(t, Aroon{trend: TrendDown, length: 3, offset: 2}.equal(Aroon{trend: TrendUp, length: 3, offset: 2}))
+	assert.False(t, Aroon{trend: TrendDown, length: 3, offset: 2}.equal(SMA{}))
 }
 
 func Test_Aroon_Length(t *testing.T) {
@@ -55,7 +55,7 @@ func Test_Aroon_Length(t *testing.T) {
 }
 
 func Test_Aroon_Trend(t *testing.T) {
-	assert.Equal(t, CleanString("up"), Aroon{trend: CleanString("up")}.Trend())
+	assert.Equal(t, TrendUp, Aroon{trend: TrendUp}.Trend())
 }
 
 func Test_Aroon_Offset(t *testing.T) {
@@ -69,26 +69,26 @@ func Test_Aroon_validate(t *testing.T) {
 		Valid bool
 	}{
 		"Invalid trend": {
-			Aroon: Aroon{trend: "downn", length: 5, offset: 0},
+			Aroon: Aroon{trend: 70, length: 5, offset: 0},
 			Error: errors.New("invalid trend"),
 			Valid: false,
 		},
 		"Invalid length": {
-			Aroon: Aroon{trend: "down", length: 0, offset: 0},
+			Aroon: Aroon{trend: TrendDown, length: 0, offset: 0},
 			Error: ErrInvalidLength,
 			Valid: false,
 		},
 		"Invalid offset": {
-			Aroon: Aroon{trend: "down", length: 1, offset: -1},
+			Aroon: Aroon{trend: TrendDown, length: 1, offset: -1},
 			Error: ErrInvalidOffset,
 			Valid: false,
 		},
 		"Successful validation with trend being up": {
-			Aroon: Aroon{trend: "up", length: 1, offset: 0},
+			Aroon: Aroon{trend: TrendUp, length: 1, offset: 0},
 			Valid: true,
 		},
 		"Successful validation with trend being down": {
-			Aroon: Aroon{trend: "down", length: 1, offset: 0},
+			Aroon: Aroon{trend: TrendDown, length: 1, offset: 0},
 			Valid: true,
 		},
 	}
@@ -117,14 +117,14 @@ func Test_Aroon_Calc(t *testing.T) {
 			Error: ErrInvalidIndicator,
 		},
 		"Invalid data size": {
-			Aroon: Aroon{trend: "down", length: 5, offset: 0, valid: true},
+			Aroon: Aroon{trend: TrendDown, length: 5, offset: 0, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
 			Error: ErrInvalidDataSize,
 		},
 		"Successful calculation with trend being up": {
-			Aroon: Aroon{trend: "up", length: 5, offset: 0, valid: true},
+			Aroon: Aroon{trend: TrendUp, length: 5, offset: 0, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(25),
 				decimal.NewFromInt(31),
@@ -136,7 +136,7 @@ func Test_Aroon_Calc(t *testing.T) {
 			Result: decimal.NewFromInt(40),
 		},
 		"Successful calculation with trend being down": {
-			Aroon: Aroon{trend: "down", length: 5, offset: 0, valid: true},
+			Aroon: Aroon{trend: TrendDown, length: 5, offset: 0, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(25),
 				decimal.NewFromInt(31),
@@ -148,7 +148,7 @@ func Test_Aroon_Calc(t *testing.T) {
 			Result: Hundred,
 		},
 		"Successful calculation with offset": {
-			Aroon: Aroon{trend: "down", length: 5, offset: 3, valid: true},
+			Aroon: Aroon{trend: TrendDown, length: 5, offset: 3, valid: true},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(25),
 				decimal.NewFromInt(31),
@@ -201,7 +201,7 @@ func Test_Aroon_UnmarshalJSON(t *testing.T) {
 		},
 		"Successful unmarshal": {
 			JSON:   `{"trend":"up","length":1,"offset":0}`,
-			Result: Aroon{trend: "up", length: 1, offset: 0, valid: true},
+			Result: Aroon{trend: TrendUp, length: 1, offset: 0, valid: true},
 		},
 	}
 
@@ -224,14 +224,14 @@ func Test_Aroon_UnmarshalJSON(t *testing.T) {
 }
 
 func Test_Aroon_MarshalJSON(t *testing.T) {
-	d, err := Aroon{trend: "down", length: 1, offset: 4}.MarshalJSON()
+	d, err := Aroon{trend: TrendDown, length: 1, offset: 4}.MarshalJSON()
 
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"trend":"down","length":1,"offset":4}`, string(d))
 }
 
 func Test_Aroon_namedMarshalJSON(t *testing.T) {
-	d, err := Aroon{trend: "down", length: 1, offset: 4}.namedMarshalJSON()
+	d, err := Aroon{trend: TrendDown, length: 1, offset: 4}.namedMarshalJSON()
 
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"name":"aroon","trend":"down","length":1,"offset":4}`, string(d))

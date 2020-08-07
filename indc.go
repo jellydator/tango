@@ -38,8 +38,8 @@ type Aroon struct {
 	valid bool
 
 	// trend specifies which Aroon trend to use during the
-	// calculation process. Allowed values: up, down.
-	trend String
+	// calculation process.
+	trend Trend
 
 	// length specifies how many data points should be used
 	// during the calculations.
@@ -52,7 +52,7 @@ type Aroon struct {
 
 // NewAroon validates provided configuration options and
 // creates new Aroon indicator.
-func NewAroon(trend String, length, offset int) (Aroon, error) {
+func NewAroon(trend Trend, length, offset int) (Aroon, error) {
 	a := Aroon{trend: trend, length: length, offset: offset}
 
 	if err := a.validate(); err != nil {
@@ -78,7 +78,7 @@ func (a Aroon) equal(i Indicator) bool {
 }
 
 // Trend returns trend configuration option.
-func (a Aroon) Trend() String {
+func (a Aroon) Trend() Trend {
 	return a.trend
 }
 
@@ -94,8 +94,8 @@ func (a Aroon) Offset() int {
 
 // validate checks whether Aroon was configured properly or not.
 func (a *Aroon) validate() error {
-	if a.trend != "down" && a.trend != "up" {
-		return errors.New("invalid trend")
+	if err := a.Trend().Validate(); err != nil {
+		return err
 	}
 
 	if a.length < 1 {
@@ -133,8 +133,8 @@ func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 			v = dd[i]
 		}
 
-		if a.trend == "up" && v.LessThanOrEqual(dd[i]) ||
-			a.trend == "down" && !v.LessThan(dd[i]) {
+		if a.trend == TrendUp && v.LessThanOrEqual(dd[i]) ||
+			a.trend == TrendDown && !v.LessThan(dd[i]) {
 
 			v = dd[i]
 			p = decimal.NewFromInt(int64(a.length - i - 1))
@@ -154,9 +154,9 @@ func (a Aroon) Count() int {
 // UnmarshalJSON parses JSON into Aroon structure.
 func (a *Aroon) UnmarshalJSON(d []byte) error {
 	var data struct {
-		Trend  String `json:"trend"`
-		Length int    `json:"length"`
-		Offset int    `json:"offset"`
+		Trend  Trend `json:"trend"`
+		Length int   `json:"length"`
+		Offset int   `json:"offset"`
 	}
 
 	if err := json.Unmarshal(d, &data); err != nil {
@@ -176,9 +176,9 @@ func (a *Aroon) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts Aroon configuration data into JSON.
 func (a Aroon) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Trend  String `json:"trend"`
-		Length int    `json:"length"`
-		Offset int    `json:"offset"`
+		Trend  Trend `json:"trend"`
+		Length int   `json:"length"`
+		Offset int   `json:"offset"`
 	}{
 		Trend:  a.trend,
 		Length: a.length,
@@ -191,7 +191,7 @@ func (a Aroon) MarshalJSON() ([]byte, error) {
 func (a Aroon) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Name   String `json:"name"`
-		Trend  String `json:"trend"`
+		Trend  Trend  `json:"trend"`
 		Length int    `json:"length"`
 		Offset int    `json:"offset"`
 	}{

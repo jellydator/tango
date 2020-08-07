@@ -27,9 +27,17 @@ var (
 	// ErrInvalidDataSize is returned when incorrect data size is provided.
 	ErrInvalidDataSize = errors.New("invalid data size")
 
-	// ErrInvalidSource is returned when source doesn't match any
-	// of the available sources.
+	// ErrInvalidSource is returned when source doesn't match any of the
+	// available sources.
 	ErrInvalidSource = errors.New("invalid source")
+
+	// ErrInvalidTrend is returned when trend doesn't match any of the
+	// available trends.
+	ErrInvalidTrend = errors.New("invalid trend")
+
+	// ErrInvalidBand is returned when band doesn't match any of the
+	// available bands.
+	ErrInvalidBand = errors.New("invalid band")
 )
 
 // String is a custom string that helps prevent capitalization issues by
@@ -211,4 +219,129 @@ func fromJSON(d []byte) (Indicator, error) {
 	}
 
 	return nil, ErrInvalidSource
+}
+
+const (
+	// TrendUp specifies increasing value trend.
+	TrendUp Trend = iota + 1
+
+	// TrendDown specifies decreasing value value.
+	TrendDown
+)
+
+// Trend specifies which trend should be used.
+type Trend int
+
+// Validate checks whether the trend is one of
+// supported trend types or not.
+func (t Trend) Validate() error {
+	switch t {
+	case TrendUp, TrendDown:
+		return nil
+	default:
+		return ErrInvalidTrend
+	}
+}
+
+// MarshalJSON turns trend into appropriate string
+// representation in JSON.
+func (t Trend) MarshalJSON() ([]byte, error) {
+	var v string
+	switch t {
+	case TrendUp:
+		v = "up"
+	case TrendDown:
+		v = "down"
+	default:
+		return nil, ErrInvalidTrend
+	}
+
+	return json.Marshal(v)
+}
+
+// UnmarshalJSON turns JSON string to appropriate trend value.
+func (t *Trend) UnmarshalJSON(d []byte) error {
+	var f string
+	if err := json.Unmarshal(d, &f); err != nil {
+		return err
+	}
+
+	f = strings.ToLower(f)
+
+	switch f {
+	case "up", "u":
+		*t = TrendUp
+	case "down", "d":
+		*t = TrendDown
+	default:
+		return ErrInvalidTrend
+	}
+
+	return nil
+}
+
+const (
+	// BandUpper specifies upper bollinger band type.
+	BandUpper Band = iota + 1
+
+	// BandUpper specifies middle bollinger band type.
+	BandMiddle
+
+	// BandUpper specifies lower bollinger band type.
+	BandLower
+)
+
+// Band specifies which band should be used.
+type Band int
+
+// Validate checks whether the band is one of
+// supported band types or not.
+func (b Band) Validate() error {
+	switch b {
+	case BandUpper, BandMiddle, BandLower:
+		return nil
+	default:
+		return ErrInvalidBand
+	}
+}
+
+// MarshalJSON turns band into appropriate string
+// representation in JSON.
+func (b Band) MarshalJSON() ([]byte, error) {
+	var v string
+	switch b {
+	case BandUpper:
+		v = "upper"
+	case BandMiddle:
+		v = "middle"
+	case BandLower:
+		v = "lower"
+	default:
+		return nil, ErrInvalidBand
+	}
+
+	return json.Marshal(v)
+}
+
+// UnmarshalJSON turns JSON string to appropriate band value.
+func (b *Band) UnmarshalJSON(d []byte) error {
+	var f string
+	if err := json.Unmarshal(d, &f); err != nil {
+		return err
+	}
+
+	f = strings.ToLower(f)
+
+	switch f {
+	case "upper", "u":
+		*b = BandUpper
+	case "middle", "m":
+		*b = BandMiddle
+	case "lower", "l":
+		*b = BandLower
+	default:
+		return ErrInvalidBand
+	}
+
+	return nil
 }
