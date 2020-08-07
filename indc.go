@@ -211,6 +211,10 @@ type BB struct {
 	// valid specifies whether BB paremeters were validated.
 	valid bool
 
+	// percent specifies whether returned number should be in units (if false)
+	// or percent (true).
+	percent bool
+
 	// band specifies which bollinger band to calculate.
 	band Band
 
@@ -228,8 +232,8 @@ type BB struct {
 
 // NewBB validates provided configuration options and creates
 // new BB indicator.
-func NewBB(band Band, stdDevs decimal.Decimal, length, offset int) (BB, error) {
-	bb := BB{band: band, stdDevs: stdDevs, length: length, offset: offset}
+func NewBB(percent bool, band Band, stdDevs decimal.Decimal, length, offset int) (BB, error) {
+	bb := BB{percent: percent, band: band, stdDevs: stdDevs, length: length, offset: offset}
 
 	if err := bb.validate(); err != nil {
 		return BB{}, err
@@ -241,9 +245,10 @@ func NewBB(band Band, stdDevs decimal.Decimal, length, offset int) (BB, error) {
 // Equal checks whether provided band has exactly the same values as main
 // band.
 func (bb BB) Equal(bb1 BB) bool {
-	if bb.valid != bb1.valid || bb.band != bb1.band ||
-		!bb.stdDevs.Equal(bb1.stdDevs) || bb.length != bb1.length ||
-		bb.offset != bb1.offset {
+	if bb.valid != bb1.valid || bb.percent != bb1.percent ||
+		bb.band != bb1.band || !bb.stdDevs.Equal(bb1.stdDevs) ||
+		bb.length != bb1.length || bb.offset != bb1.offset {
+
 		return false
 	}
 
@@ -257,6 +262,11 @@ func (bb BB) equal(i Indicator) bool {
 	}
 
 	return ok
+}
+
+// Percent returns percent configuration option.
+func (bb BB) Percent() bool {
+	return bb.percent
 }
 
 // Band returns band configuration option.
@@ -283,6 +293,10 @@ func (bb BB) Offset() int {
 func (bb *BB) validate() error {
 	if err := bb.band.Validate(); err != nil {
 		return err
+	}
+
+	if bb.percent && bb.band == BandMiddle || bb.percent && bb.band == BandWidth {
+		return errors.New("invalid bb configuration")
 	}
 
 	if bb.length < 1 {
@@ -313,19 +327,31 @@ func (bb BB) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	}
 
 	s, _ := NewSMA(bb.length, 0)
-	r, _ := s.Calc(dd)
+	m, _ := s.Calc(dd)
 
 	if bb.band == BandMiddle {
-		return r, nil
+		return m, nil
 	}
 
 	a := standardDeviation(dd).Mul(bb.stdDevs)
 
 	if bb.band == BandUpper {
-		return r.Add(a), nil
+		if bb.percent {
+			return m.Add(a).Div(m).Sub(One).Mul(Hundred), nil
+		}
+
+		return m.Add(a), nil
 	}
 
-	return r.Sub(a), nil
+	if bb.band == BandLower {
+		if bb.percent {
+			return m.Sub(a).Div(m).Sub(One).Mul(Hundred), nil
+		}
+
+		return m.Sub(a), nil
+	}
+
+	return m.Add(a).Sub(m.Sub(a)).Div(m).Mul(Hundred), nil
 }
 
 // Count determines the total amount of data points needed for BB
@@ -337,6 +363,7 @@ func (bb BB) Count() int {
 // UnmarshalJSON parses JSON into Aroon structure.
 func (bb *BB) UnmarshalJSON(d []byte) error {
 	var data struct {
+		Percent bool            `json:"percent"`
 		Band    Band            `json:"band"`
 		StdDevs decimal.Decimal `json:"standard_deviations"`
 		Length  int             `json:"length"`
@@ -347,7 +374,7 @@ func (bb *BB) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	nbb, err := NewBB(data.Band, data.StdDevs, data.Length, data.Offset)
+	nbb, err := NewBB(data.Percent, data.Band, data.StdDevs, data.Length, data.Offset)
 	if err != nil {
 		return err
 	}
@@ -360,11 +387,13 @@ func (bb *BB) UnmarshalJSON(d []byte) error {
 // MarshalJSON converts BB configuration data into JSON.
 func (bb BB) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
+		Percent bool            `json:"percent"`
 		Band    Band            `json:"band"`
 		StdDevs decimal.Decimal `json:"standard_deviations"`
 		Length  int             `json:"length"`
 		Offset  int             `json:"offset"`
 	}{
+		Percent: bb.percent,
 		Band:    bb.band,
 		StdDevs: bb.stdDevs,
 		Length:  bb.length,
@@ -377,12 +406,14 @@ func (bb BB) MarshalJSON() ([]byte, error) {
 func (bb BB) namedMarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Name    String          `json:"name"`
+		Percent bool            `json:"percent"`
 		Band    Band            `json:"band"`
 		StdDevs decimal.Decimal `json:"standard_deviations"`
 		Length  int             `json:"length"`
 		Offset  int             `json:"offset"`
 	}{
 		Name:    NameBB,
+		Percent: bb.percent,
 		Band:    bb.band,
 		StdDevs: bb.stdDevs,
 		Length:  bb.length,
