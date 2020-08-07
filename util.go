@@ -74,7 +74,7 @@ func resize(dd []decimal.Decimal, length, offset int) ([]decimal.Decimal, error)
 	return dd[len(dd)-length-offset : len(dd)-offset], nil
 }
 
-// avearage calculates average decimal number of given array.
+// average calculates average decimal number of given array.
 func average(dd []decimal.Decimal) decimal.Decimal {
 	var sum decimal.Decimal
 
@@ -85,6 +85,7 @@ func average(dd []decimal.Decimal) decimal.Decimal {
 	return sum.Div(decimal.NewFromInt(int64(len(dd))))
 }
 
+// sqrt is used to get a square root of decimal number.
 func sqrt(d decimal.Decimal) decimal.Decimal {
 	f, _ := d.Float64()
 
@@ -163,65 +164,70 @@ func fromJSON(d []byte) (Indicator, error) {
 
 	switch i.N {
 	case NameAroon:
-		a := Aroon{}
-		err := json.Unmarshal(d, &a)
+		v := Aroon{}
+		err := json.Unmarshal(d, &v)
 
-		return a, err
+		return v, err
+	case NameBB:
+		v := BB{}
+		err := json.Unmarshal(d, &v)
+
+		return v, err
 	case NameCCI:
-		c := CCI{}
-		err := json.Unmarshal(d, &c)
+		v := CCI{}
+		err := json.Unmarshal(d, &v)
 
-		return c, err
+		return v, err
 	case NameDEMA:
-		dm := DEMA{}
-		err := json.Unmarshal(d, &dm)
+		v := DEMA{}
+		err := json.Unmarshal(d, &v)
 
-		return dm, err
+		return v, err
 	case NameEMA:
-		e := EMA{}
-		err := json.Unmarshal(d, &e)
+		v := EMA{}
+		err := json.Unmarshal(d, &v)
 
-		return e, err
+		return v, err
 	case NameHMA:
-		h := HMA{}
-		err := json.Unmarshal(d, &h)
+		v := HMA{}
+		err := json.Unmarshal(d, &v)
 
-		return h, err
+		return v, err
 	case NameCD:
-		m := CD{}
-		err := json.Unmarshal(d, &m)
+		v := CD{}
+		err := json.Unmarshal(d, &v)
 
-		return m, err
+		return v, err
 	case NameROC:
-		r := ROC{}
-		err := json.Unmarshal(d, &r)
+		v := ROC{}
+		err := json.Unmarshal(d, &v)
 
-		return r, err
+		return v, err
 	case NameRSI:
-		r := RSI{}
-		err := json.Unmarshal(d, &r)
+		v := RSI{}
+		err := json.Unmarshal(d, &v)
 
-		return r, err
+		return v, err
 	case NameSMA:
-		s := SMA{}
-		err := json.Unmarshal(d, &s)
+		v := SMA{}
+		err := json.Unmarshal(d, &v)
 
-		return s, err
+		return v, err
 	case NameSRSI:
-		s := SRSI{}
-		err := json.Unmarshal(d, &s)
+		v := SRSI{}
+		err := json.Unmarshal(d, &v)
 
-		return s, err
+		return v, err
 	case NameStoch:
-		s := Stoch{}
-		err := json.Unmarshal(d, &s)
+		v := Stoch{}
+		err := json.Unmarshal(d, &v)
 
-		return s, err
+		return v, err
 	case NameWMA:
-		w := WMA{}
-		err := json.Unmarshal(d, &w)
+		v := WMA{}
+		err := json.Unmarshal(d, &v)
 
-		return w, err
+		return v, err
 	}
 
 	return nil, ErrInvalidSource
