@@ -94,7 +94,7 @@ func (a Aroon) Offset() int {
 
 // validate checks whether Aroon was configured properly or not.
 func (a *Aroon) validate() error {
-	if err := a.Trend().Validate(); err != nil {
+	if err := a.trend.Validate(); err != nil {
 		return err
 	}
 
@@ -199,6 +199,188 @@ func (a Aroon) namedMarshalJSON() ([]byte, error) {
 		Trend:  a.trend,
 		Length: a.length,
 		Offset: a.offset,
+	})
+}
+
+// NameBB returns Bollinger Band indicator name.
+const NameBB = "bb"
+
+// BB holds all the necessary information needed to calculate Bollinger Bands.
+// The zero value is not usable.
+type BB struct {
+	// valid specifies whether BB paremeters were validated.
+	valid bool
+
+	// band specifies which bollinger band to calculate.
+	band Band
+
+	// stdDev specifies how many standard deviations to apply.
+	stdDev decimal.Decimal
+
+	// length specifies how many data points should be used
+	// during the calculations.
+	length int
+
+	// offset specifies how many data points should be skipped from the end
+	// during the calculations.
+	offset int
+}
+
+// NewBB validates provided configuration options and creates
+// new BB indicator.
+func NewBB(band Band, stdDev decimal.Decimal, length, offset int) (BB, error) {
+	bb := BB{band: band, stdDev: stdDev, length: length, offset: offset}
+
+	if err := bb.validate(); err != nil {
+		return BB{}, err
+	}
+
+	return bb, nil
+}
+
+// Equal checks whether provided band has exactly the same values as main
+// band.
+func (bb BB) Equal(bb1 BB) bool {
+	return bb == bb1
+}
+
+func (bb BB) equal(i Indicator) bool {
+	b1, ok := i.(BB)
+	if ok {
+		return bb.Equal(b1)
+	}
+
+	return ok
+}
+
+// Band returns band configuration option.
+func (bb BB) Band() Band {
+	return bb.band
+}
+
+// StandardDeviations returns standard deviation configuration option.
+func (bb BB) StandardDeviations() decimal.Decimal {
+	return bb.stdDev
+}
+
+// Length returns length configuration option.
+func (bb BB) Length() int {
+	return bb.length
+}
+
+// Offset returns offset configuration option.
+func (bb BB) Offset() int {
+	return bb.offset
+}
+
+// validate checks whether BB was configured properly or not.
+func (bb *BB) validate() error {
+	if err := bb.band.Validate(); err != nil {
+		return err
+	}
+
+	if bb.length < 1 {
+		return ErrInvalidLength
+	}
+
+	if bb.offset < 0 {
+		return ErrInvalidOffset
+	}
+
+	bb.valid = true
+
+	return nil
+}
+
+// Calc calculates BB from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/b/bollingerbands.asp.
+// All credits are due to John Bollinger who developed BB indicator.
+func (bb BB) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !bb.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
+	dd, err := resize(dd, bb.Count()-bb.offset, bb.offset)
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	s, _ := NewSMA(bb.length, 0)
+	r, _ := s.Calc(dd)
+
+	if bb.band == BandMiddle {
+		return r, nil
+	}
+
+	a := standardDeviation(dd).Mul(bb.stdDev)
+
+	if bb.band == BandUpper {
+		return r.Add(a), nil
+	}
+
+	return r.Sub(a), nil
+}
+
+// Count determines the total amount of data points needed for BB
+// calculation.
+func (bb BB) Count() int {
+	return bb.length + bb.offset
+}
+
+// UnmarshalJSON parses JSON into Aroon structure.
+func (bb *BB) UnmarshalJSON(d []byte) error {
+	var data struct {
+		Band   Band            `json:"band"`
+		StdDev decimal.Decimal `json:"standard_deviation"`
+		Length int             `json:"length"`
+		Offset int             `json:"offset"`
+	}
+
+	if err := json.Unmarshal(d, &data); err != nil {
+		return err
+	}
+
+	nbb, err := NewBB(data.Band, data.StdDev, data.Length, data.Offset)
+	if err != nil {
+		return err
+	}
+
+	*bb = nbb
+
+	return nil
+}
+
+// MarshalJSON converts BB configuration data into JSON.
+func (bb BB) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Band   Band            `json:"band"`
+		StdDev decimal.Decimal `json:"standard_deviation"`
+		Length int             `json:"length"`
+		Offset int             `json:"offset"`
+	}{
+		Band:   bb.band,
+		StdDev: bb.stdDev,
+		Length: bb.length,
+		Offset: bb.offset,
+	})
+}
+
+// namedMarshalJSON converts BB configuration data with its
+// name into JSON.
+func (bb BB) namedMarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Name   String          `json:"name"`
+		Band   Band            `json:"band"`
+		StdDev decimal.Decimal `json:"standard_deviation"`
+		Length int             `json:"length"`
+		Offset int             `json:"offset"`
+	}{
+		Name:   NameBB,
+		Band:   bb.band,
+		StdDev: bb.stdDev,
+		Length: bb.length,
+		Offset: bb.offset,
 	})
 }
 
@@ -1566,7 +1748,7 @@ func (s SRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidIndicator
 	}
 
-	v, err := calcMultiple(s.rsi, dd, s.rsi.length)
+	v, err := calcMultiple(s.rsi, s.rsi.length, dd)
 	if err != nil {
 		return decimal.Zero, err
 	}

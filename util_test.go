@@ -3,7 +3,6 @@ package indc
 import (
 	"testing"
 
-	"github.com/jellydator/chartype"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
@@ -111,104 +110,6 @@ func Test_resize(t *testing.T) {
 	}
 }
 
-func Test_resizeCandles(t *testing.T) {
-	cc := map[string]struct {
-		Length int
-		Offset int
-		Data   []chartype.Candle
-		Result []chartype.Candle
-		Error  error
-	}{
-		"Invalid data size": {
-			Length: 3,
-			Offset: 0,
-			Data: []chartype.Candle{
-				{Close: decimal.NewFromInt(30)},
-			},
-			Error: ErrInvalidDataSize,
-		},
-		"Unmodified slice returned when length is 1": {
-			Length: 0,
-			Offset: 0,
-			Data: []chartype.Candle{
-				{Close: decimal.NewFromInt(30)},
-			},
-			Result: []chartype.Candle{
-				{Close: decimal.NewFromInt(30)},
-			},
-		},
-		"Successful computation": {
-			Length: 3,
-			Offset: 0,
-			Data: []chartype.Candle{
-				{Close: decimal.NewFromInt(30)},
-				{Close: decimal.NewFromInt(31)},
-				{Close: decimal.NewFromInt(32)},
-				{Close: decimal.NewFromInt(32)},
-				{Close: decimal.NewFromInt(32)},
-				{Close: decimal.NewFromInt(32)},
-			},
-			Result: []chartype.Candle{
-				{Close: decimal.NewFromInt(32)},
-				{Close: decimal.NewFromInt(32)},
-				{Close: decimal.NewFromInt(32)},
-			},
-		},
-	}
-
-	for cn, c := range cc {
-		c := c
-
-		t.Run(cn, func(t *testing.T) {
-			t.Parallel()
-
-			res, err := resizeCandles(c.Data, c.Length, c.Offset)
-			equalError(t, c.Error, err)
-			if err != nil {
-				return
-			}
-
-			for i := 0; i < len(c.Result); i++ {
-				assert.Equal(t, c.Result[i].Close.Round(8), res[i].Close.Round(8))
-			}
-		})
-	}
-}
-
-func Test_typicalPrice(t *testing.T) {
-	cc := map[string]struct {
-		Data   []chartype.Candle
-		Result []decimal.Decimal
-	}{
-		"Successful calculation": {
-			Data: []chartype.Candle{
-				{High: decimal.RequireFromString("24.2"), Low: decimal.RequireFromString("23.85"), Close: decimal.RequireFromString("23.89")},
-				{High: decimal.RequireFromString("24.07"), Low: decimal.RequireFromString("23.72"), Close: decimal.RequireFromString("23.95")},
-				{High: decimal.RequireFromString("24.04"), Low: decimal.RequireFromString("23.64"), Close: decimal.RequireFromString("23.67")},
-			},
-			Result: []decimal.Decimal{
-				decimal.RequireFromString("23.98"),
-				decimal.RequireFromString("23.91333333"),
-				decimal.RequireFromString("23.78333333"),
-			},
-		},
-	}
-
-	for cn, c := range cc {
-		c := c
-
-		t.Run(cn, func(t *testing.T) {
-			t.Parallel()
-
-			res := typicalPrice(c.Data)
-
-			for i := 0; i < len(c.Result); i++ {
-				assert.Equal(t, c.Result[i].Round(8), res[i].Round(8))
-			}
-		})
-	}
-}
-
 func Test_meanDeviation(t *testing.T) {
 	cc := map[string]struct {
 		Data   []decimal.Decimal
@@ -241,6 +142,46 @@ func Test_meanDeviation(t *testing.T) {
 			t.Parallel()
 
 			res := meanDeviation(c.Data)
+
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
+
+func Test_standardDeviation(t *testing.T) {
+	cc := map[string]struct {
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+	}{
+		"Successful calculation with no values": {
+			Data:   []decimal.Decimal{},
+			Result: decimal.NewFromInt(0),
+		},
+		"Successful calculation with one value": {
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(2),
+			},
+			Result: decimal.NewFromInt(0),
+		},
+		"Successful calculation": {
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(600),
+				decimal.NewFromInt(470),
+				decimal.NewFromInt(170),
+				decimal.NewFromInt(430),
+				decimal.NewFromInt(300),
+			},
+			Result: sqrt(decimal.NewFromInt(21704)),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res := standardDeviation(c.Data)
 
 			assert.Equal(t, c.Result.String(), res.String())
 		})
@@ -327,7 +268,7 @@ func Test_calcMultiple(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res, err := calcMultiple(c.Indicator, c.Data, c.Amount)
+			res, err := calcMultiple(c.Indicator, c.Amount, c.Data)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
