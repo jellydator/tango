@@ -1021,6 +1021,10 @@ type CD struct {
 	// valid specifies whether CD paremeters were validated.
 	valid bool
 
+	// percent specifies whether returned number should be in units (if false)
+	// or percent (true).
+	percent bool
+
 	// source1 specifies which indicator to use as base
 	// during calculation process.
 	source1 Indicator
@@ -1036,8 +1040,8 @@ type CD struct {
 
 // NewCD validates provided configuration options and
 // creates new CD indicator.
-func NewCD(source1, source2 Indicator, offset int) (CD, error) {
-	cd := CD{source1: source1, source2: source2, offset: offset}
+func NewCD(percent bool, source1, source2 Indicator, offset int) (CD, error) {
+	cd := CD{percent: percent, source1: source1, source2: source2, offset: offset}
 
 	if err := cd.validate(); err != nil {
 		return CD{}, err
@@ -1063,6 +1067,11 @@ func (cd CD) equal(i Indicator) bool {
 	}
 
 	return ok
+}
+
+// Percent returns percent configuration option.
+func (cd CD) Percent() bool {
+	return cd.percent
 }
 
 // Sub1 returns source1 configuration option.
@@ -1120,9 +1129,11 @@ func (cd CD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	r := r1.Sub(r2)
+	if cd.percent {
+		return r2.Div(r1).Sub(decimal.NewFromInt(1)).Mul(Hundred), nil
+	}
 
-	return r, nil
+	return r2.Sub(r1), nil
 }
 
 // Count determines the total amount of data points needed for CD
@@ -1141,6 +1152,7 @@ func (cd CD) Count() int {
 // UnmarshalJSON parses JSON into CD structure.
 func (cd *CD) UnmarshalJSON(d []byte) error {
 	var data struct {
+		Percent bool            `json:"percent"`
 		Source1 json.RawMessage `json:"source1"`
 		Source2 json.RawMessage `json:"source2"`
 		Offset  int             `json:"offset"`
@@ -1160,7 +1172,7 @@ func (cd *CD) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	nm, _ := NewCD(src1, src2, data.Offset)
+	nm, _ := NewCD(data.Percent, src1, src2, data.Offset)
 	if err := nm.validate(); err != nil {
 		return err
 	}
@@ -1183,10 +1195,12 @@ func (cd CD) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
+		Percent bool            `json:"percent"`
 		Source1 json.RawMessage `json:"source1"`
 		Source2 json.RawMessage `json:"source2"`
 		Offset  int             `json:"offset"`
 	}{
+		Percent: cd.percent,
 		Source1: src1,
 		Source2: src2,
 		Offset:  cd.offset,
@@ -1208,11 +1222,13 @@ func (cd CD) namedMarshalJSON() ([]byte, error) {
 
 	return json.Marshal(struct {
 		Name    String          `json:"name"`
+		Percent bool            `json:"percent"`
 		Source1 json.RawMessage `json:"source1"`
 		Source2 json.RawMessage `json:"source2"`
 		Offset  int             `json:"offset"`
 	}{
 		Name:    NameCD,
+		Percent: cd.percent,
 		Source1: src1,
 		Source2: src2,
 		Offset:  cd.offset,

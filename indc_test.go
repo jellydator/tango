@@ -1176,6 +1176,7 @@ func Test_HMA_namedMarshalJSON(t *testing.T) {
 
 func Test_NewCD(t *testing.T) {
 	cc := map[string]struct {
+		Percent bool
 		Source1 Indicator
 		Source2 Indicator
 		Offset  int
@@ -1186,10 +1187,11 @@ func Test_NewCD(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful creation": {
+			Percent: true,
 			Source1: &IndicatorMock{},
 			Source2: &IndicatorMock{},
 			Offset:  4,
-			Result:  CD{source1: &IndicatorMock{}, source2: &IndicatorMock{}, offset: 4, valid: true},
+			Result:  CD{percent: true, source1: &IndicatorMock{}, source2: &IndicatorMock{}, offset: 4, valid: true},
 		},
 	}
 
@@ -1199,7 +1201,7 @@ func Test_NewCD(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			m, err := NewCD(c.Source1, c.Source2, c.Offset)
+			m, err := NewCD(c.Percent, c.Source1, c.Source2, c.Offset)
 			equalError(t, c.Error, err)
 			if err != nil {
 				return
@@ -1216,6 +1218,10 @@ func Test_CD_Equal(t *testing.T) {
 	assert.False(t, CD{source1: SMA{length: 1}, source2: SMA{}}.equal(CD{source1: SMA{}, source2: SMA{}}))
 	assert.False(t, CD{source1: SMA{}, source2: SMA{length: 1}}.equal(CD{source1: SMA{}, source2: SMA{}}))
 	assert.False(t, CD{source1: SMA{}, source2: SMA{}}.equal(SMA{}))
+}
+
+func Test_CD_Percent(t *testing.T) {
+	assert.Equal(t, true, CD{percent: true}.Percent())
 }
 
 func Test_CD_Sub1(t *testing.T) {
@@ -1328,7 +1334,16 @@ func Test_CD_Calc(t *testing.T) {
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(32),
 			},
-			Result: decimal.NewFromInt(-5),
+			Result: decimal.NewFromInt(5),
+		},
+		"Successful calculation using percent": {
+			CD: CD{percent: true, source1: stubIndicator(decimal.NewFromInt(5), nil, 1), source2: stubIndicator(decimal.NewFromInt(10), nil, 1), offset: 0, valid: true},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(32),
+			},
+			Result: decimal.NewFromInt(100),
 		},
 		"Successful calculation": {
 			CD: CD{source1: stubIndicator(decimal.NewFromInt(5), nil, 1), source2: stubIndicator(decimal.NewFromInt(10), nil, 1), offset: 0, valid: true},
@@ -1337,7 +1352,7 @@ func Test_CD_Calc(t *testing.T) {
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(32),
 			},
-			Result: decimal.NewFromInt(-5),
+			Result: decimal.NewFromInt(5),
 		},
 	}
 
@@ -1393,8 +1408,8 @@ func Test_CD_UnmarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful unmarshal": {
-			JSON:   `{"source1":{"name":"sma","length":1,"offset":4},"source2":{"name":"sma","length":2,"offset":6},"offset":5}`,
-			Result: CD{source1: SMA{length: 1, offset: 4, valid: true}, source2: SMA{length: 2, offset: 6, valid: true}, offset: 5, valid: true},
+			JSON:   `{"percent":true,"source1":{"name":"sma","length":1,"offset":4},"source2":{"name":"sma","length":2,"offset":6},"offset":5}`,
+			Result: CD{percent: true, source1: SMA{length: 1, offset: 4, valid: true}, source2: SMA{length: 2, offset: 6, valid: true}, offset: 5, valid: true},
 		},
 	}
 
@@ -1439,8 +1454,8 @@ func Test_CD_MarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			CD:     CD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
-			Result: `{"source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"},"offset":4}`,
+			CD:     CD{percent: true, source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
+			Result: `{"percent":true,"source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"},"offset":4}`,
 		},
 	}
 
@@ -1484,8 +1499,8 @@ func Test_CD_namedMarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			CD:     CD{source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
-			Result: `{"name":"cd","source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"},"offset":4}`,
+			CD:     CD{percent: true, source1: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), source2: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), offset: 4},
+			Result: `{"name":"cd","percent":true,"source1":{"name":"indicatormock"},"source2":{"name":"indicatormock"},"offset":4}`,
 		},
 	}
 
