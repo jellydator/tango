@@ -281,95 +281,6 @@ func Test_calcMultiple(t *testing.T) {
 	}
 }
 
-func Test_fromJSON(t *testing.T) {
-	cc := map[string]struct {
-		ByteArray []byte
-		Result    Indicator
-		Error     error
-	}{
-		"Invalid JSON": {
-			ByteArray: []byte(`{\"_"/`),
-			Error:     assert.AnError,
-		},
-		"Invalid source name": {
-			ByteArray: []byte(`{"name":"aa"}`),
-			Error:     ErrInvalidSource,
-		},
-		"Successful creation of Aroon": {
-			ByteArray: []byte(`{"name":"aroon","trend":"up","length":1,"offset":2}`),
-			Result:    Aroon{trend: TrendUp, length: 1, offset: 2, valid: true},
-		},
-		"Successful creation of BB": {
-			ByteArray: []byte(`{"name":"bb","band":"upper","std_dev":"2","length":1,"offset":2}`),
-			Result:    BB{band: BandUpper, stdDev: decimal.RequireFromString("2"), length: 1, offset: 2, valid: true},
-		},
-		"Successful creation of CCI": {
-			ByteArray: []byte(`{"name":"cci","source":{"name":"sma","length":1,"offset":3}}`),
-			Result:    CCI{source: SMA{length: 1, offset: 3, valid: true}, factor: decimal.RequireFromString("0.015"), valid: true},
-		},
-		"Successful creation of DEMA": {
-			ByteArray: []byte(`{"name":"dema","ema":{"length":1,"offset":1}}`),
-			Result:    DEMA{ema: EMA{SMA{length: 1, offset: 1, valid: true}}, valid: true},
-		},
-		"Successful creation of EMA": {
-			ByteArray: []byte(`{"name":"ema","length":1,"offset":3}`),
-			Result:    EMA{SMA{length: 1, offset: 3, valid: true}},
-		},
-		"Successful creation of HMA": {
-			ByteArray: []byte(`{"name":"hma", "wma":{"name":"wma","length":2, "offset":3}}`),
-			Result:    HMA{wma: WMA{length: 2, offset: 3, valid: true}, valid: true},
-		},
-		"Successful creation of CD": {
-			ByteArray: []byte(`{"name":"cd",
-			"source1":{"name":"sma","length":2,"offset":2},
-			"source2":{"name":"sma","length":3,"offset":4},
-			"offset":3}`),
-			Result: CD{percent: false, source1: SMA{length: 2, offset: 2, valid: true},
-				source2: SMA{length: 3, offset: 4, valid: true}, offset: 3, valid: true},
-		},
-		"Successful creation of ROC": {
-			ByteArray: []byte(`{"name":"roc","length":1,"offset":3}`),
-			Result:    ROC{length: 1, offset: 3, valid: true},
-		},
-		"Successful creation of RSI": {
-			ByteArray: []byte(`{"name":"rsi","length":1,"offset":2}`),
-			Result:    RSI{length: 1, offset: 2, valid: true},
-		},
-		"Successful creation of SMA": {
-			ByteArray: []byte(`{"name":"sma","length":1,"offset":3}`),
-			Result:    SMA{length: 1, offset: 3, valid: true},
-		},
-		"Successful creation of SRSI": {
-			ByteArray: []byte(`{"name":"srsi", "rsi":{"name":"rsi","length":1,"offset":1}}`),
-			Result:    SRSI{rsi: RSI{length: 1, offset: 1, valid: true}, valid: true},
-		},
-		"Successful creation of Stoch": {
-			ByteArray: []byte(`{"name":"stoch","length":1,"offset":4}`),
-			Result:    Stoch{length: 1, offset: 4, valid: true},
-		},
-		"Successful creation of WMA": {
-			ByteArray: []byte(`{"name":"wma","length":1,"offset":5}`),
-			Result:    WMA{length: 1, offset: 5, valid: true},
-		},
-	}
-
-	for cn, c := range cc {
-		c := c
-
-		t.Run(cn, func(t *testing.T) {
-			t.Parallel()
-
-			res, err := fromJSON(c.ByteArray)
-			equalError(t, c.Error, err)
-			if err != nil {
-				return
-			}
-
-			assert.Equal(t, c.Result, res)
-		})
-	}
-}
-
 func Test_Trend_Validate(t *testing.T) {
 	cc := map[string]struct {
 		Trend Trend
@@ -394,7 +305,7 @@ func Test_Trend_Validate(t *testing.T) {
 			t.Parallel()
 
 			err := c.Trend.Validate()
-			AssertEqualError(t, c.Err, err)
+			equalError(t, c.Err, err)
 		})
 	}
 }
@@ -426,7 +337,7 @@ func Test_Trend_MarshalText(t *testing.T) {
 			t.Parallel()
 
 			res, err := c.Trend.MarshalText()
-			AssertEqualError(t, c.Err, err)
+			equalError(t, c.Err, err)
 			if err != nil {
 				return
 			}
@@ -472,7 +383,7 @@ func Test_Trend_UnmarshalText(t *testing.T) {
 
 			var tr Trend
 			err := tr.UnmarshalText([]byte(c.Text))
-			AssertEqualError(t, c.Err, err)
+			equalError(t, c.Err, err)
 			if err != nil {
 				return
 			}
@@ -512,7 +423,7 @@ func Test_Band_Validate(t *testing.T) {
 			t.Parallel()
 
 			err := c.Band.Validate()
-			AssertEqualError(t, c.Err, err)
+			equalError(t, c.Err, err)
 		})
 	}
 }
@@ -552,7 +463,7 @@ func Test_Band_MarshalText(t *testing.T) {
 			t.Parallel()
 
 			res, err := c.Band.MarshalText()
-			AssertEqualError(t, c.Err, err)
+			equalError(t, c.Err, err)
 			if err != nil {
 				return
 			}
@@ -614,7 +525,7 @@ func Test_Band_UnmarshalText(t *testing.T) {
 
 			var b Band
 			err := b.UnmarshalText([]byte(c.Text))
-			AssertEqualError(t, c.Err, err)
+			equalError(t, c.Err, err)
 			if err != nil {
 				return
 			}

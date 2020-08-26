@@ -1,3 +1,5 @@
+// Package indc provides types and functions to calculate values of various
+// market indicators.
 package indc
 
 import (
@@ -22,9 +24,10 @@ type Indicator interface {
 	// from the end during the calculations.
 	Offset() int
 
-	// namedMarshalJSON converts indicator and its name to JSON.
+	// namedMarshalJSON should convert indicator and its name to JSON.
 	namedMarshalJSON() ([]byte, error)
 
+	// equal should check whether both indicators are the same.
 	equal(i Indicator) bool
 }
 
@@ -62,12 +65,12 @@ func NewAroon(trend Trend, length, offset int) (Aroon, error) {
 	return a, nil
 }
 
-// Equal checks whether provided aroon has exactly the same values as main
-// aroon.
+// Equal checks whether both indicators are the same.
 func (a Aroon) Equal(a1 Aroon) bool {
 	return a == a1
 }
 
+// equal checks whether both indicators are the same.
 func (a Aroon) equal(i Indicator) bool {
 	a1, ok := i.(Aroon)
 	if ok {
@@ -142,7 +145,7 @@ func (a Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	}
 
 	return decimal.NewFromInt(int64(a.length)).Sub(p).
-		Mul(Hundred).Div(decimal.NewFromInt(int64(a.length))), nil
+		Mul(_hundred).Div(decimal.NewFromInt(int64(a.length))), nil
 }
 
 // Count determines the total amount of data points needed for Aroon
@@ -248,14 +251,14 @@ func NewBB(percent bool, band Band, stdDev decimal.Decimal, length, offset int) 
 	return bb, nil
 }
 
-// Equal checks whether provided band has exactly the same values as main
-// band.
+// Equal checks whether both indicators are the same.
 func (bb BB) Equal(bb1 BB) bool {
 	return bb.valid == bb1.valid && bb.percent == bb1.percent &&
 		bb.band == bb1.band && bb.stdDev.Equal(bb1.stdDev) &&
 		bb.length == bb1.length && bb.offset == bb1.offset
 }
 
+// equal checks whether both indicators are the same.
 func (bb BB) equal(i Indicator) bool {
 	b1, ok := i.(BB)
 	if ok {
@@ -347,7 +350,7 @@ func (bb BB) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	if bb.band == BandUpper {
 		if bb.percent {
-			return m.Add(a).Div(m).Sub(One).Mul(Hundred), nil
+			return m.Add(a).Div(m).Sub(_one).Mul(_hundred), nil
 		}
 
 		return m.Add(a), nil
@@ -355,13 +358,13 @@ func (bb BB) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 
 	if bb.band == BandLower {
 		if bb.percent {
-			return m.Sub(a).Div(m).Sub(One).Mul(Hundred), nil
+			return m.Sub(a).Div(m).Sub(_one).Mul(_hundred), nil
 		}
 
 		return m.Sub(a), nil
 	}
 
-	return m.Add(a).Sub(m.Sub(a)).Div(m).Mul(Hundred), nil
+	return m.Add(a).Sub(m.Sub(a)).Div(m).Mul(_hundred), nil
 }
 
 // Count determines the total amount of data points needed for BB
@@ -466,8 +469,7 @@ func NewCCI(source Indicator, factor decimal.Decimal) (CCI, error) {
 	return c, nil
 }
 
-// Equal checks whether provided cci has exactly the same values as main
-// cci.
+// Equal checks whether both indicators are the same.
 func (c CCI) Equal(c1 CCI) bool {
 	if c.valid != c1.valid || !c.factor.Equal(c1.factor) {
 		return false
@@ -476,6 +478,7 @@ func (c CCI) Equal(c1 CCI) bool {
 	return c.source.equal(c1.source)
 }
 
+// equal checks whether both indicators are the same.
 func (c CCI) equal(i Indicator) bool {
 	c1, ok := i.(CCI)
 	if ok {
@@ -645,8 +648,7 @@ func NewDEMA(ema EMA) (DEMA, error) {
 	return dm, nil
 }
 
-// Equal checks whether provided dema has exactly the same values as main
-// dema.
+// Equal checks whether both indicators are the same.
 func (dm DEMA) Equal(dm1 DEMA) bool {
 	if dm.valid != dm1.valid {
 		return false
@@ -655,6 +657,7 @@ func (dm DEMA) Equal(dm1 DEMA) bool {
 	return dm.ema.Equal(dm1.ema)
 }
 
+// equal checks whether both indicators are the same.
 func (dm DEMA) equal(i Indicator) bool {
 	dm1, ok := i.(DEMA)
 	if ok {
@@ -813,12 +816,12 @@ func NewEMA(length, offset int) (EMA, error) {
 	return e, nil
 }
 
-// Equal checks whether provided ema has exactly the same values as main
-// ema.
+// Equal checks whether both indicators are the same.
 func (e EMA) Equal(e1 EMA) bool {
 	return e.SMA.Equal(e1.SMA)
 }
 
+// equal checks whether both indicators are the same.
 func (e EMA) equal(i Indicator) bool {
 	e1, ok := i.(EMA)
 	if ok {
@@ -958,8 +961,7 @@ func NewHMA(w WMA) (HMA, error) {
 	return h, nil
 }
 
-// Equal checks whether provided hma has exactly the same values as main
-// hma.
+// Equal checks whether both indicators are the same.
 func (h HMA) Equal(h1 HMA) bool {
 	if h.valid != h1.valid {
 		return false
@@ -968,6 +970,7 @@ func (h HMA) Equal(h1 HMA) bool {
 	return h.wma.Equal(h1.wma)
 }
 
+// equal checks whether both indicators are the same.
 func (h HMA) equal(i Indicator) bool {
 	h1, ok := i.(HMA)
 	if ok {
@@ -1143,8 +1146,7 @@ func NewCD(percent bool, source1, source2 Indicator, offset int) (CD, error) {
 	return cd, nil
 }
 
-// Equal checks whether provided cd has exactly the same values as main
-// cd.
+// Equal checks whether both indicators are the same.
 func (cd CD) Equal(cd1 CD) bool {
 	if cd.valid != cd1.valid || cd.offset != cd1.offset {
 		return false
@@ -1153,6 +1155,7 @@ func (cd CD) Equal(cd1 CD) bool {
 	return cd.source1.equal(cd1.source1) && cd.source2.equal(cd1.source2)
 }
 
+// equal checks whether both indicators are the same.
 func (cd CD) equal(i Indicator) bool {
 	cd1, ok := i.(CD)
 	if ok {
@@ -1223,7 +1226,7 @@ func (cd CD) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	}
 
 	if cd.percent {
-		return r2.Div(r1).Sub(decimal.NewFromInt(1)).Mul(Hundred), nil
+		return r2.Div(r1).Sub(decimal.NewFromInt(1)).Mul(_hundred), nil
 	}
 
 	return r2.Sub(r1), nil
@@ -1364,12 +1367,12 @@ func NewROC(length, offset int) (ROC, error) {
 	return r, nil
 }
 
-// Equal checks whether provided roc has exactly the same values as main
-// roc.
+// Equal checks whether both indicators are the same.
 func (r ROC) Equal(r1 ROC) bool {
 	return r == r1
 }
 
+// equal checks whether both indicators are the same.
 func (r ROC) equal(i Indicator) bool {
 	r1, ok := i.(ROC)
 	if ok {
@@ -1424,7 +1427,7 @@ func (r ROC) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, nil
 	}
 
-	return n.Sub(l).Div(l).Mul(Hundred), nil
+	return n.Sub(l).Div(l).Mul(_hundred), nil
 }
 
 // Count determines the total amount of data points needed for ROC
@@ -1510,12 +1513,12 @@ func NewRSI(length, offset int) (RSI, error) {
 	return r, nil
 }
 
-// Equal checks whether provided rsi has exactly the same values as main
-// rsi.
+// Equal checks whether both indicators are the same.
 func (r RSI) Equal(r1 RSI) bool {
 	return r == r1
 }
 
+// equal checks whether both indicators are the same.
 func (r RSI) equal(i Indicator) bool {
 	r1, ok := i.(RSI)
 	if ok {
@@ -1581,14 +1584,14 @@ func (r RSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	}
 
 	if al == decimal.Zero {
-		return Hundred, nil
+		return _hundred, nil
 	}
 
 	ag = ag.Div(length)
 
 	al = al.Div(length)
 
-	return Hundred.Sub(Hundred.Div(decimal.NewFromInt(1).Add(ag.Div(al)))), nil
+	return _hundred.Sub(_hundred.Div(decimal.NewFromInt(1).Add(ag.Div(al)))), nil
 }
 
 // Count determines the total amount of data points needed for RSI
@@ -1674,12 +1677,12 @@ func NewSMA(length, offset int) (SMA, error) {
 	return s, nil
 }
 
-// Equal checks whether provided sma has exactly the same values as main
-// sma.
+// Equal checks whether both indicators are the same.
 func (s SMA) Equal(s1 SMA) bool {
 	return s == s1
 }
 
+// equal checks whether both indicators are the same.
 func (s SMA) equal(i Indicator) bool {
 	s1, ok := i.(SMA)
 	if ok {
@@ -1814,8 +1817,7 @@ func NewSRSI(r RSI) (SRSI, error) {
 	return s, nil
 }
 
-// Equal checks whether provided srsi has exactly the same values as main
-// srsi.
+// Equal checks whether both indicators are the same.
 func (s SRSI) Equal(s1 SRSI) bool {
 	if s.valid != s1.valid {
 		return false
@@ -1824,6 +1826,7 @@ func (s SRSI) Equal(s1 SRSI) bool {
 	return s.rsi.Equal(s1.rsi)
 }
 
+// equal checks whether both indicators are the same.
 func (s SRSI) equal(i Indicator) bool {
 	s1, ok := i.(SRSI)
 	if ok {
@@ -1976,12 +1979,12 @@ func NewStoch(length, offset int) (Stoch, error) {
 	return s, nil
 }
 
-// Equal checks whether provided stoch has exactly the same values as main
-// stoch.
+// Equal checks whether both indicators are the same.
 func (s Stoch) Equal(s1 Stoch) bool {
 	return s == s1
 }
 
+// equal checks whether both indicators are the same.
 func (s Stoch) equal(i Indicator) bool {
 	s1, ok := i.(Stoch)
 	if ok {
@@ -2047,7 +2050,7 @@ func (s Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, nil
 	}
 
-	return dd[len(dd)-1].Sub(l).Div(denom).Mul(Hundred), nil
+	return dd[len(dd)-1].Sub(l).Div(denom).Mul(_hundred), nil
 }
 
 // Count determines the total amount of data points needed for Stoch
@@ -2133,12 +2136,12 @@ func NewWMA(length, offset int) (WMA, error) {
 	return w, nil
 }
 
-// Equal checks whether provided wma has exactly the same values as main
-// wma.
+// Equal checks whether both indicators are the same.
 func (w WMA) Equal(w1 WMA) bool {
 	return w == w1
 }
 
+// equal checks whether both indicators are the same.
 func (w WMA) equal(i Indicator) bool {
 	w1, ok := i.(WMA)
 	if ok {

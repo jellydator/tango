@@ -141,7 +141,7 @@ func Test_Aroon_Calc(t *testing.T) {
 				decimal.NewFromInt(29),
 				decimal.NewFromInt(29),
 			},
-			Result: Hundred,
+			Result: _hundred,
 		},
 		"Successful calculation with offset": {
 			Aroon: Aroon{trend: TrendDown, length: 5, offset: 3, valid: true},
@@ -156,7 +156,7 @@ func Test_Aroon_Calc(t *testing.T) {
 				decimal.NewFromInt(29),
 				decimal.NewFromInt(29),
 			},
-			Result: Hundred,
+			Result: _hundred,
 		},
 	}
 
@@ -610,8 +610,8 @@ func Test_NewCCI(t *testing.T) {
 		},
 		"Successful creation": {
 			Source: &IndicatorMock{},
-			Factor: Hundred,
-			Result: CCI{source: &IndicatorMock{}, factor: Hundred, valid: true},
+			Factor: _hundred,
+			Result: CCI{source: &IndicatorMock{}, factor: _hundred, valid: true},
 		},
 	}
 
@@ -644,7 +644,7 @@ func Test_CCI_Sub(t *testing.T) {
 }
 
 func Test_CCI_Factor(t *testing.T) {
-	assert.Equal(t, Hundred, CCI{factor: Hundred}.Factor())
+	assert.Equal(t, _hundred, CCI{factor: _hundred}.Factor())
 }
 
 func Test_CCI_Offset(t *testing.T) {
@@ -841,7 +841,7 @@ func Test_CCI_MarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			CCI:    CCI{source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), factor: Hundred},
+			CCI:    CCI{source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), factor: _hundred},
 			Result: `{"source":{"name":"indicatormock"},"factor":"100"}`,
 		},
 	}
@@ -882,7 +882,7 @@ func Test_CCI_namedMarshalJSON(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successful marshal": {
-			CCI:    CCI{source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), factor: Hundred},
+			CCI:    CCI{source: stubIndicator([]byte(`{"name":"indicatormock"}`), nil), factor: _hundred},
 			Result: `{"name":"cci","source":{"name":"indicatormock"},"factor":"100"}`,
 		},
 	}
@@ -2205,7 +2205,7 @@ func Test_RSI_Calc(t *testing.T) {
 				decimal.NewFromInt(4),
 				decimal.NewFromInt(8),
 			},
-			Result: Hundred,
+			Result: _hundred,
 		},
 		"Successful calculation with offset": {
 			RSI: RSI{length: 3, offset: 2, valid: true},

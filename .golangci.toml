@@ -10,6 +10,7 @@ enable = [
 	"gocyclo",
 	"gocognit",
 	"asciicheck",
+	"gofmt",
 	"goimports",
 	"maligned",
 	"depguard",
@@ -21,14 +22,18 @@ enable = [
 	"scopelint",
 	"gocritic",
 	"gochecknoinits",
-	#"gochecknoglobals",
-	#"godox",
+	"gochecknoglobals",
 	"whitespace",
 	"wsl",
 	"goprintffuncname",
 	"goerr113",
 	"godot",
-	"nestif"
+	"nestif",
+	"nolintlint",
+	"exhaustive",
+	"sqlclosecheck",
+	"exportloopref",
+	"noctx"
 ]
 
 [linters-settings.gocyclo]
@@ -42,15 +47,13 @@ suggest-new = true
 
 [linters-settings.depguard]
 type = "blacklist"
-packages = ["gotest.tools/assert"]
-
-[linters-settings.misspell]
-ignore-words = [
-	"strat"
+packages = [
+	"gotest.tools/assert",
+	"github.com/bmizerany/assert"
 ]
 
 [linters-settings.nakedret]
-max-func-lines = 15
+max-func-lines = 20
 
 [linters-settings.prealloc]
 for-loops = true
@@ -75,10 +78,21 @@ multi-func = true
 [linters-settings.wsl]
 force-err-cuddling = true
 
-# don't require package comments
+[linters-settings.exhaustive]
+default-signifies-exhaustive = true
+
+[issues]
+exclude-use-default = false
+
+# allow defer usage
 [[issues.exclude-rules]]
-text = "ST1000"
-linters = ["stylecheck"]
+text = "unnecessaryDefer: defer"
+linters = ["gocritic"]
+
+# allow inits in test files
+[[issues.exclude-rules]]
+path = "_test.go"
+linters = ["gochecknoinits"]
 
 # exclude global vars prefixed with underscore
 [[issues.exclude-rules]]

@@ -1,7 +1,6 @@
 package indc
 
 import (
-	"encoding/json"
 	"errors"
 	"math"
 	"strings"
@@ -10,11 +9,11 @@ import (
 )
 
 var (
-	// Hundred is just plain 100 in decimal format.
-	Hundred = decimal.NewFromInt(100)
+	// _hundred is just plain 100 in decimal format.
+	_hundred = decimal.NewFromInt(100)
 
-	// One is just plain 1 in decimal format.
-	One = decimal.NewFromInt(1)
+	// _one is just plain 1 in decimal format.
+	_one = decimal.NewFromInt(1)
 )
 
 var (
@@ -63,7 +62,7 @@ func (s String) MarshalText() ([]byte, error) {
 	return []byte(s), nil
 }
 
-// resize cuts given array based on length to use for
+// resize cuts given slice based on length to use for
 // calculations.
 func resize(dd []decimal.Decimal, length, offset int) ([]decimal.Decimal, error) {
 	if length < 1 || offset < 0 {
@@ -77,7 +76,7 @@ func resize(dd []decimal.Decimal, length, offset int) ([]decimal.Decimal, error)
 	return dd[len(dd)-length-offset : len(dd)-offset], nil
 }
 
-// average calculates average decimal number of given array.
+// average calculates average decimal number of given slice.
 func average(dd []decimal.Decimal) decimal.Decimal {
 	var sum decimal.Decimal
 
@@ -91,11 +90,10 @@ func average(dd []decimal.Decimal) decimal.Decimal {
 // sqrt is used to get a square root of decimal number.
 func sqrt(d decimal.Decimal) decimal.Decimal {
 	f, _ := d.Float64()
-
 	return decimal.NewFromFloat(math.Sqrt(f))
 }
 
-// meanDeviation calculates mean deviation of given array.
+// meanDeviation calculates mean deviation of given slice.
 func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	length := decimal.NewFromInt(int64(len(dd)))
 
@@ -113,7 +111,7 @@ func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	return res
 }
 
-// standardDeviation calculates standart deviation of given array.
+// standardDeviation calculates standart deviation of given slice.
 func standardDeviation(dd []decimal.Decimal) decimal.Decimal {
 	length := decimal.NewFromInt(int64(len(dd)))
 
@@ -153,87 +151,6 @@ func calcMultiple(src Indicator, amount int, dd []decimal.Decimal) ([]decimal.De
 	}
 
 	return v, nil
-}
-
-// fromJSON finds a source indicator based on its name and returns it.
-func fromJSON(d []byte) (Indicator, error) {
-	var i struct {
-		N String `json:"name"`
-	}
-
-	if err := json.Unmarshal(d, &i); err != nil {
-		return nil, err
-	}
-
-	switch i.N {
-	case NameAroon:
-		v := Aroon{}
-		err := json.Unmarshal(d, &v)
-
-		return v, err
-	case NameBB:
-		v := BB{}
-		err := json.Unmarshal(d, &v)
-
-		return v, err
-	case NameCCI:
-		v := CCI{}
-		err := json.Unmarshal(d, &v)
-
-		return v, err
-	case NameDEMA:
-		v := DEMA{}
-		err := json.Unmarshal(d, &v)
-
-		return v, err
-	case NameEMA:
-		v := EMA{}
-		err := json.Unmarshal(d, &v)
-
-		return v, err
-	case NameHMA:
-		v := HMA{}
-		err := json.Unmarshal(d, &v)
-
-		return v, err
-	case NameCD:
-		v := CD{}
-		err := json.Unmarshal(d, &v)
-
-		return v, err
-	case NameROC:
-		v := ROC{}
-		err := json.Unmarshal(d, &v)
-
-		return v, err
-	case NameRSI:
-		v := RSI{}
-		err := json.Unmarshal(d, &v)
-
-		return v, err
-	case NameSMA:
-		v := SMA{}
-		err := json.Unmarshal(d, &v)
-
-		return v, err
-	case NameSRSI:
-		v := SRSI{}
-		err := json.Unmarshal(d, &v)
-
-		return v, err
-	case NameStoch:
-		v := Stoch{}
-		err := json.Unmarshal(d, &v)
-
-		return v, err
-	case NameWMA:
-		v := WMA{}
-		err := json.Unmarshal(d, &v)
-
-		return v, err
-	}
-
-	return nil, ErrInvalidSource
 }
 
 const (
