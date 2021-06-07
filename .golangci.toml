@@ -1,39 +1,45 @@
 [linters]
 enable = [
-	"bodyclose",
-	"golint",
-	"rowserrcheck",
-	"stylecheck",
-	"gosec",
-	"unconvert",
-	"goconst",
-	"gocyclo",
-	"gocognit",
-	"asciicheck",
-	"gofmt",
-	"goimports",
-	"maligned",
-	"depguard",
-	"misspell",
-	"unparam",
-	"dogsled",
-	"nakedret",
-	"prealloc",
-	"scopelint",
-	"gocritic",
-	"gochecknoinits",
-	"gochecknoglobals",
-	"whitespace",
-	"wsl",
-	"goprintffuncname",
-	"goerr113",
-	"godot",
-	"nestif",
-	"nolintlint",
-	"exhaustive",
-	"sqlclosecheck",
-	"exportloopref",
-	"noctx"
+    "bodyclose",
+    "rowserrcheck",
+    "stylecheck",
+    "gosec",
+    "unconvert",
+    "goconst",
+    "gocyclo",
+    "gocognit",
+    "asciicheck",
+    "gofmt",
+    "goimports",
+    "depguard",
+    "misspell",
+    "unparam",
+    "dogsled",
+    "nakedret",
+    "prealloc",
+    "gocritic",
+    "gochecknoinits",
+    "gochecknoglobals",
+    "whitespace",
+    "wsl",
+    "goprintffuncname",
+    "goerr113",
+    "godot",
+    "nestif",
+    "nolintlint",
+    "exhaustive",
+    "sqlclosecheck",
+    "exportloopref",
+    "noctx",
+    "forbidigo",
+    "forcetypeassert",
+    "nilerr",
+    "wastedassign",
+    "importas",
+    "revive",
+    "durationcheck",
+    "ifshort",
+    "predeclared"
 ]
 
 [linters-settings.gocyclo]
@@ -96,7 +102,7 @@ linters = ["gochecknoinits"]
 
 # exclude global vars prefixed with underscore
 [[issues.exclude-rules]]
-text = "^`_.+` " 
+text = "_.+" 
 linters = ["gochecknoglobals"]
 
 # fix wsl and whitespace clash
