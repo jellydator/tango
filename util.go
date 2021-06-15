@@ -3,16 +3,15 @@ package indc
 import (
 	"errors"
 	"math"
-	"strings"
 
 	"github.com/shopspring/decimal"
 )
 
 var (
-	// _hundred is just plain 100 in decimal format.
+	// _hundred is 100 in decimal format.
 	_hundred = decimal.NewFromInt(100)
 
-	// _one is just plain 1 in decimal format.
+	// _one is 1 in decimal format.
 	_one = decimal.NewFromInt(1)
 )
 
@@ -23,15 +22,8 @@ var (
 	// ErrInvalidLength is returned when incorrect length is provided.
 	ErrInvalidLength = errors.New("invalid length")
 
-	// ErrInvalidOffset is returned when incorrect offset is provided.
-	ErrInvalidOffset = errors.New("invalid offset")
-
 	// ErrInvalidDataSize is returned when incorrect data size is provided.
 	ErrInvalidDataSize = errors.New("invalid data size")
-
-	// ErrInvalidSource is returned when source doesn't match any of the
-	// available sources.
-	ErrInvalidSource = errors.New("invalid source")
 
 	// ErrInvalidTrend is returned when trend doesn't match any of the
 	// available trends.
@@ -42,42 +34,9 @@ var (
 	ErrInvalidBand = errors.New("invalid band")
 )
 
-// String is a custom string that helps prevent capitalization issues by
-// lowercasing provided string.
-type String string
-
-// CleanString returns a properly formatted string.
-func CleanString(s string) String {
-	return String(strings.ToLower(strings.TrimSpace(s)))
-}
-
-// UnmarshalText parses String from a string form input (works with JSON, etc).
-func (s *String) UnmarshalText(d []byte) error {
-	*s = CleanString(string(d))
-	return nil
-}
-
-// MarshalText converts String to a string output (works with JSON, etc).
-func (s String) MarshalText() ([]byte, error) {
-	return []byte(s), nil
-}
-
-// resize cuts given slice based on length to use for
-// calculations.
-func resize(dd []decimal.Decimal, length, offset int) ([]decimal.Decimal, error) {
-	if length < 1 || offset < 0 {
-		return dd, nil
-	}
-
-	if length+offset > len(dd) {
-		return nil, ErrInvalidDataSize
-	}
-
-	return dd[len(dd)-length-offset : len(dd)-offset], nil
-}
-
-// average calculates average decimal number of given slice.
-func average(dd []decimal.Decimal) decimal.Decimal {
+// avg is a helper function that calculates average decimal number of
+// given slice.
+func avg(dd []decimal.Decimal) decimal.Decimal {
 	var sum decimal.Decimal
 
 	for i := range dd {
@@ -87,14 +46,14 @@ func average(dd []decimal.Decimal) decimal.Decimal {
 	return sum.Div(decimal.NewFromInt(int64(len(dd))))
 }
 
-// sqrt is used to get a square root of decimal number.
+// sqrt is a helper function that calculated the square root of decimal number.
 func sqrt(d decimal.Decimal) decimal.Decimal {
 	f, _ := d.Float64()
 	return decimal.NewFromFloat(math.Sqrt(f))
 }
 
-// meanDeviation calculates mean deviation of given slice.
-func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
+// mdev calculates mean deviation of given slice.
+func mdev(dd []decimal.Decimal) decimal.Decimal {
 	length := decimal.NewFromInt(int64(len(dd)))
 
 	if length.Equal(decimal.Zero) {
@@ -102,7 +61,7 @@ func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	}
 
 	res := decimal.Zero
-	mean := average(dd)
+	mean := avg(dd)
 
 	for i := range dd {
 		res = res.Add(dd[i].Sub(mean).Abs().Div(length))
@@ -111,8 +70,8 @@ func meanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	return res
 }
 
-// standardDeviation calculates standart deviation of given slice.
-func standardDeviation(dd []decimal.Decimal) decimal.Decimal {
+// sdev calculates standart deviation of given slice.
+func sdev(dd []decimal.Decimal) decimal.Decimal {
 	length := decimal.NewFromInt(int64(len(dd)))
 
 	if length.Equal(decimal.Zero) {
@@ -120,37 +79,13 @@ func standardDeviation(dd []decimal.Decimal) decimal.Decimal {
 	}
 
 	res := decimal.Zero
-	mean := average(dd)
+	mean := avg(dd)
 
 	for i := range dd {
 		res = res.Add(dd[i].Sub(mean).Pow(decimal.NewFromInt(2)).Div(length))
 	}
 
 	return sqrt(res)
-}
-
-// calcMultiple calculates specified amount of values by using specified
-// indicator.
-func calcMultiple(src Indicator, amount int, dd []decimal.Decimal) ([]decimal.Decimal, error) {
-	if amount < 1 {
-		return []decimal.Decimal{}, nil
-	}
-
-	dd, err := resize(dd, src.Count()+amount-1, 0)
-	if err != nil {
-		return nil, ErrInvalidDataSize
-	}
-
-	v := make([]decimal.Decimal, amount)
-
-	for i := 0; i < amount; i++ {
-		v[i], err = src.Calc(dd[:len(dd)-i])
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return v, nil
 }
 
 const (
@@ -209,7 +144,6 @@ func (t *Trend) UnmarshalText(d []byte) error {
 // Available Bollinger Band indicator types.
 const (
 	BandUpper Band = iota + 1
-	BandMiddle
 	BandLower
 	BandWidth
 )
@@ -221,7 +155,7 @@ type Band int
 // supported band types or not.
 func (b Band) Validate() error {
 	switch b {
-	case BandUpper, BandMiddle, BandLower, BandWidth:
+	case BandUpper, BandLower, BandWidth:
 		return nil
 	default:
 		return ErrInvalidBand
@@ -236,8 +170,6 @@ func (b Band) MarshalText() ([]byte, error) {
 	switch b {
 	case BandUpper:
 		v = "upper"
-	case BandMiddle:
-		v = "middle"
 	case BandLower:
 		v = "lower"
 	case BandWidth:
@@ -254,8 +186,6 @@ func (b *Band) UnmarshalText(d []byte) error {
 	switch string(d) {
 	case "upper", "u":
 		*b = BandUpper
-	case "middle", "m":
-		*b = BandMiddle
 	case "lower", "l":
 		*b = BandLower
 	case "width", "w":
