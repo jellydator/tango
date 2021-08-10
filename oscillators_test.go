@@ -213,35 +213,6 @@ func Test_NewCCI(t *testing.T) {
 	}
 }
 
-func Test_CCI_validate(t *testing.T) {
-	cc := map[string]struct {
-		CCI   CCI
-		Error error
-	}{
-		"Successfully validated": {
-			CCI: CCI{
-				valid: false,
-				ma: SMA{
-					length: 1,
-				},
-			},
-		},
-	}
-
-	for cn, c := range cc {
-		c := c
-
-		t.Run(cn, func(t *testing.T) {
-			t.Parallel()
-
-			assertEqualError(t, c.Error, c.CCI.validate())
-			if c.Error == nil {
-				assert.True(t, c.CCI.valid)
-			}
-		})
-	}
-}
-
 func Test_CCI_Calc(t *testing.T) {
 	cc := map[string]struct {
 		CCI    CCI

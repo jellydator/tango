@@ -112,21 +112,11 @@ func NewCCI(mat MAType, length int) (CCI, error) {
 	}
 
 	cci := CCI{
-		ma: ma,
-	}
-
-	if err := cci.validate(); err != nil {
-		return CCI{}, err
+		ma:    ma,
+		valid: true,
 	}
 
 	return cci, nil
-}
-
-// validate checks whether the indicator has valid configuration properties.
-func (cci *CCI) validate() error {
-	cci.valid = true
-
-	return nil
 }
 
 // Calc calculates CCI from the provided data points slice.
