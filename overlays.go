@@ -20,14 +20,14 @@ type BB struct {
 	// stdDev specifies how to adjust standard deviation.
 	stdDev decimal.Decimal
 
-	// sma specifies SMA indicator configuration.
-	sma SMA
+	// ma specifies MA indicator configuration.
+	ma Indicator
 }
 
 // NewBB validates provided configuration options and creates
 // new BB indicator.
-func NewBB(band Band, stdDev decimal.Decimal, length int) (BB, error) {
-	sma, err := NewSMA(length)
+func NewBB(mat MAType, band Band, stdDev decimal.Decimal, length int) (BB, error) {
+	ma, err := mat.Initialize(length)
 	if err != nil {
 		return BB{}, err
 	}
@@ -35,7 +35,7 @@ func NewBB(band Band, stdDev decimal.Decimal, length int) (BB, error) {
 	bb := BB{
 		band:   band,
 		stdDev: stdDev,
-		sma:    sma,
+		ma:     ma,
 	}
 
 	if err := bb.validate(); err != nil {
@@ -69,7 +69,7 @@ func (bb BB) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, ErrInvalidDataSize
 	}
 
-	res, err := bb.sma.Calc(dd)
+	res, err := bb.ma.Calc(dd)
 	if err != nil {
 		// unlikely to happen
 		return decimal.Zero, err
@@ -90,7 +90,7 @@ func (bb BB) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 // Count determines the total amount of data points needed for BB
 // calculation.
 func (bb BB) Count() int {
-	return bb.sma.Count()
+	return bb.ma.Count()
 }
 
 // DEMA holds all the necessary information needed to calculate

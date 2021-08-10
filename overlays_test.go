@@ -9,20 +9,23 @@ import (
 
 func Test_NewBB(t *testing.T) {
 	cc := map[string]struct {
+		MAType MAType
 		Band   Band
 		StdDev decimal.Decimal
 		Length int
 		Result BB
 		Error  error
 	}{
-		"NewSMA returns an error": {
-			Error: assert.AnError,
+		"Invalid moving average": {
+			Error: ErrInvalidMA,
 		},
 		"Validate returns an error": {
+			MAType: MATypeSMA,
 			Length: 1,
 			Error:  ErrInvalidBand,
 		},
 		"Successfully created new BB": {
+			MAType: MATypeSMA,
 			Band:   BandUpper,
 			StdDev: decimal.RequireFromString("2.5"),
 			Length: 5,
@@ -30,7 +33,7 @@ func Test_NewBB(t *testing.T) {
 				valid:  true,
 				band:   BandUpper,
 				stdDev: decimal.RequireFromString("2.5"),
-				sma: SMA{
+				ma: SMA{
 					length: 5,
 					valid:  true,
 				},
@@ -44,7 +47,7 @@ func Test_NewBB(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res, err := NewBB(c.Band, c.StdDev, c.Length)
+			res, err := NewBB(c.MAType, c.Band, c.StdDev, c.Length)
 			assertEqualError(t, c.Error, err)
 			assert.Equal(t, c.Result, res)
 		})
@@ -60,7 +63,7 @@ func Test_BB_validate(t *testing.T) {
 			BB: BB{
 				band:   70,
 				stdDev: decimal.Decimal{},
-				sma: SMA{
+				ma: SMA{
 					length: 5,
 				},
 			},
@@ -70,7 +73,7 @@ func Test_BB_validate(t *testing.T) {
 			BB: BB{
 				band:   BandUpper,
 				stdDev: decimal.Decimal{},
-				sma: SMA{
+				ma: SMA{
 					length: 1,
 				},
 			},
@@ -108,7 +111,7 @@ func Test_BB_Calc(t *testing.T) {
 			BB: BB{
 				valid: true,
 				band:  BandUpper,
-				sma: SMA{
+				ma: SMA{
 					valid:  true,
 					length: 5,
 				},
@@ -123,7 +126,7 @@ func Test_BB_Calc(t *testing.T) {
 				valid:  true,
 				band:   BandUpper,
 				stdDev: decimal.RequireFromString("1"),
-				sma: SMA{
+				ma: SMA{
 					length: 5,
 					valid:  true,
 				},
@@ -142,7 +145,7 @@ func Test_BB_Calc(t *testing.T) {
 				valid:  true,
 				band:   BandLower,
 				stdDev: decimal.RequireFromString("1"),
-				sma: SMA{
+				ma: SMA{
 					length: 5,
 					valid:  true,
 				},
@@ -161,7 +164,7 @@ func Test_BB_Calc(t *testing.T) {
 				valid:  true,
 				band:   BandWidth,
 				stdDev: decimal.RequireFromString("2"),
-				sma: SMA{
+				ma: SMA{
 					length: 20,
 					valid:  true,
 				},
@@ -210,7 +213,7 @@ func Test_BB_Calc(t *testing.T) {
 }
 
 func Test_BB_Count(t *testing.T) {
-	assert.Equal(t, 1, BB{sma: SMA{length: 1}}.Count())
+	assert.Equal(t, 1, BB{ma: SMA{length: 1}}.Count())
 }
 
 func Test_NewDEMA(t *testing.T) {
