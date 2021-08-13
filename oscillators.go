@@ -10,10 +10,6 @@ type Aroon struct {
 	// valid specifies whether Aroon paremeters were validated.
 	valid bool
 
-	// trend specifies which Aroon trend to use during the
-	// calculation process.
-	trend Trend
-
 	// length specifies how many data points should be used
 	// during the calculations.
 	length int
@@ -21,9 +17,8 @@ type Aroon struct {
 
 // NewAroon validates provided configuration options and
 // creates new Aroon indicator instance.
-func NewAroon(trend Trend, length int) (Aroon, error) {
+func NewAroon(length int) (Aroon, error) {
 	aroon := Aroon{
-		trend:  trend,
 		length: length,
 	}
 
@@ -36,10 +31,6 @@ func NewAroon(trend Trend, length int) (Aroon, error) {
 
 // validate checks whether the indicator has valid configuration properties.
 func (aroon *Aroon) validate() error {
-	if err := aroon.trend.Validate(); err != nil {
-		return err
-	}
-
 	if aroon.length < 1 {
 		return ErrInvalidLength
 	}
@@ -49,40 +40,64 @@ func (aroon *Aroon) validate() error {
 	return nil
 }
 
-// Calc calculates Aroon from the provided data points slice.
+// Calc calculates both Aroon trends from the provided data points slice.
 // Calculation is based on formula provided by investopedia.
 // https://www.investopedia.com/terms/a/aroon.asp.
 // All credits are due to Tushar Chande who developed Aroon indicator.
-func (aroon Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+func (aroon Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, decimal.Decimal, error) {
 	if !aroon.valid {
-		return decimal.Zero, ErrInvalidIndicator
+		return decimal.Zero, decimal.Zero, ErrInvalidIndicator
 	}
 
 	if len(dd) != aroon.Count() {
-		return decimal.Zero, ErrInvalidDataSize
+		return decimal.Zero, decimal.Zero, ErrInvalidDataSize
 	}
 
-	res := dd[0]
-	prd := decimal.Zero
+	min := dd[0]
+	minIndex := decimal.Zero
 
-	refresh := func(val decimal.Decimal) bool {
-		fn := res.LessThanOrEqual
-		if aroon.trend == TrendDown {
-			fn = res.GreaterThanOrEqual
-		}
-
-		return fn(val)
-	}
+	max := dd[0]
+	maxIndex := decimal.Zero
 
 	for i := 0; i < len(dd); i++ {
-		if refresh(dd[i]) {
-			res = dd[i]
-			prd = decimal.NewFromInt(int64(aroon.length - i - 1))
+		if min.GreaterThanOrEqual(dd[i]) {
+			min = dd[i]
+			minIndex = decimal.NewFromInt(int64(aroon.length - i - 1))
+		}
+
+		if max.LessThanOrEqual(dd[i]) {
+			max = dd[i]
+			maxIndex = decimal.NewFromInt(int64(aroon.length - i - 1))
 		}
 	}
 
-	return decimal.NewFromInt(int64(aroon.length)).Sub(prd).
-		Mul(_hundred).Div(decimal.NewFromInt(int64(aroon.length))), nil
+	return aroon.calc(maxIndex), aroon.calc(minIndex), nil
+}
+
+// Calc calculates specified Aroon trend from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/a/aroon.asp.
+// All credits are due to Tushar Chande who developed Aroon indicator.
+func (aroon Aroon) CalcTrend(dd []decimal.Decimal, trend Trend) (decimal.Decimal, error) {
+	if err := trend.Validate(); err != nil {
+		return decimal.Zero, err
+	}
+
+	uptrend, downtrend, err := aroon.Calc(dd)
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	if trend == TrendDown {
+		return downtrend, nil
+	}
+
+	return uptrend, nil
+}
+
+func (aroon Aroon) calc(index decimal.Decimal) decimal.Decimal {
+	return decimal.NewFromInt(int64(aroon.length)).Sub(index).
+		Mul(_hundred).Div(decimal.NewFromInt(int64(aroon.length)))
 }
 
 // Count determines the total amount of data points needed for Aroon
@@ -99,14 +114,14 @@ type CCI struct {
 	valid bool
 
 	// ma specifies moving average indicator configuration.
-	ma Indicator
+	ma MA
 }
 
 // NewCCI validates provided configuration options and creates
 // new CCI indicator.
 // If provided factor is zero, default value is going to be used (0.015f).
 func NewCCI(mat MAType, length int) (CCI, error) {
-	ma, err := mat.Initialize(length)
+	ma, err := NewMA(mat, length)
 	if err != nil {
 		return CCI{}, err
 	}

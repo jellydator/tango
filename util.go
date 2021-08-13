@@ -186,11 +186,11 @@ func (b Band) MarshalText() ([]byte, error) {
 // UnmarshalText turns JSON string to appropriate band value.
 func (b *Band) UnmarshalText(d []byte) error {
 	switch string(d) {
-	case "upper", "u":
+	case "upper":
 		*b = BandUpper
-	case "lower", "l":
+	case "lower":
 		*b = BandLower
-	case "width", "w":
+	case "width":
 		*b = BandWidth
 	default:
 		return ErrInvalidBand
@@ -205,26 +205,25 @@ type MAType int
 
 // Available moving average indicator types.
 const (
-	MATypeDEMA MAType = iota + 1
-	MATypeEMA
-	MATypeHMA
-	MATypeSMA
-	MATypeWMA
+	MATypeDoubleExponential MAType = iota + 1
+	MATypeExponential
+	MATypeHull
+	MATypeSimple
+	MATypeWeighted
 )
 
-// Initialize tries to construct new moving average based on the provided
-// name.
-func (mat MAType) Initialize(length int) (Indicator, error) {
+// NewMA constructs new moving average based on the provided type.
+func NewMA(mat MAType, length int) (MA, error) {
 	switch mat {
-	case MATypeDEMA:
+	case MATypeDoubleExponential:
 		return NewDEMA(length)
-	case MATypeEMA:
+	case MATypeExponential:
 		return NewEMA(length)
-	case MATypeHMA:
+	case MATypeHull:
 		return NewHMA(length)
-	case MATypeSMA:
+	case MATypeSimple:
 		return NewSMA(length)
-	case MATypeWMA:
+	case MATypeWeighted:
 		return NewWMA(length)
 	default:
 		return nil, ErrInvalidMA
@@ -236,16 +235,16 @@ func (mat MAType) MarshalText() ([]byte, error) {
 	var v string
 
 	switch mat {
-	case MATypeDEMA:
-		v = "dema"
-	case MATypeEMA:
-		v = "ema"
-	case MATypeHMA:
-		v = "hma"
-	case MATypeSMA:
-		v = "sma"
-	case MATypeWMA:
-		v = "wma"
+	case MATypeDoubleExponential:
+		v = "double-exponential"
+	case MATypeExponential:
+		v = "exponential"
+	case MATypeHull:
+		v = "hull"
+	case MATypeSimple:
+		v = "simple"
+	case MATypeWeighted:
+		v = "weighted"
 	default:
 		return nil, ErrInvalidMA
 	}
@@ -256,16 +255,16 @@ func (mat MAType) MarshalText() ([]byte, error) {
 // UnmarshalText turns JSON string to appropriate moving average type value.
 func (mat *MAType) UnmarshalText(d []byte) error {
 	switch string(d) {
-	case "dema":
-		*mat = MATypeDEMA
-	case "ema":
-		*mat = MATypeEMA
-	case "hma":
-		*mat = MATypeHMA
-	case "sma":
-		*mat = MATypeSMA
-	case "wma":
-		*mat = MATypeWMA
+	case "double-exponential":
+		*mat = MATypeDoubleExponential
+	case "exponential":
+		*mat = MATypeExponential
+	case "hull":
+		*mat = MATypeHull
+	case "simple":
+		*mat = MATypeSimple
+	case "weighted":
+		*mat = MATypeWeighted
 	default:
 		return ErrInvalidMA
 	}
@@ -273,8 +272,8 @@ func (mat *MAType) UnmarshalText(d []byte) error {
 	return nil
 }
 
-// Indicator is an interface that every indicator should implement.
-type Indicator interface {
+// MA is an interface that all moving averages implement.
+type MA interface {
 	// Calc should return calculation results based on provided data
 	// points slice.
 	Calc([]decimal.Decimal) (decimal.Decimal, error)

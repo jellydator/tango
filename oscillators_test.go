@@ -10,7 +10,6 @@ import (
 
 func Test_NewAroon(t *testing.T) {
 	cc := map[string]struct {
-		Trend  Trend
 		Length int
 		Result Aroon
 		Error  error
@@ -19,11 +18,9 @@ func Test_NewAroon(t *testing.T) {
 			Error: assert.AnError,
 		},
 		"Successfully created new Aroon": {
-			Trend:  TrendDown,
 			Length: 5,
 			Result: Aroon{
 				valid:  true,
-				trend:  TrendDown,
 				length: 5,
 			},
 		},
@@ -35,7 +32,7 @@ func Test_NewAroon(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res, err := NewAroon(c.Trend, c.Length)
+			res, err := NewAroon(c.Length)
 			assertEqualError(t, c.Error, err)
 			assert.Equal(t, c.Result, res)
 		})
@@ -47,23 +44,12 @@ func Test_Aroon_validate(t *testing.T) {
 		Aroon Aroon
 		Error error
 	}{
-		"Invalid trend": {
-			Aroon: Aroon{
-				valid:  false,
-				trend:  70,
-				length: 5,
-			},
-			Error: ErrInvalidTrend,
-		},
 		"Invalid length": {
-			Aroon: Aroon{
-				trend: TrendDown,
-			},
+			Aroon: Aroon{},
 			Error: ErrInvalidLength,
 		},
 		"Successfully validated": {
 			Aroon: Aroon{
-				trend:  TrendUp,
 				length: 1,
 			},
 		},
@@ -85,10 +71,11 @@ func Test_Aroon_validate(t *testing.T) {
 
 func Test_Aroon_Calc(t *testing.T) {
 	cc := map[string]struct {
-		Aroon  Aroon
-		Data   []decimal.Decimal
-		Result decimal.Decimal
-		Error  error
+		Aroon      Aroon
+		Data       []decimal.Decimal
+		UpResult   decimal.Decimal
+		DownResult decimal.Decimal
+		Error      error
 	}{
 		"Invalid indicator": {
 			Aroon: Aroon{
@@ -99,9 +86,79 @@ func Test_Aroon_Calc(t *testing.T) {
 		"Invalid data size": {
 			Aroon: Aroon{
 				valid:  true,
-				trend:  TrendDown,
 				length: 5,
 			},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful calculation": {
+			Aroon: Aroon{
+				valid:  true,
+				length: 5,
+			},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(31),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(29),
+				decimal.NewFromInt(29),
+			},
+			UpResult:   decimal.NewFromInt(40),
+			DownResult: _hundred,
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			uptrend, downtrend, err := c.Aroon.Calc(c.Data)
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.UpResult.String(), uptrend.String())
+			assert.Equal(t, c.DownResult.String(), downtrend.String())
+		})
+	}
+}
+
+func Test_Aroon_CalcTrend(t *testing.T) {
+	cc := map[string]struct {
+		Aroon  Aroon
+		Trend  Trend
+		Data   []decimal.Decimal
+		Result decimal.Decimal
+		Error  error
+	}{
+		"Invalid indicator": {
+			Aroon: Aroon{
+				valid: false,
+			},
+			Trend: TrendDown,
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid trend": {
+			Aroon: Aroon{
+				valid:  true,
+				length: 1,
+			},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidTrend,
+		},
+		"Invalid data size": {
+			Aroon: Aroon{
+				valid:  true,
+				length: 5,
+			},
+			Trend: TrendDown,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(30),
 			},
@@ -110,9 +167,9 @@ func Test_Aroon_Calc(t *testing.T) {
 		"Successful calculation with TrendUp": {
 			Aroon: Aroon{
 				valid:  true,
-				trend:  TrendUp,
 				length: 5,
 			},
+			Trend: TrendUp,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(38),
@@ -125,9 +182,9 @@ func Test_Aroon_Calc(t *testing.T) {
 		"Successful calculation with TrendDown": {
 			Aroon: Aroon{
 				valid:  true,
-				trend:  TrendDown,
 				length: 5,
 			},
+			Trend: TrendDown,
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(38),
@@ -145,7 +202,7 @@ func Test_Aroon_Calc(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res, err := c.Aroon.Calc(c.Data)
+			res, err := c.Aroon.CalcTrend(c.Data, c.Trend)
 			assertEqualError(t, c.Error, err)
 			if err != nil {
 				return
@@ -177,7 +234,7 @@ func Test_NewCCI(t *testing.T) {
 			Error:  errors.New("invalid moving average"),
 		},
 		"Successfully created new CCI with default factor": {
-			Type:   MATypeSMA,
+			Type:   MATypeSimple,
 			Length: 10,
 			Result: CCI{
 				valid: true,
@@ -188,7 +245,7 @@ func Test_NewCCI(t *testing.T) {
 			},
 		},
 		"Successfully created new CCI": {
-			Type:   MATypeSMA,
+			Type:   MATypeSimple,
 			Length: 10,
 			Result: CCI{
 				valid: true,

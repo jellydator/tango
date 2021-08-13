@@ -290,28 +290,16 @@ func Test_Band_UnmarshalText(t *testing.T) {
 		"Invalid Band": {
 			Err: ErrInvalidBand,
 		},
-		"Successful BandUpper unmarshal (long form)": {
+		"Successful BandUpper unmarshal": {
 			Text:   "upper",
 			Result: BandUpper,
 		},
-		"Successful BandUpper unmarshal (short form)": {
-			Text:   "u",
-			Result: BandUpper,
-		},
-		"Successful BandLower unmarshal  (long form)": {
+		"Successful BandLower unmarshal": {
 			Text:   "lower",
 			Result: BandLower,
 		},
-		"Successful BandLower unmarshal  (short form)": {
-			Text:   "l",
-			Result: BandLower,
-		},
-		"Successful BandWidth unmarshal  (long form)": {
+		"Successful BandWidth unmarshal": {
 			Text:   "width",
-			Result: BandWidth,
-		},
-		"Successful BandWidth unmarshal  (short form)": {
-			Text:   "w",
 			Result: BandWidth,
 		},
 	}
@@ -334,18 +322,18 @@ func Test_Band_UnmarshalText(t *testing.T) {
 	}
 }
 
-func Test_MAType_Initialize(t *testing.T) {
+func Test_NewMA(t *testing.T) {
 	cc := map[string]struct {
 		Type      MAType
 		Length    int
-		Indicator Indicator
+		Indicator MA
 		Err       error
 	}{
 		"Invalid MAType": {
 			Err: ErrInvalidMA,
 		},
-		"Successful MATypeDEMA initialization": {
-			Type:   MATypeDEMA,
+		"Successful MATypeDoubleExponential initialization": {
+			Type:   MATypeDoubleExponential,
 			Length: 1,
 			Indicator: DEMA{
 				valid: true,
@@ -358,8 +346,8 @@ func Test_MAType_Initialize(t *testing.T) {
 				},
 			},
 		},
-		"Successful MATypeEMA initialization": {
-			Type:   MATypeEMA,
+		"Successful MATypeExponential initialization": {
+			Type:   MATypeExponential,
 			Length: 1,
 			Indicator: EMA{
 				valid: true,
@@ -369,8 +357,8 @@ func Test_MAType_Initialize(t *testing.T) {
 				},
 			},
 		},
-		"Successful MATypeHMA initialization": {
-			Type:   MATypeHMA,
+		"Successful MATypeHull initialization": {
+			Type:   MATypeHull,
 			Length: 1,
 			Indicator: HMA{
 				valid: true,
@@ -380,16 +368,16 @@ func Test_MAType_Initialize(t *testing.T) {
 				},
 			},
 		},
-		"Successful MATypeSMA initialization": {
-			Type:   MATypeSMA,
+		"Successful MATypeSimple initialization": {
+			Type:   MATypeSimple,
 			Length: 1,
 			Indicator: SMA{
 				valid:  true,
 				length: 1,
 			},
 		},
-		"Successful MATypeWMA initialization": {
-			Type:   MATypeWMA,
+		"Successful MATypeWeighted initialization": {
+			Type:   MATypeWeighted,
 			Length: 1,
 			Indicator: WMA{
 				valid:  true,
@@ -404,7 +392,7 @@ func Test_MAType_Initialize(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			ma, err := c.Type.Initialize(c.Length)
+			ma, err := NewMA(c.Type, c.Length)
 			assertEqualError(t, c.Err, err)
 			if err != nil {
 				return
@@ -425,25 +413,25 @@ func Test_MAType_MarshalText(t *testing.T) {
 			Type: 70,
 			Err:  ErrInvalidMA,
 		},
-		"Successful MATypeDEMA marshal": {
-			Type: MATypeDEMA,
-			Text: "dema",
+		"Successful MATypeDoubleExponential marshal": {
+			Type: MATypeDoubleExponential,
+			Text: "double-exponential",
 		},
-		"Successful MATypeEMA marshal": {
-			Type: MATypeEMA,
-			Text: "ema",
+		"Successful MATypeExponential marshal": {
+			Type: MATypeExponential,
+			Text: "exponential",
 		},
-		"Successful MATypeHMA marshal": {
-			Type: MATypeHMA,
-			Text: "hma",
+		"Successful MATypeHull marshal": {
+			Type: MATypeHull,
+			Text: "hull",
 		},
 		"Successful MATypeSMA marshal": {
-			Type: MATypeSMA,
-			Text: "sma",
+			Type: MATypeSimple,
+			Text: "simple",
 		},
 		"Successful MATypeWMA marshal": {
-			Type: MATypeWMA,
-			Text: "wma",
+			Type: MATypeWeighted,
+			Text: "weighted",
 		},
 	}
 
@@ -475,24 +463,24 @@ func Test_MAType_UnmarshalText(t *testing.T) {
 			Err:  ErrInvalidMA,
 		},
 		"Successful MATypeDEMA unmarshal": {
-			Text:   "dema",
-			Result: MATypeDEMA,
+			Text:   "double-exponential",
+			Result: MATypeDoubleExponential,
 		},
 		"Successful MATypeEMA unmarshal": {
-			Text:   "ema",
-			Result: MATypeEMA,
+			Text:   "exponential",
+			Result: MATypeExponential,
 		},
 		"Successful MATypeHMA unmarshal": {
-			Text:   "hma",
-			Result: MATypeHMA,
+			Text:   "hull",
+			Result: MATypeHull,
 		},
 		"Successful MATypeSMA unmarshal": {
-			Text:   "sma",
-			Result: MATypeSMA,
+			Text:   "simple",
+			Result: MATypeSimple,
 		},
 		"Successful MATypeWMA unmarshal": {
-			Text:   "wma",
-			Result: MATypeWMA,
+			Text:   "weighted",
+			Result: MATypeWeighted,
 		},
 	}
 

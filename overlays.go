@@ -3,6 +3,7 @@
 package indc
 
 import (
+	"errors"
 	"math"
 
 	"github.com/shopspring/decimal"
@@ -14,26 +15,22 @@ type BB struct {
 	// valid specifies whether BB paremeters were validated.
 	valid bool
 
-	// band specifies which bollinger band to calculate.
-	band Band
-
 	// stdDev specifies how to adjust standard deviation.
 	stdDev decimal.Decimal
 
 	// ma specifies MA indicator configuration.
-	ma Indicator
+	ma MA
 }
 
 // NewBB validates provided configuration options and creates
 // new BB indicator.
-func NewBB(mat MAType, band Band, stdDev decimal.Decimal, length int) (BB, error) {
-	ma, err := mat.Initialize(length)
+func NewBB(mat MAType, stdDev decimal.Decimal, length int) (BB, error) {
+	ma, err := NewMA(mat, length)
 	if err != nil {
 		return BB{}, err
 	}
 
 	bb := BB{
-		band:   band,
 		stdDev: stdDev,
 		ma:     ma,
 	}
@@ -45,10 +42,9 @@ func NewBB(mat MAType, band Band, stdDev decimal.Decimal, length int) (BB, error
 	return bb, nil
 }
 
-// validate checks whether the indicator has valid configuration properties.
 func (bb *BB) validate() error {
-	if err := bb.band.Validate(); err != nil {
-		return err
+	if bb.stdDev.Cmp(decimal.Zero) <= 0 {
+		return errors.New("invalid standard deviation")
 	}
 
 	bb.valid = true
@@ -56,35 +52,73 @@ func (bb *BB) validate() error {
 	return nil
 }
 
-// Calc calculates BB from the provided data points slice.
+// Calc calculates all BB values from provided data points slice.
 // Calculation is based on formula provided by investopedia.
 // https://www.investopedia.com/terms/b/bollingerbands.asp.
 // All credits are due to John Bollinger who developed BB indicator.
-func (bb BB) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
+func (bb BB) Calc(dd []decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal, error) {
+	res, sdev, err := bb.calc(dd)
+	if err != nil {
+		return decimal.Zero, decimal.Zero, decimal.Zero, err
+	}
+
+	return bb.calcUpper(res, sdev), bb.calcLower(res, sdev), bb.calcWidth(res, sdev), nil
+}
+
+// Calc calculates specified BB value from provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/b/bollingerbands.asp.
+// All credits are due to John Bollinger who developed BB indicator.
+func (bb BB) CalcBand(dd []decimal.Decimal, band Band) (decimal.Decimal, error) {
+	if err := band.Validate(); err != nil {
+		return decimal.Zero, err
+	}
+
+	res, sdev, err := bb.calc(dd)
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	switch band {
+	case BandUpper:
+		return bb.calcUpper(res, sdev), nil
+	case BandLower:
+		return bb.calcLower(res, sdev), nil
+	default: // BB is validated, only BandWidth is left.
+		return bb.calcWidth(res, sdev), nil
+	}
+}
+
+func (bb BB) calc(dd []decimal.Decimal) (decimal.Decimal, decimal.Decimal, error) {
 	if !bb.valid {
-		return decimal.Zero, ErrInvalidIndicator
+		return decimal.Zero, decimal.Zero, ErrInvalidIndicator
 	}
 
 	if len(dd) != bb.Count() {
-		return decimal.Zero, ErrInvalidDataSize
+		return decimal.Zero, decimal.Zero, ErrInvalidDataSize
 	}
 
 	res, err := bb.ma.Calc(dd)
 	if err != nil {
 		// unlikely to happen
-		return decimal.Zero, err
+		return decimal.Zero, decimal.Zero, err
 	}
 
 	sdev := sdev(dd).Mul(bb.stdDev)
 
-	switch bb.band {
-	case BandUpper:
-		return res.Add(sdev), nil
-	case BandLower:
-		return res.Sub(sdev), nil
-	default: // BB is validated, only BandWidth is left.
-		return res.Add(sdev).Sub(res.Sub(sdev)).Div(res).Mul(_hundred), nil
-	}
+	return res, sdev, nil
+}
+
+func (bb BB) calcUpper(res, sdev decimal.Decimal) decimal.Decimal {
+	return res.Add(sdev)
+}
+
+func (bb BB) calcLower(res, sdev decimal.Decimal) decimal.Decimal {
+	return res.Sub(sdev)
+}
+
+func (bb BB) calcWidth(res, sdev decimal.Decimal) decimal.Decimal {
+	return res.Add(sdev).Sub(res.Sub(sdev)).Div(res).Mul(_hundred)
 }
 
 // Count determines the total amount of data points needed for BB
