@@ -56,7 +56,13 @@ func (bb *BB) validate() error {
 // Calculation is based on formula provided by investopedia.
 // https://www.investopedia.com/terms/b/bollingerbands.asp.
 // All credits are due to John Bollinger who developed BB indicator.
-func (bb BB) Calc(dd []decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal, error) {
+func (bb BB) Calc(dd []decimal.Decimal) (
+	upper decimal.Decimal,
+	lower decimal.Decimal,
+	width decimal.Decimal,
+	err error,
+) {
+
 	res, sdev, err := bb.calc(dd)
 	if err != nil {
 		return decimal.Zero, decimal.Zero, decimal.Zero, err
@@ -65,7 +71,7 @@ func (bb BB) Calc(dd []decimal.Decimal) (decimal.Decimal, decimal.Decimal, decim
 	return bb.calcUpper(res, sdev), bb.calcLower(res, sdev), bb.calcWidth(res, sdev), nil
 }
 
-// Calc calculates specified BB value from provided data points slice.
+// CalcBand calculates specified BB value from provided data points slice.
 // Calculation is based on formula provided by investopedia.
 // https://www.investopedia.com/terms/b/bollingerbands.asp.
 // All credits are due to John Bollinger who developed BB indicator.
@@ -89,7 +95,12 @@ func (bb BB) CalcBand(dd []decimal.Decimal, band Band) (decimal.Decimal, error) 
 	}
 }
 
-func (bb BB) calc(dd []decimal.Decimal) (decimal.Decimal, decimal.Decimal, error) {
+func (bb BB) calc(dd []decimal.Decimal) (
+	ma decimal.Decimal,
+	sdev decimal.Decimal,
+	err error,
+) {
+
 	if !bb.valid {
 		return decimal.Zero, decimal.Zero, ErrInvalidIndicator
 	}
@@ -98,15 +109,15 @@ func (bb BB) calc(dd []decimal.Decimal) (decimal.Decimal, decimal.Decimal, error
 		return decimal.Zero, decimal.Zero, ErrInvalidDataSize
 	}
 
-	res, err := bb.ma.Calc(dd)
+	ma, err = bb.ma.Calc(dd)
 	if err != nil {
 		// unlikely to happen
 		return decimal.Zero, decimal.Zero, err
 	}
 
-	sdev := sdev(dd).Mul(bb.stdDev)
+	sdev = StandardDeviation(dd).Mul(bb.stdDev)
 
-	return res, sdev, nil
+	return ma, sdev, nil
 }
 
 func (bb BB) calcUpper(res, sdev decimal.Decimal) decimal.Decimal {

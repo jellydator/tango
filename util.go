@@ -38,9 +38,9 @@ var (
 	ErrInvalidMA = errors.New("invalid moving average")
 )
 
-// avg is a helper function that calculates average decimal number of
+// Average is a helper function that calculates average decimal number of
 // given slice.
-func avg(dd []decimal.Decimal) decimal.Decimal {
+func Average(dd []decimal.Decimal) decimal.Decimal {
 	var sum decimal.Decimal
 
 	for i := range dd {
@@ -50,14 +50,14 @@ func avg(dd []decimal.Decimal) decimal.Decimal {
 	return sum.Div(decimal.NewFromInt(int64(len(dd))))
 }
 
-// sqrt is a helper function that calculated the square root of decimal number.
-func sqrt(d decimal.Decimal) decimal.Decimal {
+// SquareRoot is a helper function that calculated the square root of decimal number.
+func SquareRoot(d decimal.Decimal) decimal.Decimal {
 	f, _ := d.Float64()
 	return decimal.NewFromFloat(math.Sqrt(f))
 }
 
-// mdev calculates mean deviation of given slice.
-func mdev(dd []decimal.Decimal) decimal.Decimal {
+// MeanDeviation calculates mean deviation of given slice.
+func MeanDeviation(dd []decimal.Decimal) decimal.Decimal {
 	length := decimal.NewFromInt(int64(len(dd)))
 
 	if length.Equal(decimal.Zero) {
@@ -65,7 +65,7 @@ func mdev(dd []decimal.Decimal) decimal.Decimal {
 	}
 
 	res := decimal.Zero
-	mean := avg(dd)
+	mean := Average(dd)
 
 	for i := range dd {
 		res = res.Add(dd[i].Sub(mean).Abs().Div(length))
@@ -74,8 +74,8 @@ func mdev(dd []decimal.Decimal) decimal.Decimal {
 	return res
 }
 
-// sdev calculates standart deviation of given slice.
-func sdev(dd []decimal.Decimal) decimal.Decimal {
+// StandardDeviation calculates standard deviation of given slice.
+func StandardDeviation(dd []decimal.Decimal) decimal.Decimal {
 	length := decimal.NewFromInt(int64(len(dd)))
 
 	if length.Equal(decimal.Zero) {
@@ -83,13 +83,13 @@ func sdev(dd []decimal.Decimal) decimal.Decimal {
 	}
 
 	res := decimal.Zero
-	mean := avg(dd)
+	mean := Average(dd)
 
 	for i := range dd {
 		res = res.Add(dd[i].Sub(mean).Pow(decimal.NewFromInt(2)).Div(length))
 	}
 
-	return sqrt(res)
+	return SquareRoot(res)
 }
 
 // Trend specifies which trend should be used.

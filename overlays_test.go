@@ -90,6 +90,90 @@ func Test_BB_validate(t *testing.T) {
 	}
 }
 
+func Test_BB_Calc(t *testing.T) {
+	cc := map[string]struct {
+		BB          BB
+		Data        []decimal.Decimal
+		UpperResult decimal.Decimal
+		LowerResult decimal.Decimal
+		WidthResult decimal.Decimal
+		Error       error
+	}{
+		"Invalid indicator": {
+			BB: BB{
+				valid: false,
+			},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size": {
+			BB: BB{
+				valid: true,
+				ma: SMA{
+					valid:  true,
+					length: 5,
+				},
+			},
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful calculation": {
+			BB: BB{
+				valid:  true,
+				stdDev: decimal.RequireFromString("2"),
+				ma: SMA{
+					length: 20,
+					valid:  true,
+				},
+			},
+			Data: []decimal.Decimal{
+				decimal.RequireFromString("63.98"),
+				decimal.RequireFromString("64.17"),
+				decimal.RequireFromString("64.71"),
+				decimal.RequireFromString("64.75"),
+				decimal.RequireFromString("63.94"),
+				decimal.RequireFromString("63.82"),
+				decimal.RequireFromString("63.19"),
+				decimal.RequireFromString("62.84"),
+				decimal.RequireFromString("62.25"),
+				decimal.RequireFromString("63.20"),
+				decimal.RequireFromString("63.02"),
+				decimal.RequireFromString("63.35"),
+				decimal.RequireFromString("64.21"),
+				decimal.RequireFromString("64.91"),
+				decimal.RequireFromString("64.05"),
+				decimal.RequireFromString("63.28"),
+				decimal.RequireFromString("62.78"),
+				decimal.RequireFromString("62.36"),
+				decimal.RequireFromString("63.19"),
+				decimal.RequireFromString("64.69"),
+			},
+			UpperResult: decimal.RequireFromString("65.19977921"),
+			LowerResult: decimal.RequireFromString("62.06922079"),
+			WidthResult: decimal.RequireFromString("4.91959301"),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			upperBand, lowerBand, widthBand, err := c.BB.Calc(c.Data)
+			assertEqualError(t, c.Error, err)
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.UpperResult.Round(8).String(), upperBand.Round(8).String())
+			assert.Equal(t, c.LowerResult.Round(8).String(), lowerBand.Round(8).String())
+			assert.Equal(t, c.WidthResult.Round(8).String(), widthBand.Round(8).String())
+		})
+	}
+}
+
 func Test_BB_CalcBand(t *testing.T) {
 	cc := map[string]struct {
 		BB     BB
@@ -212,90 +296,6 @@ func Test_BB_CalcBand(t *testing.T) {
 			}
 
 			assert.Equal(t, c.Result.Round(8).String(), res.Round(8).String())
-		})
-	}
-}
-
-func Test_BB_Calc(t *testing.T) {
-	cc := map[string]struct {
-		BB          BB
-		Data        []decimal.Decimal
-		UpperResult decimal.Decimal
-		LowerResult decimal.Decimal
-		WidthResult decimal.Decimal
-		Error       error
-	}{
-		"Invalid indicator": {
-			BB: BB{
-				valid: false,
-			},
-			Error: ErrInvalidIndicator,
-		},
-		"Invalid data size": {
-			BB: BB{
-				valid: true,
-				ma: SMA{
-					valid:  true,
-					length: 5,
-				},
-			},
-			Data: []decimal.Decimal{
-				decimal.NewFromInt(30),
-			},
-			Error: ErrInvalidDataSize,
-		},
-		"Successful calculation": {
-			BB: BB{
-				valid:  true,
-				stdDev: decimal.RequireFromString("2"),
-				ma: SMA{
-					length: 20,
-					valid:  true,
-				},
-			},
-			Data: []decimal.Decimal{
-				decimal.RequireFromString("63.98"),
-				decimal.RequireFromString("64.17"),
-				decimal.RequireFromString("64.71"),
-				decimal.RequireFromString("64.75"),
-				decimal.RequireFromString("63.94"),
-				decimal.RequireFromString("63.82"),
-				decimal.RequireFromString("63.19"),
-				decimal.RequireFromString("62.84"),
-				decimal.RequireFromString("62.25"),
-				decimal.RequireFromString("63.20"),
-				decimal.RequireFromString("63.02"),
-				decimal.RequireFromString("63.35"),
-				decimal.RequireFromString("64.21"),
-				decimal.RequireFromString("64.91"),
-				decimal.RequireFromString("64.05"),
-				decimal.RequireFromString("63.28"),
-				decimal.RequireFromString("62.78"),
-				decimal.RequireFromString("62.36"),
-				decimal.RequireFromString("63.19"),
-				decimal.RequireFromString("64.69"),
-			},
-			UpperResult: decimal.RequireFromString("65.19977921"),
-			LowerResult: decimal.RequireFromString("62.06922079"),
-			WidthResult: decimal.RequireFromString("4.91959301"),
-		},
-	}
-
-	for cn, c := range cc {
-		c := c
-
-		t.Run(cn, func(t *testing.T) {
-			t.Parallel()
-
-			upperBand, lowerBand, widthBand, err := c.BB.Calc(c.Data)
-			assertEqualError(t, c.Error, err)
-			if err != nil {
-				return
-			}
-
-			assert.Equal(t, c.UpperResult.Round(8).String(), upperBand.Round(8).String())
-			assert.Equal(t, c.LowerResult.Round(8).String(), lowerBand.Round(8).String())
-			assert.Equal(t, c.WidthResult.Round(8).String(), widthBand.Round(8).String())
 		})
 	}
 }

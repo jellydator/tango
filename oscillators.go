@@ -44,7 +44,12 @@ func (aroon *Aroon) validate() error {
 // Calculation is based on formula provided by investopedia.
 // https://www.investopedia.com/terms/a/aroon.asp.
 // All credits are due to Tushar Chande who developed Aroon indicator.
-func (aroon Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, decimal.Decimal, error) {
+func (aroon Aroon) Calc(dd []decimal.Decimal) (
+	uptrend decimal.Decimal,
+	downtrend decimal.Decimal,
+	err error,
+) {
+
 	if !aroon.valid {
 		return decimal.Zero, decimal.Zero, ErrInvalidIndicator
 	}
@@ -74,7 +79,7 @@ func (aroon Aroon) Calc(dd []decimal.Decimal) (decimal.Decimal, decimal.Decimal,
 	return aroon.calc(maxIndex), aroon.calc(minIndex), nil
 }
 
-// Calc calculates specified Aroon trend from the provided data points slice.
+// CalcTrend calculates specified Aroon trend from the provided data points slice.
 // Calculation is based on formula provided by investopedia.
 // https://www.investopedia.com/terms/a/aroon.asp.
 // All credits are due to Tushar Chande who developed Aroon indicator.
@@ -152,7 +157,7 @@ func (cci CCI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 		return decimal.Zero, err
 	}
 
-	dnm := decimal.RequireFromString("0.015").Mul(mdev(dd))
+	dnm := decimal.RequireFromString("0.015").Mul(MeanDeviation(dd))
 
 	if dnm.Equal(decimal.Zero) {
 		return decimal.Zero, nil

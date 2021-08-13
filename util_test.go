@@ -23,7 +23,7 @@ func assertEqualError(t *testing.T, exp, err error) {
 
 	assert.NoError(t, err)
 }
-func Test_mdev(t *testing.T) {
+func Test_MeanDeviation(t *testing.T) {
 	cc := map[string]struct {
 		Data   []decimal.Decimal
 		Result decimal.Decimal
@@ -54,14 +54,14 @@ func Test_mdev(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res := mdev(c.Data)
+			res := MeanDeviation(c.Data)
 
 			assert.Equal(t, c.Result.String(), res.String())
 		})
 	}
 }
 
-func Test_sdev(t *testing.T) {
+func Test_StandardDeviation(t *testing.T) {
 	cc := map[string]struct {
 		Data   []decimal.Decimal
 		Result decimal.Decimal
@@ -84,7 +84,7 @@ func Test_sdev(t *testing.T) {
 				decimal.NewFromInt(430),
 				decimal.NewFromInt(300),
 			},
-			Result: sqrt(decimal.NewFromInt(21704)),
+			Result: SquareRoot(decimal.NewFromInt(21704)),
 		},
 	}
 
@@ -94,7 +94,7 @@ func Test_sdev(t *testing.T) {
 		t.Run(cn, func(t *testing.T) {
 			t.Parallel()
 
-			res := sdev(c.Data)
+			res := StandardDeviation(c.Data)
 
 			assert.Equal(t, c.Result.String(), res.String())
 		})
@@ -462,23 +462,23 @@ func Test_MAType_UnmarshalText(t *testing.T) {
 			Text: "70",
 			Err:  ErrInvalidMA,
 		},
-		"Successful MATypeDEMA unmarshal": {
+		"Successful MATypeDoubleExponential unmarshal": {
 			Text:   "double-exponential",
 			Result: MATypeDoubleExponential,
 		},
-		"Successful MATypeEMA unmarshal": {
+		"Successful MATypeExponential unmarshal": {
 			Text:   "exponential",
 			Result: MATypeExponential,
 		},
-		"Successful MATypeHMA unmarshal": {
+		"Successful MATypeHull unmarshal": {
 			Text:   "hull",
 			Result: MATypeHull,
 		},
-		"Successful MATypeSMA unmarshal": {
+		"Successful MATypeSimple unmarshal": {
 			Text:   "simple",
 			Result: MATypeSimple,
 		},
-		"Successful MATypeWMA unmarshal": {
+		"Successful MATypeWeighted unmarshal": {
 			Text:   "weighted",
 			Result: MATypeWeighted,
 		},
