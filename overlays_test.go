@@ -1,4 +1,4 @@
-package indc
+package tango
 
 import (
 	"errors"

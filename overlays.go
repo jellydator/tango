@@ -1,6 +1,6 @@
-// Package indc provides types and functions to calculate values of various
+// Package tango provides types and functions to calculate values of various
 // market indicators.
-package indc
+package tango
 
 import (
 	"errors"
