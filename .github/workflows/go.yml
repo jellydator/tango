@@ -34,7 +34,7 @@ jobs:
         go-version: ^1.21
 
     - name: Download gocov
-      run: go get github.com/axw/gocov/gocov
+      run: go install github.com/axw/gocov/gocov
       
     - name: Checkout code
       uses: actions/checkout@v3
