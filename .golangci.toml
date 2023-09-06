@@ -38,7 +38,6 @@ enable = [
     "importas",
     "revive",
     "durationcheck",
-    "ifshort",
     "predeclared"
 ]
 
@@ -51,12 +50,9 @@ min-complexity = 20
 [linters-settings.maligned]
 suggest-new = true
 
-[linters-settings.depguard]
-type = "blacklist"
-packages = [
-	"gotest.tools/assert",
-	"github.com/bmizerany/assert"
-]
+[linters-settings.depguard.rules.main]
+deny = [{ pkg = "gotest.tools/assert" },
+{ pkg = "github.com/bmizerany/assert" }]
 
 [linters-settings.nakedret]
 max-func-lines = 20
