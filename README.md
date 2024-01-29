@@ -23,7 +23,7 @@ with data slices.
 The main calculations are done using `Calc` method. The return types varies
 based on the tool.
 
-A simple would case could look like this:
+A simple use case could look like this:
 ```go
 func main() {
   sma, err := tango.NewSMA(3)
@@ -49,13 +49,15 @@ For the calculation to be successful, the `Calc` method should receive only the
 information that it requires. In some scenarios, it might not be known how many
 data points is needed, for this, a `Count` method may be used.
 
-```go
-func CalculateSMA(sma tango.SMA, values []decimal.Decimal) (decimal.Decimal, error) {
-  if len(dataPoints) < sma.Count() {
+```gosma
+func CalculateMA(ma tango.MA, values []decimal.Decimal) (decimal.Decimal, error) {
+  requiredValues := ma.Count()
+
+  if len(values) < requiredValues {
     return decimal.Zero, errors.New("invalid count of values")
   }
 
-  return sma.Calc(values[:requiredPoints])
+  return ma.Calc(values[:requiredValues])
 }
 ```
 
