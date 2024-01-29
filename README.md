@@ -49,7 +49,7 @@ For the calculation to be successful, the `Calc` method should receive only the
 information that it requires. In some scenarios, it might not be known how many
 data points is needed, for this, a `Count` method may be used.
 
-```gosma
+```go
 func CalculateMA(ma tango.MA, values []decimal.Decimal) (decimal.Decimal, error) {
   requiredValues := ma.Count()
 
