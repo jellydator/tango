@@ -36,6 +36,10 @@ var (
 	// ErrInvalidMA is returned when ma doesn't match any of the
 	// availabble ma types.
 	ErrInvalidMA = errors.New("invalid moving average")
+
+	// ErrInvalidStandardDeviation is returned when standard deviation
+	// is invalid.
+	ErrInvalidStandardDeviation = errors.New("invalid standard deviation")
 )
 
 // Average is a helper function that calculates average decimal number of

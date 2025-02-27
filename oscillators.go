@@ -58,26 +58,26 @@ func (aroon Aroon) Calc(dd []decimal.Decimal) (
 		return decimal.Zero, decimal.Zero, ErrInvalidDataSize
 	}
 
-	min := dd[len(dd)-1]
+	minValue := dd[len(dd)-1]
 	minIndex := decimal.NewFromInt(0)
 	foundMin := false
 
-	max := dd[len(dd)-1]
+	maxValue := dd[len(dd)-1]
 	maxIndex := decimal.NewFromInt(0)
 	foundMax := false
 
 	for i := len(dd) - 2; i >= 0 && (!foundMin || !foundMax); i-- {
-		if !foundMin && min.GreaterThan(dd[i]) {
-			min = dd[i]
+		if !foundMin && minValue.GreaterThan(dd[i]) {
+			minValue = dd[i]
 			minIndex = decimal.NewFromInt(int64(aroon.length - i))
-		} else if !min.Equal(dd[i]) {
+		} else if !minValue.Equal(dd[i]) {
 			foundMin = true
 		}
 
-		if !foundMax && max.LessThan(dd[i]) {
-			max = dd[i]
+		if !foundMax && maxValue.LessThan(dd[i]) {
+			maxValue = dd[i]
 			maxIndex = decimal.NewFromInt(int64(aroon.length - i))
-		} else if !max.Equal(dd[i]) {
+		} else if !maxValue.Equal(dd[i]) {
 			foundMax = true
 		}
 	}
@@ -369,24 +369,24 @@ func (s StochRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	}
 
 	curr := res[0]
-	max := res[0]
-	min := res[0]
+	maxValue := res[0]
+	minValue := res[0]
 
 	for i := 1; i < len(res); i++ {
-		if max.LessThan(res[i]) {
-			max = res[i]
+		if maxValue.LessThan(res[i]) {
+			maxValue = res[i]
 		}
 
-		if min.GreaterThan(res[i]) {
-			min = res[i]
+		if minValue.GreaterThan(res[i]) {
+			minValue = res[i]
 		}
 	}
 
-	if max.Equal(min) {
+	if maxValue.Equal(minValue) {
 		return decimal.Zero, nil
 	}
 
-	return curr.Sub(min).Div(max.Sub(min)), nil
+	return curr.Sub(minValue).Div(maxValue.Sub(minValue)), nil
 }
 
 // Count determines the total amount of data needed for StochRSI

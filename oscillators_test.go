@@ -1,7 +1,6 @@
 package tango
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -62,6 +61,7 @@ func Test_Aroon_validate(t *testing.T) {
 			t.Parallel()
 
 			assertEqualError(t, c.Error, c.Aroon.validate())
+
 			if c.Error == nil {
 				assert.True(t, c.Aroon.valid)
 			}
@@ -119,6 +119,7 @@ func Test_Aroon_Calc(t *testing.T) {
 
 			uptrend, downtrend, err := c.Aroon.Calc(c.Data)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
@@ -223,6 +224,7 @@ func Test_Aroon_CalcTrend(t *testing.T) {
 
 			res, err := c.Aroon.CalcTrend(c.Data, c.Trend)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
@@ -250,7 +252,7 @@ func Test_NewCCI(t *testing.T) {
 		},
 		"Invalid provided moving average type": {
 			Length: 1,
-			Error:  errors.New("invalid moving average"),
+			Error:  ErrInvalidMA,
 		},
 		"Successfully created new CCI with default factor": {
 			Type:   MATypeSimple,
@@ -360,6 +362,7 @@ func Test_CCI_Calc(t *testing.T) {
 
 			res, err := c.CCI.Calc(c.Data)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
@@ -433,6 +436,7 @@ func Test_ROC_validate(t *testing.T) {
 			t.Parallel()
 
 			assertEqualError(t, c.Error, c.ROC.validate())
+
 			if c.Error == nil {
 				assert.True(t, c.ROC.valid)
 			}
@@ -485,6 +489,7 @@ func Test_ROC_Calc(t *testing.T) {
 
 			res, err := c.ROC.Calc(c.Data)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
@@ -556,6 +561,7 @@ func Test_RSI_validate(t *testing.T) {
 			t.Parallel()
 
 			assertEqualError(t, c.Error, c.RSI.validate())
+
 			if c.Error == nil {
 				assert.True(t, c.RSI.valid)
 			}
@@ -630,6 +636,7 @@ func Test_RSI_Calc(t *testing.T) {
 
 			res, err := c.RSI.Calc(c.Data)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
@@ -747,6 +754,7 @@ func Test_StochRSI_Calc(t *testing.T) {
 
 			res, err := c.StochRSI.Calc(c.Data)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
@@ -821,6 +829,7 @@ func Test_Stoch_validate(t *testing.T) {
 			t.Parallel()
 
 			assertEqualError(t, c.Error, c.Stoch.validate())
+
 			if c.Error == nil {
 				assert.True(t, c.Stoch.valid)
 			}
@@ -895,6 +904,7 @@ func Test_Stoch_Calc(t *testing.T) {
 
 			res, err := c.Stoch.Calc(c.Data)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}

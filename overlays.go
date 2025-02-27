@@ -3,7 +3,6 @@
 package tango
 
 import (
-	"errors"
 	"math"
 
 	"github.com/shopspring/decimal"
@@ -44,7 +43,7 @@ func NewBB(mat MAType, stdDev decimal.Decimal, length int) (BB, error) {
 
 func (bb *BB) validate() error {
 	if bb.stdDev.Cmp(decimal.Zero) <= 0 {
-		return errors.New("invalid standard deviation")
+		return ErrInvalidStandardDeviation
 	}
 
 	bb.valid = true

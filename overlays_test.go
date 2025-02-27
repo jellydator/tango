@@ -1,7 +1,6 @@
 package tango
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -22,7 +21,7 @@ func Test_NewBB(t *testing.T) {
 		"Validate returns an error": {
 			MAType: MATypeSimple,
 			Length: 1,
-			Error:  errors.New("invalid standard deviation"),
+			Error:  ErrInvalidStandardDeviation,
 		},
 		"Successfully created new BB": {
 			MAType: MATypeSimple,
@@ -64,7 +63,7 @@ func Test_BB_validate(t *testing.T) {
 					length: 5,
 				},
 			},
-			Error: errors.New("invalid standard deviation"),
+			Error: ErrInvalidStandardDeviation,
 		},
 		"Successfully validated": {
 			BB: BB{
@@ -83,6 +82,7 @@ func Test_BB_validate(t *testing.T) {
 			t.Parallel()
 
 			assertEqualError(t, c.Error, c.BB.validate())
+
 			if c.Error == nil {
 				assert.True(t, c.BB.valid)
 			}
@@ -163,6 +163,7 @@ func Test_BB_Calc(t *testing.T) {
 
 			upperBand, lowerBand, widthBand, err := c.BB.Calc(c.Data)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
@@ -291,6 +292,7 @@ func Test_BB_CalcBand(t *testing.T) {
 
 			res, err := c.BB.CalcBand(c.Data, c.Band)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
@@ -398,6 +400,7 @@ func Test_DEMA_Calc(t *testing.T) {
 
 			res, err := c.DEMA.Calc(c.Data)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
@@ -503,6 +506,7 @@ func Test_EMA_Calc(t *testing.T) {
 
 			res, err := c.EMA.Calc(c.Data)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
@@ -546,6 +550,7 @@ func Test_EMA_CalcNext(t *testing.T) {
 
 			res, err := c.EMA.CalcNext(c.Last, c.Next)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
@@ -656,6 +661,7 @@ func Test_HMA_Calc(t *testing.T) {
 
 			res, err := c.HMA.Calc(c.Data)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
@@ -729,6 +735,7 @@ func Test_SMA_validate(t *testing.T) {
 			t.Parallel()
 
 			assertEqualError(t, c.Error, c.SMA.validate())
+
 			if c.Error == nil {
 				assert.True(t, c.SMA.valid)
 			}
@@ -779,6 +786,7 @@ func Test_SMA_Calc(t *testing.T) {
 
 			res, err := c.SMA.Calc(c.Data)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
@@ -850,6 +858,7 @@ func Test_WMA_validate(t *testing.T) {
 			t.Parallel()
 
 			assertEqualError(t, c.Error, c.WMA.validate())
+
 			if c.Error == nil {
 				assert.True(t, c.WMA.valid)
 			}
@@ -900,6 +909,7 @@ func Test_WMA_Calc(t *testing.T) {
 
 			res, err := c.WMA.Calc(c.Data)
 			assertEqualError(t, c.Error, err)
+
 			if err != nil {
 				return
 			}
