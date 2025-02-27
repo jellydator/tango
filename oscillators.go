@@ -58,21 +58,27 @@ func (aroon Aroon) Calc(dd []decimal.Decimal) (
 		return decimal.Zero, decimal.Zero, ErrInvalidDataSize
 	}
 
-	min := dd[0]
-	minIndex := decimal.Zero
+	min := dd[len(dd)-1]
+	minIndex := decimal.NewFromInt(0)
+	foundMin := false
 
-	max := dd[0]
-	maxIndex := decimal.Zero
+	max := dd[len(dd)-1]
+	maxIndex := decimal.NewFromInt(0)
+	foundMax := false
 
-	for i := 0; i < len(dd); i++ {
-		if min.GreaterThanOrEqual(dd[i]) {
+	for i := len(dd) - 2; i >= 0 && (!foundMin || !foundMax); i-- {
+		if !foundMin && min.GreaterThan(dd[i]) {
 			min = dd[i]
-			minIndex = decimal.NewFromInt(int64(aroon.length - i - 1))
+			minIndex = decimal.NewFromInt(int64(aroon.length - i))
+		} else if !min.Equal(dd[i]) {
+			foundMin = true
 		}
 
-		if max.LessThanOrEqual(dd[i]) {
+		if !foundMax && max.LessThan(dd[i]) {
 			max = dd[i]
-			maxIndex = decimal.NewFromInt(int64(aroon.length - i - 1))
+			maxIndex = decimal.NewFromInt(int64(aroon.length - i))
+		} else if !max.Equal(dd[i]) {
+			foundMax = true
 		}
 	}
 
@@ -108,7 +114,7 @@ func (aroon Aroon) calc(index decimal.Decimal) decimal.Decimal {
 // Count determines the total amount of data points needed for Aroon
 // calculation.
 func (aroon Aroon) Count() int {
-	return aroon.length
+	return aroon.length + 1
 }
 
 // CCI holds all the necessary information needed to calculate commodity

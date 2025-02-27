@@ -100,6 +100,7 @@ func Test_Aroon_Calc(t *testing.T) {
 			},
 			Data: []decimal.Decimal{
 				decimal.NewFromInt(31),
+				decimal.NewFromInt(31),
 				decimal.NewFromInt(38),
 				decimal.NewFromInt(35),
 				decimal.NewFromInt(29),
@@ -164,20 +165,37 @@ func Test_Aroon_CalcTrend(t *testing.T) {
 			},
 			Error: ErrInvalidDataSize,
 		},
-		"Successful calculation with TrendUp": {
+		"Successful calculation with TrendUp with 0": {
 			Aroon: Aroon{
 				valid:  true,
 				length: 5,
 			},
 			Trend: TrendUp,
 			Data: []decimal.Decimal{
-				decimal.NewFromInt(31),
+				decimal.NewFromInt(49),
+				decimal.NewFromInt(40),
 				decimal.NewFromInt(38),
 				decimal.NewFromInt(35),
 				decimal.NewFromInt(29),
 				decimal.NewFromInt(29),
 			},
-			Result: decimal.NewFromInt(40),
+			Result: decimal.Zero,
+		},
+		"Successful calculation with TrendUp with 100": {
+			Aroon: Aroon{
+				valid:  true,
+				length: 5,
+			},
+			Trend: TrendUp,
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(40),
+				decimal.NewFromInt(40),
+				decimal.NewFromInt(38),
+				decimal.NewFromInt(35),
+				decimal.NewFromInt(29),
+				decimal.NewFromInt(50),
+			},
+			Result: _hundred,
 		},
 		"Successful calculation with TrendDown": {
 			Aroon: Aroon{
@@ -186,6 +204,7 @@ func Test_Aroon_CalcTrend(t *testing.T) {
 			},
 			Trend: TrendDown,
 			Data: []decimal.Decimal{
+				decimal.NewFromInt(31),
 				decimal.NewFromInt(31),
 				decimal.NewFromInt(38),
 				decimal.NewFromInt(35),
@@ -214,7 +233,7 @@ func Test_Aroon_CalcTrend(t *testing.T) {
 }
 
 func Test_Aroon_Count(t *testing.T) {
-	assert.Equal(t, 5, Aroon{
+	assert.Equal(t, 6, Aroon{
 		length: 5,
 	}.Count())
 }
