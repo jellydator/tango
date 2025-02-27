@@ -156,6 +156,7 @@ func Test_Trend_MarshalText(t *testing.T) {
 
 			res, err := c.Trend.MarshalText()
 			assertEqualError(t, c.Err, err)
+
 			if err != nil {
 				return
 			}
@@ -201,6 +202,7 @@ func Test_Trend_UnmarshalText(t *testing.T) {
 			var tr Trend
 			err := tr.UnmarshalText([]byte(c.Text))
 			assertEqualError(t, c.Err, err)
+
 			if err != nil {
 				return
 			}
@@ -272,6 +274,7 @@ func Test_Band_MarshalText(t *testing.T) {
 
 			res, err := c.Band.MarshalText()
 			assertEqualError(t, c.Err, err)
+
 			if err != nil {
 				return
 			}
@@ -313,6 +316,7 @@ func Test_Band_UnmarshalText(t *testing.T) {
 			var b Band
 			err := b.UnmarshalText([]byte(c.Text))
 			assertEqualError(t, c.Err, err)
+
 			if err != nil {
 				return
 			}
@@ -394,6 +398,7 @@ func Test_NewMA(t *testing.T) {
 
 			ma, err := NewMA(c.Type, c.Length)
 			assertEqualError(t, c.Err, err)
+
 			if err != nil {
 				return
 			}
@@ -443,6 +448,7 @@ func Test_MAType_MarshalText(t *testing.T) {
 
 			res, err := c.Type.MarshalText()
 			assertEqualError(t, c.Err, err)
+
 			if err != nil {
 				return
 			}
@@ -493,6 +499,7 @@ func Test_MAType_UnmarshalText(t *testing.T) {
 			var mat MAType
 			err := mat.UnmarshalText([]byte(c.Text))
 			assertEqualError(t, c.Err, err)
+
 			if err != nil {
 				return
 			}

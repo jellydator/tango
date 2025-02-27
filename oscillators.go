@@ -58,21 +58,27 @@ func (aroon Aroon) Calc(dd []decimal.Decimal) (
 		return decimal.Zero, decimal.Zero, ErrInvalidDataSize
 	}
 
-	min := dd[0]
-	minIndex := decimal.Zero
+	minValue := dd[len(dd)-1]
+	minIndex := decimal.NewFromInt(0)
+	foundMin := false
 
-	max := dd[0]
-	maxIndex := decimal.Zero
+	maxValue := dd[len(dd)-1]
+	maxIndex := decimal.NewFromInt(0)
+	foundMax := false
 
-	for i := 0; i < len(dd); i++ {
-		if min.GreaterThanOrEqual(dd[i]) {
-			min = dd[i]
-			minIndex = decimal.NewFromInt(int64(aroon.length - i - 1))
+	for i := len(dd) - 2; i >= 0 && (!foundMin || !foundMax); i-- {
+		if !foundMin && minValue.GreaterThan(dd[i]) {
+			minValue = dd[i]
+			minIndex = decimal.NewFromInt(int64(aroon.length - i))
+		} else if !minValue.Equal(dd[i]) {
+			foundMin = true
 		}
 
-		if max.LessThanOrEqual(dd[i]) {
-			max = dd[i]
-			maxIndex = decimal.NewFromInt(int64(aroon.length - i - 1))
+		if !foundMax && maxValue.LessThan(dd[i]) {
+			maxValue = dd[i]
+			maxIndex = decimal.NewFromInt(int64(aroon.length - i))
+		} else if !maxValue.Equal(dd[i]) {
+			foundMax = true
 		}
 	}
 
@@ -108,7 +114,7 @@ func (aroon Aroon) calc(index decimal.Decimal) decimal.Decimal {
 // Count determines the total amount of data points needed for Aroon
 // calculation.
 func (aroon Aroon) Count() int {
-	return aroon.length
+	return aroon.length + 1
 }
 
 // CCI holds all the necessary information needed to calculate commodity
@@ -363,24 +369,24 @@ func (s StochRSI) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 	}
 
 	curr := res[0]
-	max := res[0]
-	min := res[0]
+	maxValue := res[0]
+	minValue := res[0]
 
 	for i := 1; i < len(res); i++ {
-		if max.LessThan(res[i]) {
-			max = res[i]
+		if maxValue.LessThan(res[i]) {
+			maxValue = res[i]
 		}
 
-		if min.GreaterThan(res[i]) {
-			min = res[i]
+		if minValue.GreaterThan(res[i]) {
+			minValue = res[i]
 		}
 	}
 
-	if max.Equal(min) {
+	if maxValue.Equal(minValue) {
 		return decimal.Zero, nil
 	}
 
-	return curr.Sub(min).Div(max.Sub(min)), nil
+	return curr.Sub(minValue).Div(maxValue.Sub(minValue)), nil
 }
 
 // Count determines the total amount of data needed for StochRSI
