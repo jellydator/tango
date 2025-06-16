@@ -32,7 +32,7 @@ func Test_CandlestickPattern_Eval(t *testing.T) {
 		Result  bool
 	}{
 		"Invalid pattern": {},
-		"Invalid candle cound": {
+		"Invalid candle count": {
 			Pattern: CandlestickPatternHammer,
 		},
 		"Successfully evaluated hammer pattern with some leeway": {
