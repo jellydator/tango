@@ -178,6 +178,84 @@ func (cci CCI) Count() int {
 	return cci.ma.Count()
 }
 
+// FibonacciLevels holds all the necessary information needed to calculate
+// fibonacci levels.
+// The zero value is not usable.
+type FibonacciLevels struct {
+	// valid specifies whether FibonacciLevels paremeters were validated.
+	valid bool
+
+	// length specifies how many data points should be used
+	// during the calculations.
+	length int
+}
+
+// NewFibonacciLevels validates provided configuration options and
+// creates new FibonacciLevels indicator instance.
+func NewFibonacciLevels(length int) (FibonacciLevels, error) {
+	fl := FibonacciLevels{
+		length: length,
+	}
+
+	if err := fl.validate(); err != nil {
+		return FibonacciLevels{}, err
+	}
+
+	return fl, nil
+}
+
+// validate checks whether the indicator has valid configuration properties.
+func (fl *FibonacciLevels) validate() error {
+	if fl.length < 2 {
+		return ErrInvalidLength
+	}
+
+	fl.valid = true
+
+	return nil
+}
+
+// Calc calculates fibonacci level from the provided data points slice.
+// Calculation is based on formula provided by investopedia, however
+// it is not a full implementation of FibonacciRetracement as trend
+// is not considered.
+// https://www.investopedia.com/terms/f/fibonacciretracement.asp.
+func (fl FibonacciLevels) Calc(level decimal.Decimal, dd []decimal.Decimal) (decimal.Decimal, error) {
+	if !fl.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
+	if level.GreaterThan(decimal.NewFromInt(1)) || level.LessThan(decimal.Zero) {
+		return decimal.Zero, ErrInvalidLevel
+	}
+
+	if len(dd) != fl.Count() {
+		return decimal.Zero, ErrInvalidDataSize
+	}
+
+	// We find minimum and maximum values in the slice.
+	minValue := dd[len(dd)-1]
+	maxValue := dd[len(dd)-1]
+
+	for i := len(dd) - 2; i >= 0; i-- {
+		if minValue.GreaterThan(dd[i]) {
+			minValue = dd[i]
+		}
+
+		if maxValue.LessThan(dd[i]) {
+			maxValue = dd[i]
+		}
+	}
+
+	return minValue.Add(maxValue.Sub(minValue).Mul(level)), nil
+}
+
+// Count determines the total amount of data points needed for fibonacci levels
+// calculation.
+func (fl FibonacciLevels) Count() int {
+	return fl.length
+}
+
 // ROC holds all the necessary information needed to calculate rate
 // of change.
 // The zero value is not usable.

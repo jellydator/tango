@@ -802,6 +802,175 @@ func Test_SMA_Count(t *testing.T) {
 	}.Count())
 }
 
+func Test_NewVWAP(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result VWAP
+		Error  error
+	}{
+		"Validate returns an error": {
+			Error: assert.AnError,
+		},
+		"Successfully created new VWAP": {
+			Length: 1,
+			Result: VWAP{
+				valid:  true,
+				length: 1,
+			},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := NewVWAP(c.Length)
+			assertEqualError(t, c.Error, err)
+			assert.Equal(t, c.Result, res)
+		})
+	}
+}
+
+func Test_VWAP_validate(t *testing.T) {
+	cc := map[string]struct {
+		VWAP  VWAP
+		Error error
+	}{
+		"Invalid length": {
+			VWAP: VWAP{
+				length: 0,
+			},
+			Error: ErrInvalidLength,
+		},
+		"Successfully validated": {
+			VWAP: VWAP{
+				length: 1,
+			},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			assertEqualError(t, c.Error, c.VWAP.validate())
+
+			if c.Error == nil {
+				assert.True(t, c.VWAP.valid)
+			}
+		})
+	}
+}
+
+func Test_VWAP_Calc(t *testing.T) {
+	cc := map[string]struct {
+		VWAP    VWAP
+		Prices  []decimal.Decimal
+		Volumes []decimal.Decimal
+		Result  decimal.Decimal
+		Error   error
+	}{
+		"Invalid indicator": {
+			VWAP:  VWAP{},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size": {
+			VWAP: VWAP{
+				valid:  true,
+				length: 3,
+			},
+			Prices: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Volumes: []decimal.Decimal{
+				decimal.NewFromInt(100),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful calculation with zero volume": {
+			VWAP: VWAP{
+				valid:  true,
+				length: 8,
+			},
+			Prices: []decimal.Decimal{
+				decimal.NewFromFloat(81.72),
+				decimal.NewFromFloat(81.72),
+				decimal.NewFromFloat(81.72),
+				decimal.NewFromFloat(81.72),
+				decimal.NewFromFloat(81.72),
+				decimal.NewFromFloat(81.72),
+				decimal.NewFromFloat(81.72),
+				decimal.NewFromFloat(81.72),
+			},
+			Volumes: []decimal.Decimal{
+				decimal.NewFromInt(0),
+				decimal.NewFromInt(0),
+				decimal.NewFromInt(0),
+				decimal.NewFromInt(0),
+				decimal.NewFromInt(0),
+				decimal.NewFromInt(0),
+				decimal.NewFromInt(0),
+				decimal.NewFromInt(0),
+			},
+			Result: decimal.RequireFromString("81.72"),
+		},
+		"Successful calculation": {
+			VWAP: VWAP{
+				valid:  true,
+				length: 8,
+			},
+			Prices: []decimal.Decimal{
+				decimal.NewFromFloat(81.72),
+				decimal.NewFromFloat(81.75),
+				decimal.NewFromFloat(81.73),
+				decimal.NewFromFloat(81.76),
+				decimal.NewFromFloat(81.77),
+				decimal.NewFromFloat(81.77),
+				decimal.NewFromFloat(81.76),
+				decimal.NewFromFloat(81.78),
+			},
+			Volumes: []decimal.Decimal{
+				decimal.NewFromInt(34250),
+				decimal.NewFromInt(37800),
+				decimal.NewFromInt(41410),
+				decimal.NewFromInt(36555),
+				decimal.NewFromInt(32100),
+				decimal.NewFromInt(25730),
+				decimal.NewFromInt(18500),
+				decimal.NewFromInt(17615),
+			},
+			Result: decimal.RequireFromString("81.7515572224954911"),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := c.VWAP.Calc(c.Prices, c.Volumes)
+			assertEqualError(t, c.Error, err)
+
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
+
+func Test_VWAP_Count(t *testing.T) {
+	assert.Equal(t, 15, VWAP{
+		length: 15,
+	}.Count())
+}
+
 func Test_NewWMA(t *testing.T) {
 	cc := map[string]struct {
 		Length int

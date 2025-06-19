@@ -64,6 +64,7 @@ func CalculateMA(ma tango.MA, values []decimal.Decimal) (decimal.Decimal, error)
 ## Oscillators
 - [Aroon](https://www.investopedia.com/terms/a/aroon.asp)
 - [CCI (Commodity Channel Index)](https://www.investopedia.com/terms/c/commoditychannelindex.asp)
+- Fibonacci Levels; Based on [Fibonacci Retracement](https://www.investopedia.com/terms/f/fibonacciretracement.asp), however trend calculation must be done separately.
 - [ROC (Rate of Change)](https://www.investopedia.com/terms/p/pricerateofchange.asp)
 - [RSI (Relative Strength Index)](https://www.investopedia.com/terms/r/rsi.asp)
 - [StochRSI (Stochastic Relative Strength Index)](https://www.investopedia.com/terms/s/stochrsi.asp)
@@ -75,4 +76,5 @@ func CalculateMA(ma tango.MA, values []decimal.Decimal) (decimal.Decimal, error)
 - [EMA (Exponential Moving Average)](https://www.investopedia.com/terms/e/ema.asp)
 - [HMA (Hull Moving Average)](https://www.fidelity.com/learning-center/trading-investing/technical-analysis/technical-indicator-guide/hull-moving-average)
 - [SMA (Simple Moving Average)](https://www.investopedia.com/terms/s/sma.asp)
+- [VWAP (Volume-Weighted Average Price)](https://www.investopedia.com/terms/v/vwap.asp)
 - [WMA (Weighted Moving Average)](https://www.investopedia.com/articles/technical/060401.asp)

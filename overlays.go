@@ -419,6 +419,74 @@ func (sma SMA) Count() int {
 	return sma.length
 }
 
+// VWAP holds all the necessary information needed to calculate VWAP.
+// The zero value is not usable.
+type VWAP struct {
+	// valid specifies whether VWAP paremeters were validated.
+	valid bool
+
+	// length specifies how many data points should be used
+	// during the calculations.
+	length int
+}
+
+// NewVWAP validates provided configuration options and
+// creates new VWAP indicator.
+func NewVWAP(length int) (VWAP, error) {
+	vwap := VWAP{
+		length: length,
+	}
+
+	if err := vwap.validate(); err != nil {
+		return VWAP{}, err
+	}
+
+	return vwap, nil
+}
+
+// validate checks whether the indicator has valid configuration properties.
+func (vwap *VWAP) validate() error {
+	if vwap.length < 1 {
+		return ErrInvalidLength
+	}
+
+	vwap.valid = true
+
+	return nil
+}
+
+// Calc calculates VWAP from the provided data points slice.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/v/vwap.asp.
+func (vwap VWAP) Calc(dd, vv []decimal.Decimal) (decimal.Decimal, error) {
+	if !vwap.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
+	if len(dd) != vwap.Count() || len(dd) != len(vv) {
+		return decimal.Zero, ErrInvalidDataSize
+	}
+
+	var res, volume decimal.Decimal
+
+	for i := 0; i < len(dd); i++ {
+		res = res.Add(dd[i].Mul(vv[i]))
+		volume = volume.Add(vv[i])
+	}
+
+	if volume.IsZero() {
+		return dd[len(dd)-1], nil
+	}
+
+	return res.Div(volume), nil
+}
+
+// Count determines the total amount of data points needed for VWAP
+// calculation.
+func (vwap VWAP) Count() int {
+	return vwap.length
+}
+
 // WMA holds all the necessary information needed to calculate weighted
 // moving average.
 // The zero value is not usable.
