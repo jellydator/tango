@@ -179,7 +179,7 @@ func (cci CCI) Count() int {
 }
 
 // FibonacciLevels holds all the necessary information needed to calculate
-// Fibonacci levels.
+// fibonacci levels.
 // The zero value is not usable.
 type FibonacciLevels struct {
 	// valid specifies whether FibonacciLevels paremeters were validated.
