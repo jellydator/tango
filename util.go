@@ -25,6 +25,10 @@ var (
 	// ErrInvalidDataSize is returned when incorrect data size is provided.
 	ErrInvalidDataSize = errors.New("invalid data size")
 
+	// ErrInvalidLevel is returned when level doesn't match any of the
+	// available levels.
+	ErrInvalidLevel = errors.New("invalid level")
+
 	// ErrInvalidTrend is returned when trend doesn't match any of the
 	// available trends.
 	ErrInvalidTrend = errors.New("invalid trend")

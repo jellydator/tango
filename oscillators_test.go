@@ -240,6 +240,150 @@ func Test_Aroon_Count(t *testing.T) {
 	}.Count())
 }
 
+func Test_NewFibonacciLevels(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result FibonacciLevels
+		Error  error
+	}{
+		"Validate returns an error": {
+			Error: assert.AnError,
+		},
+		"Successfully created new FibonacciLevels": {
+			Length: 5,
+			Result: FibonacciLevels{
+				valid:  true,
+				length: 5,
+			},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := NewFibonacciLevels(c.Length)
+			assertEqualError(t, c.Error, err)
+			assert.Equal(t, c.Result, res)
+		})
+	}
+}
+
+func Test_FibonacciLevels_validate(t *testing.T) {
+	cc := map[string]struct {
+		FibonacciLevels FibonacciLevels
+		Error           error
+	}{
+		"Invalid length": {
+			FibonacciLevels: FibonacciLevels{
+				length: 1,
+			},
+			Error: ErrInvalidLength,
+		},
+		"Successfully validated": {
+			FibonacciLevels: FibonacciLevels{
+				length: 2,
+			},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			assertEqualError(t, c.Error, c.FibonacciLevels.validate())
+
+			if c.Error == nil {
+				assert.True(t, c.FibonacciLevels.valid)
+			}
+		})
+	}
+}
+
+func Test_FibonacciLevels_Calc(t *testing.T) {
+	cc := map[string]struct {
+		FibonacciLevels FibonacciLevels
+		Level           decimal.Decimal
+		Data            []decimal.Decimal
+		Result          decimal.Decimal
+		Error           error
+	}{
+		"Invalid indicator": {
+			FibonacciLevels: FibonacciLevels{
+				valid: false,
+			},
+			Level: decimal.NewFromFloat(0.5),
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid level": {
+			FibonacciLevels: FibonacciLevels{
+				valid:  true,
+				length: 4,
+			},
+			Level: decimal.NewFromFloat(1.5),
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(50),
+				decimal.NewFromInt(80),
+				decimal.NewFromInt(50),
+			},
+			Error: ErrInvalidLevel,
+		},
+		"Invalid data size": {
+			FibonacciLevels: FibonacciLevels{
+				valid:  true,
+				length: 5,
+			},
+			Level: decimal.NewFromFloat(0.5),
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful calculation": {
+			FibonacciLevels: FibonacciLevels{
+				valid:  true,
+				length: 4,
+			},
+			Level: decimal.NewFromFloat(0.5),
+			Data: []decimal.Decimal{
+				decimal.NewFromInt(30),
+				decimal.NewFromInt(50),
+				decimal.NewFromInt(80),
+				decimal.NewFromInt(50),
+			},
+			Result: decimal.NewFromInt(55),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			result, err := c.FibonacciLevels.Calc(c.Level, c.Data)
+			assertEqualError(t, c.Error, err)
+
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.Result.String(), result.String())
+		})
+	}
+}
+
+func Test_FibonacciLevels_Count(t *testing.T) {
+	assert.Equal(t, 5, FibonacciLevels{
+		length: 5,
+	}.Count())
+}
+
 func Test_NewCCI(t *testing.T) {
 	cc := map[string]struct {
 		Type   MAType
