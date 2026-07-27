@@ -44,6 +44,14 @@ var (
 	// ErrInvalidStandardDeviation is returned when standard deviation
 	// is invalid.
 	ErrInvalidStandardDeviation = errors.New("invalid standard deviation")
+
+	// ErrInvalidMultiplier is returned when the provided multiplier
+	// is invalid.
+	ErrInvalidMultiplier = errors.New("invalid multiplier")
+
+	// ErrInvalidStep is returned when the provided acceleration step
+	// is invalid.
+	ErrInvalidStep = errors.New("invalid step")
 )
 
 // Average is a helper function that calculates average decimal number of

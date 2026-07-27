@@ -1057,3 +1057,162 @@ func Test_Stoch_Calc(t *testing.T) {
 		})
 	}
 }
+
+func Test_NewWilliamsR(t *testing.T) {
+	cc := map[string]struct {
+		Length int
+		Result WilliamsR
+		Error  error
+	}{
+		"Validate returns an error": {
+			Error: assert.AnError,
+		},
+		"Successfully created new WilliamsR": {
+			Length: 5,
+			Result: WilliamsR{
+				valid:  true,
+				length: 5,
+			},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := NewWilliamsR(c.Length)
+			assertEqualError(t, c.Error, err)
+			assert.Equal(t, c.Result, res)
+		})
+	}
+}
+
+func Test_WilliamsR_validate(t *testing.T) {
+	cc := map[string]struct {
+		WilliamsR WilliamsR
+		Error     error
+	}{
+		"Invalid length": {
+			WilliamsR: WilliamsR{},
+			Error:     ErrInvalidLength,
+		},
+		"Successfully validated": {
+			WilliamsR: WilliamsR{
+				length: 1,
+			},
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			assertEqualError(t, c.Error, c.WilliamsR.validate())
+
+			if c.Error == nil {
+				assert.True(t, c.WilliamsR.valid)
+			}
+		})
+	}
+}
+
+func Test_WilliamsR_Calc(t *testing.T) {
+	cc := map[string]struct {
+		WilliamsR WilliamsR
+		Candles   []Candle
+		Result    decimal.Decimal
+		Error     error
+	}{
+		"Invalid indicator": {
+			WilliamsR: WilliamsR{
+				valid: false,
+			},
+			Error: ErrInvalidIndicator,
+		},
+		"Invalid data size": {
+			WilliamsR: WilliamsR{
+				valid:  true,
+				length: 3,
+			},
+			Candles: []Candle{
+				{
+					High:  decimal.NewFromInt(12),
+					Low:   decimal.NewFromInt(8),
+					Close: decimal.NewFromInt(9),
+				},
+			},
+			Error: ErrInvalidDataSize,
+		},
+		"Successful calculation": {
+			WilliamsR: WilliamsR{
+				valid:  true,
+				length: 3,
+			},
+			Candles: []Candle{
+				{
+					High:  decimal.NewFromInt(12),
+					Low:   decimal.NewFromInt(8),
+					Close: decimal.NewFromInt(9),
+				},
+				{
+					High:  decimal.NewFromInt(14),
+					Low:   decimal.NewFromInt(6),
+					Close: decimal.NewFromInt(10),
+				},
+				{
+					High:  decimal.NewFromInt(13),
+					Low:   decimal.NewFromInt(7),
+					Close: decimal.NewFromInt(12),
+				},
+			},
+			Result: decimal.NewFromInt(-25),
+		},
+		"Successful calculation with flat candles": {
+			WilliamsR: WilliamsR{
+				valid:  true,
+				length: 2,
+			},
+			Candles: []Candle{
+				{
+					High:  decimal.NewFromInt(10),
+					Low:   decimal.NewFromInt(10),
+					Close: decimal.NewFromInt(10),
+				},
+				{
+					High:  decimal.NewFromInt(10),
+					Low:   decimal.NewFromInt(10),
+					Close: decimal.NewFromInt(10),
+				},
+			},
+			Result: decimal.NewFromInt(0),
+		},
+	}
+
+	for cn, c := range cc {
+		c := c
+
+		t.Run(cn, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := c.WilliamsR.Calc(c.Candles)
+			assertEqualError(t, c.Error, err)
+
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.Result.String(), res.String())
+		})
+	}
+}
+
+func Test_WilliamsR_Count(t *testing.T) {
+	assert.Equal(t, 3, WilliamsR{
+		valid:  true,
+		length: 3,
+	}.Count())
+}

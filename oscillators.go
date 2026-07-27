@@ -548,3 +548,82 @@ func (stoch Stoch) Calc(dd []decimal.Decimal) (decimal.Decimal, error) {
 func (stoch Stoch) Count() int {
 	return stoch.length
 }
+
+// WilliamsR holds all the necessary information needed to calculate
+// Williams %R.
+// The zero value is not usable.
+type WilliamsR struct {
+	// valid specifies whether WilliamsR parameters were validated.
+	valid bool
+
+	// length specifies how many data points should be used
+	// during the calculations.
+	length int
+}
+
+// NewWilliamsR validates provided configuration options and
+// creates new WilliamsR indicator instance.
+func NewWilliamsR(length int) (WilliamsR, error) {
+	wr := WilliamsR{
+		length: length,
+	}
+
+	if err := wr.validate(); err != nil {
+		return WilliamsR{}, err
+	}
+
+	return wr, nil
+}
+
+// validate checks whether the indicator has valid configuration properties.
+func (wr *WilliamsR) validate() error {
+	if wr.length < 1 {
+		return ErrInvalidLength
+	}
+
+	wr.valid = true
+
+	return nil
+}
+
+// Calc calculates Williams %R from the provided candles ordered from
+// the oldest to the newest. The result is zero when the highest high
+// matches the lowest low.
+// Calculation is based on formula provided by investopedia.
+// https://www.investopedia.com/terms/w/williamsr.asp.
+// All credits are due to Larry Williams who developed Williams %R indicator.
+func (wr WilliamsR) Calc(cc []Candle) (decimal.Decimal, error) {
+	if !wr.valid {
+		return decimal.Zero, ErrInvalidIndicator
+	}
+
+	if len(cc) != wr.Count() {
+		return decimal.Zero, ErrInvalidDataSize
+	}
+
+	high := cc[0].High
+	low := cc[0].Low
+
+	for _, c := range cc[1:] {
+		if c.High.GreaterThan(high) {
+			high = c.High
+		}
+
+		if c.Low.LessThan(low) {
+			low = c.Low
+		}
+	}
+
+	dnm := high.Sub(low)
+	if dnm.IsZero() {
+		return decimal.Zero, nil
+	}
+
+	return high.Sub(cc[len(cc)-1].Close).Div(dnm).Mul(_hundred.Neg()), nil
+}
+
+// Count determines the total amount of data points needed for WilliamsR
+// calculation.
+func (wr WilliamsR) Count() int {
+	return wr.length
+}
