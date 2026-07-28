@@ -4,7 +4,7 @@ on:
     branches:
       - master
   pull_request:
-    branches: 
+    branches:
       - master
 
 defaults:
@@ -33,14 +33,11 @@ jobs:
       with:
         go-version: ^1.21
 
-    - name: Download gocov
-      run: go install github.com/axw/gocov/gocov@master
-
     - name: Checkout code
       uses: actions/checkout@v3
 
     - name: Run tests
-      run: gocov test ./... -race -failfast -timeout 3m > coverage.out
+      run: go test ./... -race -failfast -timeout 3m -coverprofile=coverage.out
 
     - name: Save coverage
       uses: actions/upload-artifact@v4
@@ -58,8 +55,8 @@ jobs:
       with:
         go-version: ^1.21
 
-    - name: Download gocov
-      run: go install github.com/axw/gocov/gocov@master
+    - name: Checkout code
+      uses: actions/checkout@v3
 
     - name: Load coverage report
       uses: actions/download-artifact@v8
@@ -68,7 +65,7 @@ jobs:
 
     - name: Check coverage
       run: |
-        cov=$(gocov report coverage.out | sed -nE 's/^Total Coverage: (.+)%.*$/\1/p')
+        cov=$(go tool cover -func=coverage.out | sed -nE 's/^total:.*[[:space:]]([0-9.]+)%$/\1/p')
         if [[ -z "${cov}" || "${cov}" == "NaN" ]]; then
             echo "Invalid coverage data"
             exit 1
